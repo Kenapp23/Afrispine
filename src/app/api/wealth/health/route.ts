@@ -1,5 +1,3 @@
-'use server';
-
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { checkMyStocksHealth } from '@/lib/services/mystocks';
@@ -105,7 +103,7 @@ async function checkProviderHealth(provider: typeof PROVIDERS[number]): Promise<
   const configured = hasCredential && endpointsOk > 0;
 
   let overallStatus: ProviderHealthSummary['overallStatus'];
-  if (!configured) overallStatus = 'unconfigured';
+  if (!hasCredential) overallStatus = 'unconfigured';
   else if (endpointsOk === endpointsTotal) overallStatus = 'healthy';
   else if (endpointsOk > 0) overallStatus = 'degraded';
   else overallStatus = 'unhealthy';
@@ -117,7 +115,9 @@ async function checkProviderHealth(provider: typeof PROVIDERS[number]): Promise<
     endpointsOk,
     endpointsTotal,
     latencyMs: avgLatency,
-    message: configured ? `${endpointsOk}/${endpointsTotal} endpoints healthy` : 'Not configured or no endpoints passing',
+    message: hasCredential
+      ? `${endpointsOk}/${endpointsTotal} endpoints healthy`
+      : 'No credentials configured',
     configured,
     endpoints,
   };
