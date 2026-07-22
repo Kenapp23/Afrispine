@@ -1,3 +1,4 @@
+// AfriSpine v1.1.0 - Bank-Grade API Health Monitor
 'use client'
 
 import { useState, useEffect, useCallback } from 'react';
