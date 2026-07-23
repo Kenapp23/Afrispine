@@ -8,7 +8,6 @@ const PROVIDERS = [
   { key: 'mystocks', displayName: 'MyStocks', needsAuth: true },
   { key: 'fincra', displayName: 'Fincra', needsAuth: true },
   { key: 'openverse', displayName: 'Openverse', needsAuth: false },
-  { key: 'paystack', displayName: 'Paystack', needsAuth: true },
   { key: 'flutterwave', displayName: 'Flutterwave', needsAuth: true },
 ];
 
@@ -48,14 +47,6 @@ async function checkProviderHealth(provider: typeof PROVIDERS[number]): Promise<
       });
       const ms = Date.now() - start;
       endpoints = [{ name: 'Image Search', result: { status: r.ok ? 'healthy' : 'unhealthy', latencyMs: ms, message: r.ok ? 'OK' : `HTTP ${r.status}` } }];
-    } else if (provider.key === 'paystack') {
-      const r = await fetch('https://api.paystack.co/transaction/verify/reference', {
-        headers: { Authorization: `Bearer ${cred!.apiKey}`, Accept: 'application/json' },
-        signal: AbortSignal.timeout(8000),
-      });
-      const ms = Date.now() - start;
-      const ok = r.ok || r.status === 404;
-      endpoints = [{ name: 'Transaction Verify', result: { status: ok ? 'healthy' : 'unhealthy', latencyMs: ms, message: ok ? 'Reachable' : `HTTP ${r.status}` } }];
     } else if (provider.key === 'flutterwave') {
       const r = await fetch('https://api.flutterwave.com/v3/transactions', {
         headers: { Authorization: `Bearer ${cred!.apiKey}`, Accept: 'application/json' },

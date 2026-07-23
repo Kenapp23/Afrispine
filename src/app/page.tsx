@@ -13,7 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import {
   Activity, Settings2, RefreshCw, Shield, TrendingUp, CreditCard, ImageIcon,
-  Wallet, Zap, AlertCircle, CheckCircle2, XCircle, Clock,
+  Zap, AlertCircle, CheckCircle2, XCircle, Clock,
 } from 'lucide-react';
 import type { WealthHealthResponse, ProviderHealthSummary } from '@/lib/services/types';
 
@@ -22,7 +22,6 @@ const PROVIDER_META: Record<string, { icon: React.ReactNode; color: string; cate
   mystocks: { icon: <TrendingUp className="h-5 w-5" />, color: 'text-emerald-500', category: 'Markets' },
   fincra: { icon: <CreditCard className="h-5 w-5" />, color: 'text-amber-500', category: 'Payments', hasSecret: true, hasBaseUrl: true, baseUrlLabel: 'Business ID' },
   openverse: { icon: <ImageIcon className="h-5 w-5" />, color: 'text-sky-500', category: 'Images' },
-  paystack: { icon: <Wallet className="h-5 w-5" />, color: 'text-green-500', category: 'Payments', hasSecret: true },
   flutterwave: { icon: <Zap className="h-5 w-5" />, color: 'text-orange-500', category: 'Payments', hasSecret: true },
 };
 

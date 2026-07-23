@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "AfriSpine - Bank-Grade API Health Monitor",
   description: "Monitor and manage African fintech API provider health, credentials, and connectivity in real-time.",
-  keywords: ["AfriSpine", "fintech", "API monitoring", "Africa", "health check", "MyStocks", "Fincra", "Paystack", "Flutterwave"],
+  keywords: ["AfriSpine", "fintech", "API monitoring", "Africa", "health check", "MyStocks", "Fincra", "Flutterwave"],
   authors: [{ name: "AfriSpine Team" }],
   icons: {
     icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>",
