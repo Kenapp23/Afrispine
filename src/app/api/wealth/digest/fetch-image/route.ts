@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
 import { fetchImageForStory } from '@/lib/services/openverse';
 
 export async function POST(req: NextRequest) {
@@ -12,13 +11,19 @@ export async function POST(req: NextRequest) {
     let exchange = exchangeFocus;
     let storyTitle = title;
 
+    // Story lookup from DB (only available in local dev)
     if (storyId) {
-      const story = await db.digestStory.findUnique({ where: { id: storyId } });
-      if (story) {
-        country = country || story.country || undefined;
-        ticker = ticker || story.ticker || undefined;
-        exchange = exchange || story.exchange || undefined;
-        storyTitle = storyTitle || story.title || undefined;
+      try {
+        const { db } = await import('@/lib/db');
+        const story = await db.digestStory.findUnique({ where: { id: storyId } });
+        if (story) {
+          country = country || story.country || undefined;
+          ticker = ticker || story.ticker || undefined;
+          exchange = exchange || story.exchange || undefined;
+          storyTitle = storyTitle || story.title || undefined;
+        }
+      } catch {
+        // DB not available — use params as-is
       }
     }
 
@@ -28,11 +33,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ found: false, message: 'No suitable image found' });
     }
 
+    // Save to DB if available
     if (!dryRun && storyId) {
-      await db.digestStory.update({
-        where: { id: storyId },
-        data: { imageUrl: image.url, imageCredit: image.creator, imageSource: 'openverse' },
-      });
+      try {
+        const { db } = await import('@/lib/db');
+        await db.digestStory.update({
+          where: { id: storyId },
+          data: { imageUrl: image.url, imageCredit: image.creator, imageSource: 'openverse' },
+        });
+      } catch {
+        // DB not available — skip persistence
+      }
     }
 
     return NextResponse.json({

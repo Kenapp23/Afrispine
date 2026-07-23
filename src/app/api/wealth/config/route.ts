@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { getCredential, saveCredential, listCredentials } from '@/lib/credential-store';
 
 export async function GET() {
   try {
-    const creds = await db.apiCredential.findMany({
-      select: { provider: true, environment: true, createdAt: true, updatedAt: true },
-    });
-    return NextResponse.json({ configured: creds });
+    const configured = await listCredentials();
+    return NextResponse.json({ configured });
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
@@ -21,24 +19,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'provider and apiKey are required' }, { status: 400 });
     }
 
-    const cred = await db.apiCredential.upsert({
-      where: { provider },
-      update: {
-        apiKey: String(apiKey),
-        secretKey: secretKey ? String(secretKey) : null,
-        environment: String(environment || 'sandbox'),
-        baseUrl: baseUrl ? String(baseUrl) : null,
-      },
-      create: {
-        provider,
-        apiKey: String(apiKey),
-        secretKey: secretKey ? String(secretKey) : null,
-        environment: String(environment || 'sandbox'),
-        baseUrl: baseUrl ? String(baseUrl) : null,
-      },
+    const result = await saveCredential({
+      provider,
+      apiKey: String(apiKey),
+      secretKey: secretKey ? String(secretKey) : undefined,
+      environment: String(environment || 'sandbox'),
+      baseUrl: baseUrl ? String(baseUrl) : undefined,
     });
 
-    return NextResponse.json({ success: true, provider: cred.provider });
+    return NextResponse.json(result);
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }

@@ -1,52 +1,21 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { getCredential } from '@/lib/credential-store';
 import { checkMyStocksHealth } from '@/lib/services/mystocks';
 import { checkFincraHealth } from '@/lib/services/fincra';
 import type { WealthHealthResponse, ProviderHealthSummary } from '@/lib/services/types';
 
 const PROVIDERS = [
-  { key: 'mystocks', displayName: 'MyStocks', category: 'Markets' },
-  { key: 'fincra', displayName: 'Fincra', category: 'Payments' },
-  { key: 'openverse', displayName: 'Openverse', category: 'Images' },
-  { key: 'paystack', displayName: 'Paystack', category: 'Payments' },
-  { key: 'flutterwave', displayName: 'Flutterwave', category: 'Payments' },
+  { key: 'mystocks', displayName: 'MyStocks', needsAuth: true },
+  { key: 'fincra', displayName: 'Fincra', needsAuth: true },
+  { key: 'openverse', displayName: 'Openverse', needsAuth: false },
+  { key: 'paystack', displayName: 'Paystack', needsAuth: true },
+  { key: 'flutterwave', displayName: 'Flutterwave', needsAuth: true },
 ];
 
-async function getCred(provider: string): Promise<{
-  key: string; secretKey?: string; environment: string; baseUrl?: string;
-} | null> {
-  const envKey = process.env[`${provider.toUpperCase()}_PUBLIC_KEY`] || process.env[`${provider.toUpperCase()}_API_KEY`];
-  const envSecret = process.env[`${provider.toUpperCase()}_SECRET_KEY`];
-  const envEnv = process.env[`${provider.toUpperCase()}_ENVIRONMENT`];
-  const envBase = process.env[`${provider.toUpperCase()}_BASE_URL`];
-
-  if (envKey) {
-    return {
-      key: envKey.trim(),
-      secretKey: envSecret?.trim() || undefined,
-      environment: (envEnv as 'sandbox' | 'production') || 'sandbox',
-      baseUrl: envBase?.trim() || undefined,
-    };
-  }
-
-  try {
-    const cred = await db.apiCredential.findUnique({ where: { provider } });
-    if (!cred) return null;
-    return {
-      key: cred.apiKey,
-      secretKey: cred.secretKey || undefined,
-      environment: (cred.environment as 'sandbox' | 'production') || 'sandbox',
-      baseUrl: cred.baseUrl || undefined,
-    };
-  } catch {
-    return null;
-  }
-}
-
 async function checkProviderHealth(provider: typeof PROVIDERS[number]): Promise<ProviderHealthSummary> {
-  const cred = await getCred(provider.key);
+  const cred = provider.needsAuth ? await getCredential(provider.key) : null;
 
-  if (!cred) {
+  if (provider.needsAuth && !cred) {
     return {
       provider: provider.key,
       displayName: provider.displayName,
@@ -65,27 +34,32 @@ async function checkProviderHealth(provider: typeof PROVIDERS[number]): Promise<
 
   try {
     if (provider.key === 'mystocks') {
-      endpoints = await checkMyStocksHealth(cred.key, cred.environment as 'sandbox' | 'production');
+      endpoints = await checkMyStocksHealth(cred!.apiKey, cred!.environment as 'sandbox' | 'production');
     } else if (provider.key === 'fincra') {
-      endpoints = await checkFincraHealth(cred.key, cred.environment as 'sandbox' | 'production', cred.baseUrl);
+      endpoints = await checkFincraHealth(
+        cred!.apiKey, 
+        cred!.environment as 'sandbox' | 'production', 
+        cred!.baseUrl
+      );
     } else if (provider.key === 'openverse') {
-      const r = await fetch(`https://api.openverse.org/v1/images/?q=test&license_type=commercial&page_size=1`, {
-        signal: AbortSignal.timeout(10000),
+      // Openverse is a free public API — no auth needed
+      const r = await fetch('https://api.openverse.org/v1/images/?q=Africa+finance&license_type=commercial&page_size=1', {
+        signal: AbortSignal.timeout(8000),
       });
       const ms = Date.now() - start;
-      endpoints = [{ name: 'Search', result: { status: r.ok ? 'healthy' : 'unhealthy', latencyMs: ms, message: r.ok ? 'OK' : `HTTP ${r.status}` } }];
+      endpoints = [{ name: 'Image Search', result: { status: r.ok ? 'healthy' : 'unhealthy', latencyMs: ms, message: r.ok ? 'OK' : `HTTP ${r.status}` } }];
     } else if (provider.key === 'paystack') {
       const r = await fetch('https://api.paystack.co/transaction/verify/reference', {
-        headers: { Authorization: `Bearer ${cred.key}`, Accept: 'application/json' },
-        signal: AbortSignal.timeout(10000),
+        headers: { Authorization: `Bearer ${cred!.apiKey}`, Accept: 'application/json' },
+        signal: AbortSignal.timeout(8000),
       });
       const ms = Date.now() - start;
       const ok = r.ok || r.status === 404;
       endpoints = [{ name: 'Transaction Verify', result: { status: ok ? 'healthy' : 'unhealthy', latencyMs: ms, message: ok ? 'Reachable' : `HTTP ${r.status}` } }];
     } else if (provider.key === 'flutterwave') {
       const r = await fetch('https://api.flutterwave.com/v3/transactions', {
-        headers: { Authorization: `Bearer ${cred.key}`, Accept: 'application/json' },
-        signal: AbortSignal.timeout(10000),
+        headers: { Authorization: `Bearer ${cred!.apiKey}`, Accept: 'application/json' },
+        signal: AbortSignal.timeout(8000),
       });
       const ms = Date.now() - start;
       const ok = r.ok || r.status === 400;
@@ -99,7 +73,7 @@ async function checkProviderHealth(provider: typeof PROVIDERS[number]): Promise<
   const endpointsOk = endpoints.filter(e => e.result.status === 'healthy').length;
   const endpointsTotal = endpoints.length;
   const avgLatency = endpoints.length > 0 ? Math.round(endpoints.reduce((s, e) => s + e.result.latencyMs, 0) / endpoints.length) : 0;
-  const hasCredential = !!cred;
+  const hasCredential = !provider.needsAuth || !!cred;
   const configured = hasCredential && endpointsOk > 0;
 
   let overallStatus: ProviderHealthSummary['overallStatus'];

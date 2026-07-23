@@ -17,7 +17,7 @@ export async function fetchWithContentTypeGuard(
   options: RequestInit = {},
   expectedTypes: string[] = ['application/json']
 ): Promise<Response> {
-  const response = await fetch(url, { ...options, signal: AbortSignal.timeout(15000) });
+  const response = await fetch(url, { ...options, signal: AbortSignal.timeout(8000) });
 
   const contentType = response.headers.get('content-type') || '';
   const isExpectedType = expectedTypes.some(t => contentType.includes(t));
