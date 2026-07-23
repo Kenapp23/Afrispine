@@ -55,3 +55,43 @@ Stage Summary:
 - Live URL: https://my-project-navy-three-59.vercel.app
 - Deployment ID: dpl_B64wVVmBJCBVifZ7wrsDtN4kL9y1
 - Commit: 0f8b933 (fix: remove use-server from routes, fix status logic, fix lint warning)
+
+---
+Task ID: 3
+Agent: Main Orchestrator
+Task: Fix all 3 deployment failures on Vercel production
+
+Work Log:
+- Diagnosed root causes of 3 failures:
+  1. Config API crashed: "Unable to open database file" (SQLite on serverless)
+  2. Health API: Openverse wrongly showed 'unconfigured', Fincra timed out 15s/endpoint
+  3. Page still had 'Z.ai Code Scaffold' title/meta from default scaffold
+- Created `/src/lib/credential-store.ts` — 3-tier Vercel-compatible storage adapter:
+  1. Environment variables (persistent, read on Vercel)
+  2. Prisma/SQLite (local dev, persistent)
+  3. In-memory Map (Vercel fallback, survives within cold start)
+- Rewrote `/src/app/api/wealth/config/route.ts` to use credential-store (no more crash)
+- Rewrote `/src/app/api/wealth/health/route.ts`:
+  - Openverse checks without credentials (free public API)
+  - Reduced all timeouts from 15s to 8s
+  - Fixed cred.key → cred.apiKey bug for Paystack/Flutterwave
+  - Used PROVIDERS.needsAuth flag to skip getCredential for Openverse
+- Rewrote `/src/app/api/wealth/digest/fetch-image/route.ts`:
+  - DB access wrapped in try/catch for graceful Vercel fallback
+- Fixed `/src/app/layout.tsx`: All metadata now says AfriSpine (title, description, OG, Twitter)
+- Installed vercel CLI locally, deployed successfully
+
+Production Verification (all passed):
+- Page title: "AfriSpine - Bank-Grade API Health Monitor"
+- No "Z.ai Code Scaffold" anywhere
+- JS bundle contains: AfriSpine, Wealth API Status, Fincra, api/wealth/health, api/wealth/config
+- Health API: Openverse=healthy, Fincra=unhealthy (env var), others=unconfigured
+- Config API GET: Returns {configured: [{provider: fincra, source: environment}]}
+- Config API POST: Saves key, returns {success: true, source: memory}
+- Fetch-Image API: Returns real images from Openverse
+
+Stage Summary:
+- All 3 API failures FIXED and verified on production
+- Live URL: https://my-project-navy-three-59.vercel.app
+- Deployment ID: dpl_DVQyFdjSdDv5cKRg4Vr949gPc22i
+- Commit: 392c8cc (fix: Vercel-compatible credential store, fix all 3 API failures)
