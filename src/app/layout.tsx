@@ -14,22 +14,22 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AfriSpine - Bank-Grade API Health Monitor",
-  description: "Monitor and manage African fintech API provider health, credentials, and connectivity in real-time.",
-  keywords: ["AfriSpine", "fintech", "API monitoring", "Africa", "health check", "MyStocks", "Fincra", "Flutterwave"],
+  title: "AfriSpine - The Future of African Finance",
+  description: "Unify payments, wealth management, and market data across Africa's leading fintech providers — all through one powerful API platform.",
+  keywords: ["AfriSpine", "fintech", "Africa", "payments", "API", "wealth management", "Flutterwave", "Fincra", "MyStocks", "mobile money", "cross-border payments"],
   authors: [{ name: "AfriSpine Team" }],
   icons: {
     icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>",
   },
   openGraph: {
-    title: "AfriSpine - Bank-Grade API Health Monitor",
-    description: "Monitor African fintech API provider health in real-time",
+    title: "AfriSpine - The Future of African Finance",
+    description: "Unify payments, wealth management, and market data across Africa's leading fintech providers — one powerful API platform.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "AfriSpine - API Health Monitor",
-    description: "Monitor African fintech API provider health in real-time",
+    title: "AfriSpine - The Future of African Finance",
+    description: "Unify payments, wealth management, and market data across Africa's leading fintech providers.",
   },
 };
 
