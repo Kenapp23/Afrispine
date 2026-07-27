@@ -1,209 +1,322 @@
-// AfriSpine v1.1.0 - Bank-Grade API Health Monitor
 'use client'
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Activity, Settings2, RefreshCw, Shield, TrendingUp, CreditCard, ImageIcon,
-  Zap, AlertCircle, CheckCircle2, XCircle, Clock,
+  TrendingUp, Shield, Zap, CreditCard, ArrowRight, BarChart3,
+  Globe, Lock, Smartphone, ChevronUp, ChevronDown, Menu, X,
+  Send, Wallet, RefreshCw, CheckCircle2, Clock, AlertCircle, Users,
 } from 'lucide-react';
-import type { WealthHealthResponse, ProviderHealthSummary } from '@/lib/services/types';
 
-const PROVIDER_META: Record<string, { icon: React.ReactNode; color: string; category: string; hasSecret?: boolean; hasBaseUrl?: boolean; baseUrlLabel?: string }> = {
-  overall: { icon: <Activity className="h-5 w-5" />, color: 'text-emerald-600', category: 'System' },
-  mystocks: { icon: <TrendingUp className="h-5 w-5" />, color: 'text-emerald-500', category: 'Markets' },
-  fincra: { icon: <CreditCard className="h-5 w-5" />, color: 'text-amber-500', category: 'Payments', hasSecret: true, hasBaseUrl: true, baseUrlLabel: 'Business ID' },
-  openverse: { icon: <ImageIcon className="h-5 w-5" />, color: 'text-sky-500', category: 'Images' },
-  flutterwave: { icon: <Zap className="h-5 w-5" />, color: 'text-orange-500', category: 'Payments', hasSecret: true },
-};
-
-function statusBadge(status: string) {
-  const map: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; label: string }> = {
-    healthy: { variant: 'default', label: 'Operational' },
-    degraded: { variant: 'secondary', label: 'Degraded' },
-    unhealthy: { variant: 'destructive', label: 'Down' },
-    unconfigured: { variant: 'outline', label: 'Not Configured' },
-    error: { variant: 'destructive', label: 'Error' },
-    all_down: { variant: 'destructive', label: 'All Down' },
-  };
-  const s = map[status] || { variant: 'outline' as const, label: status };
-  return <Badge variant={s.variant}>{s.label}</Badge>;
+/* ─── Animated counter ─── */
+function Counter({ target, suffix = '' }: { target: number; suffix?: string }) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    let start = 0;
+    const duration = 2000;
+    const step = Math.ceil(target / (duration / 16));
+    const timer = setInterval(() => {
+      start += step;
+      if (start >= target) { start = target; clearInterval(timer); }
+      setCount(start);
+    }, 16);
+    return () => clearInterval(timer);
+  }, [target]);
+  return <span>{count.toLocaleString()}{suffix}</span>;
 }
 
-function StatusIcon({ status }: { status: string }) {
-  if (status === 'healthy') return <CheckCircle2 className="h-5 w-5 text-green-500" />;
-  if (status === 'degraded') return <AlertCircle className="h-5 w-5 text-amber-500" />;
-  if (status === 'unconfigured') return <Clock className="h-5 w-5 text-gray-400" />;
-  return <XCircle className="h-5 w-5 text-red-500" />;
-}
-
-function ConfigDialog({ provider, onSaved }: { provider: string; onSaved: () => void }) {
-  const meta = PROVIDER_META[provider] || {};
+/* ─── Navigation ─── */
+function Navbar({ onNavigate }: { onNavigate: (id: string) => void }) {
   const [open, setOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ apiKey: '', secretKey: '', environment: 'sandbox', baseUrl: '' });
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      const res = await fetch('/api/wealth/config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider, ...form }),
-      });
-      if (res.ok) {
-        setOpen(false);
-        setForm({ apiKey: '', secretKey: '', environment: 'sandbox', baseUrl: '' });
-        onSaved();
-      }
-    } finally {
-      setSaving(false);
-    }
-  };
-
+  const links = [
+    { label: 'Markets', id: 'markets' },
+    { label: 'Payments', id: 'payments' },
+    { label: 'Trust', id: 'trust' },
+    { label: 'About', id: 'about' },
+  ];
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8"><Settings2 className="h-4 w-4" /></Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Configure {provider.charAt(0).toUpperCase() + provider.slice(1)}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 pt-2">
-          <div className="space-y-2">
-            <Label htmlFor="apiKey">API Key</Label>
-            <Input id="apiKey" type="password" placeholder="Enter API key" value={form.apiKey} onChange={e => setForm(f => ({ ...f, apiKey: e.target.value }))} />
-          </div>
-          {meta.hasSecret && (
-            <div className="space-y-2">
-              <Label htmlFor="secretKey">Secret Key</Label>
-              <Input id="secretKey" type="password" placeholder="Enter secret key" value={form.secretKey} onChange={e => setForm(f => ({ ...f, secretKey: e.target.value }))} />
+    <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b">
+      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          <div className="flex items-center gap-2">
+            <div className="w-9 h-9 rounded-lg bg-emerald-600 flex items-center justify-center">
+              <TrendingUp className="h-5 w-5 text-white" />
             </div>
-          )}
-          {meta.hasBaseUrl && (
-            <div className="space-y-2">
-              <Label htmlFor="baseUrl">{meta.baseUrlLabel || 'Base URL'}</Label>
-              <Input id="baseUrl" placeholder={meta.baseUrlLabel || 'Base URL'} value={form.baseUrl} onChange={e => setForm(f => ({ ...f, baseUrl: e.target.value }))} />
-            </div>
-          )}
-          <div className="space-y-2">
-            <Label>Environment</Label>
-            <Select value={form.environment} onValueChange={v => setForm(f => ({ ...f, environment: v }))}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="sandbox">Sandbox</SelectItem>
-                <SelectItem value="production">Production</SelectItem>
-              </SelectContent>
-            </Select>
+            <span className="text-xl font-bold text-gray-900">AfriSpine</span>
           </div>
-          <Button onClick={handleSave} disabled={saving || !form.apiKey} className="w-full bg-emerald-600 hover:bg-emerald-700">
-            {saving ? 'Saving...' : 'Save Configuration'}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function ProviderCard({ p, onConfigSaved }: { p: ProviderHealthSummary; onConfigSaved: () => void }) {
-  const meta = PROVIDER_META[p.provider];
-  return (
-    <Card className="relative">
-      <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
-        <div className="flex items-center gap-3">
-          <div className={`${meta?.color || 'text-gray-500'}`}>{meta?.icon || <Shield className="h-5 w-5" />}</div>
-          <div>
-            <CardTitle className="text-base font-semibold">{p.displayName}</CardTitle>
-            <p className="text-xs text-muted-foreground">{meta?.category}</p>
-          </div>
-        </div>
-        <ConfigDialog provider={p.provider} onSaved={onConfigSaved} />
-      </CardHeader>
-      <CardContent className="pt-0 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2"><StatusIcon status={p.overallStatus} />{statusBadge(p.overallStatus)}</div>
-          {p.latencyMs > 0 && <span className="text-xs text-muted-foreground">{p.latencyMs}ms</span>}
-        </div>
-        {p.endpointsTotal > 0 && (
-          <div className="text-xs text-muted-foreground">
-            {p.endpointsOk}/{p.endpointsTotal} endpoints healthy
-          </div>
-        )}
-        {p.endpoints.length > 0 && (
-          <div className="space-y-1 max-h-32 overflow-y-auto">
-            {p.endpoints.map((ep, i) => (
-              <div key={i} className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground truncate mr-2">{ep.name}</span>
-                <span className={ep.result.status === 'healthy' ? 'text-green-600' : 'text-red-500'}>
-                  {ep.result.status === 'healthy' ? 'OK' : 'FAIL'}
-                </span>
-              </div>
+          <div className="hidden md:flex items-center gap-1">
+            {links.map(l => (
+              <button
+                key={l.id}
+                onClick={() => onNavigate(l.id)}
+                className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-emerald-600 rounded-md transition-colors"
+              >
+                {l.label}
+              </button>
             ))}
           </div>
+          <div className="hidden md:flex items-center gap-3">
+            <Link href="/admin">
+              <Button variant="ghost" size="sm" className="text-gray-600">Admin</Button>
+            </Link>
+            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">
+              Get Started <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+          <button className="md:hidden p-2" onClick={() => setOpen(!open)}>
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
+        {open && (
+          <div className="md:hidden pb-4 space-y-1">
+            {links.map(l => (
+              <button
+                key={l.id}
+                onClick={() => { onNavigate(l.id); setOpen(false); }}
+                className="block w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-emerald-50 rounded-md"
+              >
+                {l.label}
+              </button>
+            ))}
+            <Link href="/admin">
+              <button className="block w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-emerald-50 rounded-md">Admin Panel</button>
+            </Link>
+            <div className="pt-2 px-4">
+              <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">Get Started</Button>
+            </div>
+          </div>
         )}
-      </CardContent>
-    </Card>
+      </nav>
+    </header>
   );
 }
 
-function OverallCard({ data }: { data: WealthHealthResponse | null }) {
-  if (!data) {
-    return (
-      <Card className="border-emerald-200 bg-emerald-50/50">
-        <CardContent className="pt-6"><Skeleton className="h-20 w-full" /></CardContent>
-      </Card>
-    );
-  }
+/* ─── Hero Section ─── */
+function HeroSection() {
   return (
-    <Card className="border-emerald-200 bg-emerald-50/50">
+    <section className="relative overflow-hidden bg-gradient-to-br from-emerald-50 via-white to-amber-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28">
+        <div className="max-w-3xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <Badge variant="outline" className="mb-4 border-emerald-200 text-emerald-700 bg-emerald-50">
+              <Globe className="mr-1 h-3 w-3" /> Africa&apos;s Wealth Platform
+            </Badge>
+            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 leading-tight">
+              Invest in Africa&apos;s <br />
+              <span className="text-emerald-600">Growing Markets</span>
+            </h1>
+            <p className="mt-6 text-lg md:text-xl text-gray-600 leading-relaxed max-w-2xl">
+              Trade stocks across Nairobi, Lagos, and Johannesburg exchanges. Send and receive payments across Africa. All from one powerful platform.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-4">
+              <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white px-8">
+                Start Trading <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+              <Button size="lg" variant="outline" className="px-8">
+                Explore Markets
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+      <div className="absolute top-20 right-0 w-72 h-72 bg-emerald-100 rounded-full blur-3xl opacity-40 -z-10" />
+      <div className="absolute bottom-0 left-1/3 w-96 h-96 bg-amber-100 rounded-full blur-3xl opacity-30 -z-10" />
+    </section>
+  );
+}
+
+/* ─── Stock Markets Section ─── */
+const MARKETS = [
+  { name: 'Nairobi Securities Exchange', code: 'NSE', country: 'Kenya', flag: '🇰🇪', color: 'text-emerald-600', bg: 'bg-emerald-50', borderColor: 'border-emerald-200' },
+  { name: 'Nigerian Exchange Group', code: 'NGX', country: 'Nigeria', flag: '🇳🇬', color: 'text-green-600', bg: 'bg-green-50', borderColor: 'border-green-200' },
+  { name: 'Johannesburg Stock Exchange', code: 'JSE', country: 'South Africa', flag: '🇿🇦', color: 'text-amber-600', bg: 'bg-amber-50', borderColor: 'border-amber-200' },
+];
+
+const SAMPLE_STOCKS: Record<string, { symbol: string; name: string; price: string; change: number; volume: string }[]> = {
+  NSE: [
+    { symbol: 'SCOM', name: 'Safaricom', price: '17.25', change: 2.3, volume: '12.4M' },
+    { symbol: 'KCB', name: 'KCB Group', price: '44.50', change: -0.8, volume: '3.2M' },
+    { symbol: 'EQTY', name: 'Equity Bank', price: '53.00', change: 1.1, volume: '2.8M' },
+    { symbol: 'COOP', name: 'Cooperative Bank', price: '14.75', change: 0.5, volume: '5.1M' },
+  ],
+  NGX: [
+    { symbol: 'DANGCEM', name: 'Dangote Cement', price: '415.00', change: -1.2, volume: '8.7M' },
+    { symbol: 'MTNN', name: 'MTN Nigeria', price: '220.50', change: 3.1, volume: '15.2M' },
+    { symbol: 'GTCO', name: 'Guaranty Trust', price: '28.90', change: 0.7, volume: '22.1M' },
+    { symbol: 'ZENITHBANK', name: 'Zenith Bank', price: '27.40', change: -0.3, volume: '18.5M' },
+  ],
+  JSE: [
+    { symbol: 'NPN', name: 'Naspers', price: '1,245.00', change: 1.8, volume: '1.2M' },
+    { symbol: 'SASOL', name: 'Sasol', price: '345.20', change: -2.1, volume: '4.5M' },
+    { symbol: 'FSR', name: 'FirstRand', price: '72.80', change: 0.9, volume: '6.3M' },
+    { symbol: 'SBK', name: 'Standard Bank', price: '168.50', change: 1.4, volume: '3.8M' },
+  ],
+};
+
+function MarketCard({ market }: { market: typeof MARKETS[0] }) {
+  const stocks = SAMPLE_STOCKS[market.code] || [];
+  return (
+    <Card className={`${market.borderColor} border`}
+      ref={undefined as never}
+    >
       <CardHeader className="pb-3">
-        <div className="flex items-center gap-3">
-          <div className="text-emerald-600"><Activity className="h-5 w-5" /></div>
-          <CardTitle className="text-base font-semibold">Overall System Health</CardTitle>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">{market.flag}</span>
+            <div>
+              <CardTitle className="text-base font-bold">{market.code}</CardTitle>
+              <p className="text-xs text-muted-foreground">{market.name}</p>
+            </div>
+          </div>
+          <Badge variant="outline" className={`${market.color} ${market.bg} border-current/20`}>
+            Live
+          </Badge>
         </div>
       </CardHeader>
-      <CardContent className="pt-0 space-y-3">
-        <div className="flex items-center gap-2">{statusBadge(data.overall.status)}</div>
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          <div className="flex justify-between"><span className="text-muted-foreground">Healthy</span><span className="text-green-600 font-medium">{data.overall.healthyProviders}</span></div>
-          <div className="flex justify-between"><span className="text-muted-foreground">Degraded</span><span className="text-amber-600 font-medium">{data.overall.degradedProviders}</span></div>
-          <div className="flex justify-between"><span className="text-muted-foreground">Down</span><span className="text-red-600 font-medium">{data.overall.unhealthyProviders}</span></div>
-          <div className="flex justify-between"><span className="text-muted-foreground">Unconfigured</span><span className="text-gray-500 font-medium">{data.overall.unconfiguredProviders}</span></div>
+      <CardContent>
+        <div className="space-y-3">
+          {stocks.map(s => (
+            <div key={s.symbol} className="flex items-center justify-between py-1.5 border-b last:border-0 border-gray-100">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-gray-900">{s.symbol}</p>
+                <p className="text-xs text-muted-foreground truncate">{s.name}</p>
+              </div>
+              <div className="text-right ml-3">
+                <p className="text-sm font-semibold tabular-nums">KES {s.price}</p>
+                <div className={`flex items-center justify-end text-xs font-medium ${s.change >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                  {s.change >= 0 ? <ChevronUp className="h-3 w-3 mr-0.5" /> : <ChevronDown className="h-3 w-3 mr-0.5" />}
+                  {s.change >= 0 ? '+' : ''}{s.change}%
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
+        <Button variant="outline" size="sm" className={`w-full mt-4 ${market.color} hover:${market.bg}`}>
+          View All {market.code} Stocks <ArrowRight className="ml-1 h-3 w-3" />
+        </Button>
       </CardContent>
     </Card>
   );
 }
 
-export default function AfriSpineDashboard() {
-  const [data, setData] = useState<WealthHealthResponse | null>(null);
+function MarketsSection() {
+  return (
+    <section id="markets" className="py-16 md:py-20 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="text-center mb-12"
+        >
+          <Badge variant="outline" className="mb-3 border-emerald-200 text-emerald-700">
+            <BarChart3 className="mr-1 h-3 w-3" /> Stock Trading
+          </Badge>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+            African Stock Markets
+          </h2>
+          <p className="mt-3 text-gray-500 max-w-2xl mx-auto">
+            Access real-time data from Africa&apos;s leading stock exchanges. Trade equities, track portfolios, and grow your wealth.
+          </p>
+        </motion.div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {MARKETS.map(m => <MarketCard key={m.code} market={m} />)}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── Payments Section ─── */
+const PAYMENT_FEATURES = [
+  { icon: <Send className="h-6 w-6" />, title: 'Cross-Border Transfers', desc: 'Send money instantly across African borders with competitive exchange rates.', provider: 'Fincra' },
+  { icon: <Wallet className="h-6 w-6" />, title: 'Mobile Money', desc: 'Pay and receive via M-Pesa, MTN MoMo, Airtel Money and more.', provider: 'Flutterwave' },
+  { icon: <CreditCard className="h-6 w-6" />, title: 'Card Payments', desc: 'Accept Visa, Mastercard, and local card payments across Africa.', provider: 'Flutterwave' },
+  { icon: <Smartphone className="h-6 w-6" />, title: 'Bank Transfers', desc: 'Direct bank-to-bank transfers supporting all major African banks.', provider: 'Fincra' },
+  { icon: <RefreshCw className="h-6 w-6" />, title: 'Currency Exchange', desc: 'Real-time FX rates for KES, NGN, ZAR, UGX, TZS, GHS and more.', provider: 'Fincra' },
+  { icon: <Lock className="h-6 w-6" />, title: 'Secure Collections', desc: 'PCI-DSS compliant payment collection with automated reconciliation.', provider: 'Flutterwave' },
+];
+
+function PaymentsSection() {
+  return (
+    <section id="payments" className="py-16 md:py-20 bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="text-center mb-12"
+        >
+          <Badge variant="outline" className="mb-3 border-emerald-200 text-emerald-700">
+            <CreditCard className="mr-1 h-3 w-3" /> Payments
+          </Badge>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+            Seamless African Payments
+          </h2>
+          <p className="mt-3 text-gray-500 max-w-2xl mx-auto">
+            Powered by Fincra and Flutterwave. Send, receive, and collect payments across Africa with bank-grade security.
+          </p>
+        </motion.div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {PAYMENT_FEATURES.map((f, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: i * 0.1 }}
+            >
+              <Card className="h-full hover:shadow-md transition-shadow">
+                <CardContent className="pt-6">
+                  <div className="w-12 h-12 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 mb-4">
+                    {f.icon}
+                  </div>
+                  <h3 className="font-semibold text-gray-900 mb-2">{f.title}</h3>
+                  <p className="text-sm text-gray-500 mb-3">{f.desc}</p>
+                  <Badge variant="secondary" className="text-xs">{f.provider}</Badge>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── Trust & Stats Section ─── */
+const STATS = [
+  { value: 3, suffix: '+', label: 'African Exchanges', icon: <Globe className="h-5 w-5" /> },
+  { value: 50, suffix: 'M+', label: 'Stocks Accessible', icon: <BarChart3 className="h-5 w-5" /> },
+  { value: 30, suffix: '+', label: 'Currencies Supported', icon: <RefreshCw className="h-5 w-5" /> },
+  { value: 99, suffix: '.9%', label: 'Platform Uptime', icon: <Shield className="h-5 w-5" /> },
+];
+
+function TrustSection() {
+  const [healthData, setHealthData] = useState<{ status: string; providers: { displayName: string; overallStatus: string }[] } | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [countdown, setCountdown] = useState(30);
-  const [lastRefresh, setLastRefresh] = useState('');
 
   const fetchHealth = useCallback(async () => {
-    setLoading(true);
-    setError('');
     try {
       const res = await fetch('/api/wealth/health');
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json();
-      if (json.error) throw new Error(json.error);
-      setData(json);
-      setLastRefresh(new Date().toLocaleTimeString());
-      setCountdown(30);
-    } catch (err) {
-      setError((err as Error).message);
+      if (res.ok) {
+        const json = await res.json();
+        setHealthData(json);
+      }
+    } catch {
+      // Silently fail - stats section still shows static data
     } finally {
       setLoading(false);
     }
@@ -211,110 +324,267 @@ export default function AfriSpineDashboard() {
 
   useEffect(() => { fetchHealth(); }, [fetchHealth]);
 
-  useEffect(() => {
-    if (countdown <= 0) { fetchHealth(); return; }
-    const t = setTimeout(() => setCountdown(c => c - 1), 1000);
-    return () => clearTimeout(t);
-  }, [countdown, fetchHealth]);
-
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50/50">
-      {/* Sidebar + Main layout matching screenshot */}
-      <div className="flex flex-1">
-        {/* Sidebar */}
-        <aside className="hidden md:flex w-56 flex-col border-r bg-white p-4">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center">
-              <Activity className="h-4 w-4 text-white" />
-            </div>
-            <div>
-              <p className="font-bold text-emerald-700 text-sm leading-tight">AfriSpine</p>
-              <p className="text-[10px] text-muted-foreground">Admin</p>
-            </div>
-          </div>
-          <nav className="space-y-1 flex-1">
-            {[
-              { name: 'API Status', icon: <Activity className="h-4 w-4" />, active: true },
-              { name: 'Digest Stories', icon: <Shield className="h-4 w-4" /> },
-              { name: 'Digest Issues', icon: <Shield className="h-4 w-4" /> },
-              { name: 'Contributors', icon: <Shield className="h-4 w-4" /> },
-              { name: 'Digest Ads', icon: <Shield className="h-4 w-4" /> },
-              { name: 'Growth Engine', icon: <TrendingUp className="h-4 w-4" /> },
-              { name: 'Settings', icon: <Settings2 className="h-4 w-4" /> },
-            ].map((item) => (
-              <button
-                key={item.name}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-                  item.active
-                    ? 'bg-emerald-50 text-emerald-700 font-medium'
-                    : 'text-muted-foreground hover:bg-gray-100'
-                }`}
-              >
-                {item.icon}{item.name}
-              </button>
-            ))}
-          </nav>
-          <Separator className="my-3" />
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center text-xs font-medium text-emerald-700">A</div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium truncate">admin@afrispine.com</p>
-            </div>
-          </div>
-        </aside>
-
-        {/* Main Content */}
-        <main className="flex-1 p-6 max-w-5xl">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-2xl font-bold">Wealth API Status</h1>
-              <p className="text-sm text-muted-foreground mt-1">Monitor mystocks.africa & Fincra connection health</p>
-            </div>
-            <div className="flex items-center gap-3">
-              {lastRefresh && <span className="text-xs text-muted-foreground">Updated {lastRefresh}</span>}
-              <span className="text-xs text-muted-foreground tabular-nums">{countdown}s</span>
-              <Button variant="outline" size="sm" onClick={fetchHealth} disabled={loading}>
-                <RefreshCw className={`h-4 w-4 mr-1 ${loading ? 'animate-spin' : ''}`} /> Refresh
-              </Button>
-            </div>
-          </div>
-
-          {error && (
-            <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-lg mb-6">
-              <XCircle className="h-5 w-5 text-red-500 shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-red-800">Unable to load partner status. Please try again.</p>
-                <p className="text-xs text-red-600 mt-1">{error}</p>
+    <section id="trust" className="py-16 md:py-20 bg-emerald-700 text-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="text-center mb-12"
+        >
+          <h2 className="text-3xl md:text-4xl font-bold">
+            Trusted Infrastructure
+          </h2>
+          <p className="mt-3 text-emerald-100 max-w-2xl mx-auto">
+            Built on bank-grade APIs with real-time health monitoring and 99.9% uptime.
+          </p>
+        </motion.div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          {STATS.map((s, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: i * 0.1 }}
+              className="text-center"
+            >
+              <div className="w-12 h-12 rounded-full bg-emerald-600 flex items-center justify-center mx-auto mb-3 text-emerald-200">
+                {s.icon}
               </div>
-            </div>
-          )}
-
-          {loading && !data ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[1, 2, 3, 4, 5, 6].map(i => (
-                <Card key={i}><CardContent className="pt-6"><Skeleton className="h-28 w-full" /></CardContent></Card>
+              <p className="text-3xl md:text-4xl font-bold">
+                <Counter target={s.value} suffix={s.suffix} />
+              </p>
+              <p className="text-sm text-emerald-200 mt-1">{s.label}</p>
+            </motion.div>
+          ))}
+        </div>
+        {/* Live API Status */}
+        <div className="bg-emerald-800/50 rounded-xl p-6 max-w-2xl mx-auto">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold flex items-center gap-2">
+              <Zap className="h-4 w-4" /> Live API Status
+            </h3>
+            {!loading && (
+              <Badge className={healthData?.status === 'healthy' ? 'bg-green-500 hover:bg-green-500' : 'bg-amber-500 hover:bg-amber-500'}>
+                {healthData?.status === 'healthy' ? 'All Systems Go' : 'Partial Degradation'}
+              </Badge>
+            )}
+          </div>
+          {loading ? (
+            <div className="space-y-2"><Skeleton className="h-8 w-full bg-emerald-700/50" /><Skeleton className="h-8 w-full bg-emerald-700/50" /></div>
+          ) : (
+            <div className="space-y-2">
+              {healthData?.providers.map((p, i) => (
+                <div key={i} className="flex items-center justify-between text-sm">
+                  <span className="text-emerald-100">{p.displayName}</span>
+                  <div className="flex items-center gap-1.5">
+                    {p.overallStatus === 'healthy' ? (
+                      <CheckCircle2 className="h-4 w-4 text-green-400" />
+                    ) : p.overallStatus === 'unconfigured' ? (
+                      <Clock className="h-4 w-4 text-amber-400" />
+                    ) : (
+                      <AlertCircle className="h-4 w-4 text-red-400" />
+                    )}
+                    <span className="capitalize text-emerald-200 text-xs">{p.overallStatus}</span>
+                  </div>
+                </div>
               ))}
             </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <OverallCard data={data} />
-                {data?.providers.map(p => (
-                  <ProviderCard key={p.provider} p={p} onConfigSaved={fetchHealth} />
-                ))}
-              </div>
-            </>
           )}
-        </main>
-      </div>
-
-      {/* Footer */}
-      <footer className="border-t bg-white px-6 py-3 mt-auto">
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>AfriSpine &copy; {new Date().getFullYear()} &middot; Bank-Grade API Monitoring</span>
-          <span>v1.0.0</span>
         </div>
-      </footer>
+      </div>
+    </section>
+  );
+}
+
+/* ─── About Section ─── */
+function AboutSection() {
+  return (
+      <section id="about" className="py-16 md:py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+            >
+              <Badge variant="outline" className="mb-3 border-emerald-200 text-emerald-700">
+                About AfriSpine
+              </Badge>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+                Building Africa&apos;s Financial Future
+              </h2>
+              <p className="mt-4 text-gray-600 leading-relaxed">
+                AfriSpine is a comprehensive wealth management platform designed for Africa. We connect you to the continent&apos;s major stock exchanges and payment infrastructure, enabling seamless investing and financial operations across borders.
+              </p>
+              <p className="mt-4 text-gray-600 leading-relaxed">
+                Our platform integrates with leading African financial APIs — MyStocks for market data, Fincra for payment infrastructure, and Flutterwave for mobile money — providing a unified experience for investors and businesses.
+              </p>
+              <div className="mt-6 grid grid-cols-2 gap-4">
+                <div className="flex items-center gap-2 text-sm text-gray-700">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Bank-grade security
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-700">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Real-time data
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-700">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Multi-currency
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-700">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Cross-border
+                </div>
+              </div>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="grid grid-cols-2 gap-4">
+                <Card className="bg-emerald-50 border-emerald-200">
+                  <CardContent className="pt-6 text-center">
+                    <TrendingUp className="h-8 w-8 text-emerald-600 mx-auto mb-2" />
+                    <h4 className="font-semibold text-sm">Stock Trading</h4>
+                    <p className="text-xs text-muted-foreground mt-1">NSE, NGX, JSE</p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-amber-50 border-amber-200">
+                  <CardContent className="pt-6 text-center">
+                    <CreditCard className="h-8 w-8 text-amber-600 mx-auto mb-2" />
+                    <h4 className="font-semibold text-sm">Payments</h4>
+                    <p className="text-xs text-muted-foreground mt-1">Fincra, Flutterwave</p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-green-50 border-green-200">
+                  <CardContent className="pt-6 text-center">
+                    <Shield className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                    <h4 className="font-semibold text-sm">Security</h4>
+                    <p className="text-xs text-muted-foreground mt-1">Encrypted & Compliant</p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-orange-50 border-orange-200">
+                  <CardContent className="pt-6 text-center">
+                    <Users className="h-8 w-8 text-orange-600 mx-auto mb-2" />
+                    <h4 className="font-semibold text-sm">Growing Fast</h4>
+                    <p className="text-xs text-muted-foreground mt-1">Across Africa</p>
+                  </CardContent>
+                </Card>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+    );
+}
+
+/* ─── CTA Section ─── */
+function CTASection() {
+  return (
+    <section className="py-16 md:py-20 bg-gray-900 text-white">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+        >
+          <h2 className="text-3xl md:text-4xl font-bold">Ready to Get Started?</h2>
+          <p className="mt-4 text-gray-400 text-lg max-w-2xl mx-auto">
+            Join thousands of investors and businesses using AfriSpine to access African markets and payments.
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-4">
+            <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white px-8">
+              Open Account <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+            <Button size="lg" variant="outline" className="border-gray-600 text-white hover:bg-gray-800 px-8">
+              Contact Sales
+            </Button>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── Footer ─── */
+function Footer() {
+  return (
+    <footer className="bg-white border-t">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="col-span-2 md:col-span-1">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center">
+                <TrendingUp className="h-4 w-4 text-white" />
+              </div>
+              <span className="text-lg font-bold text-gray-900">AfriSpine</span>
+            </div>
+            <p className="text-sm text-muted-foreground">Africa&apos;s wealth management platform. Trade stocks, make payments, grow your wealth.</p>
+          </div>
+          <div>
+            <h4 className="font-semibold text-sm text-gray-900 mb-3">Markets</h4>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li>Nairobi (NSE)</li>
+              <li>Lagos (NGX)</li>
+              <li>Johannesburg (JSE)</li>
+              <li>Portfolio Tracker</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-semibold text-sm text-gray-900 mb-3">Payments</h4>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li>Transfers</li>
+              <li>Mobile Money</li>
+              <li>Card Payments</li>
+              <li>Currency Exchange</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-semibold text-sm text-gray-900 mb-3">Company</h4>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li>About Us</li>
+              <li>Contact</li>
+              <li>Terms of Service</li>
+              <li>Privacy Policy</li>
+            </ul>
+          </div>
+        </div>
+        <div className="mt-8 pt-6 border-t flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-muted-foreground">
+            &copy; {new Date().getFullYear()} AfriSpine. All rights reserved.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Empowering African wealth, one trade at a time.
+          </p>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+/* ─── Main Page ─── */
+export default function AfriSpinePlatform() {
+  const scrollTo = useCallback((id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+
+  return (
+    <div className="min-h-screen flex flex-col bg-white">
+      <Navbar onNavigate={scrollTo} />
+      <main className="flex-1">
+        <HeroSection />
+        <MarketsSection />
+        <PaymentsSection />
+        <TrustSection />
+        <AboutSection />
+        <CTASection />
+      </main>
+      <Footer />
     </div>
   );
 }

@@ -14,22 +14,22 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AfriSpine - Bank-Grade API Health Monitor",
-  description: "Monitor and manage African fintech API provider health, credentials, and connectivity in real-time.",
-  keywords: ["AfriSpine", "fintech", "API monitoring", "Africa", "health check", "MyStocks", "Fincra", "Flutterwave"],
+  title: "AfriSpine - Africa's Wealth Management Platform",
+  description: "Trade African stocks across NSE, NGX, and JSE exchanges. Send and receive payments across Africa with Fincra and Flutterwave. All from one platform.",
+  keywords: ["AfriSpine", "African stocks", "NSE", "NGX", "JSE", "fintech", "payments", "Africa", "wealth management", "MyStocks", "Fincra", "Flutterwave"],
   authors: [{ name: "AfriSpine Team" }],
   icons: {
     icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>",
   },
   openGraph: {
-    title: "AfriSpine - Bank-Grade API Health Monitor",
-    description: "Monitor African fintech API provider health in real-time",
+    title: "AfriSpine - Africa's Wealth Management Platform",
+    description: "Trade African stocks, make cross-border payments, and grow your wealth with AfriSpine.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "AfriSpine - API Health Monitor",
-    description: "Monitor African fintech API provider health in real-time",
+    title: "AfriSpine - Africa's Wealth Management Platform",
+    description: "Trade African stocks, make cross-border payments, and grow your wealth.",
   },
 };
 
