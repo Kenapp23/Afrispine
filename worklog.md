@@ -95,3 +95,32 @@ Stage Summary:
 - Live URL: https://my-project-navy-three-59.vercel.app
 - Deployment ID: dpl_DVQyFdjSdDv5cKRg4Vr949gPc22i
 - Commit: 392c8cc (fix: Vercel-compatible credential store, fix all 3 API failures)
+
+---
+Task ID: 1
+Agent: Main Agent
+Task: Restore AfriSpine platform at /, move admin to /admin, prepare for Vercel deploy
+
+Work Log:
+- Discovered root cause: page.tsx was still the old 320-line Wealth API dashboard (subagent had silently failed)
+- No Paystack references found anywhere in the codebase (confirmed zero matches)
+- Created src/app/admin/page.tsx (213 lines) - moved the Wealth API dashboard there with 'Back to Platform' link
+- Replaced src/app/page.tsx (326 lines) - full AfriSpine fintech platform with:
+  - Hero section, Stock Markets (NSE/NGX/JSE), Payments (Fincra/Flutterwave), Trust/Stats, About, CTA, Footer
+  - Responsive navbar with mobile hamburger menu
+  - Live API status from /api/wealth/health
+  - Admin link in navigation
+- Updated src/app/layout.tsx metadata: 'Africa's Wealth Management Platform'
+- ESLint: zero errors
+- Browser verification: both / and /admin render correctly
+- Committed as git 7f9d633
+- Vercel deploy attempted: token expired, cannot deploy without new token
+- Generated restoration report with screenshots
+
+Stage Summary:
+- / route: Full AfriSpine platform (verified in browser)
+- /admin route: Wealth API dashboard (verified in browser)
+- No Paystack references anywhere
+- DEPLOYMENT BLOCKED: Need user's Vercel token to push to production
+- Report: /home/z/my-project/download/afrispine-restoration-report.md
+- Screenshots: afrispine-platform.png, afrispine-admin.png
