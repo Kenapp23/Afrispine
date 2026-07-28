@@ -7,28 +7,33 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   TrendingUp, Shield, Zap, CreditCard, ArrowRight, BarChart3,
   Globe, Lock, Smartphone, ChevronUp, ChevronDown, Menu, X,
   Send, Wallet, RefreshCw, CheckCircle2, Clock, AlertCircle, Users,
+  Heart, Home, Banknote, ArrowLeftRight, Landmark, Plane, Building2,
 } from 'lucide-react';
 
-/* ─── Animated counter ─── */
-function Counter({ target, suffix = '' }: { target: number; suffix?: string }) {
+/* ─── Animated counter (fixed: uses ceil on step, handles 99→99.9 correctly) ─── */
+function Counter({ target, suffix = '', decimals = 0 }: { target: number; suffix?: string; decimals?: number }) {
   const [count, setCount] = useState(0);
   useEffect(() => {
     let start = 0;
     const duration = 2000;
-    const step = Math.ceil(target / (duration / 16));
+    const totalSteps = Math.ceil(duration / 16);
+    const rawStep = (target * Math.pow(10, decimals)) / totalSteps;
+    const step = Math.max(rawStep, 0.01);
     const timer = setInterval(() => {
       start += step;
-      if (start >= target) { start = target; clearInterval(timer); }
+      if (start >= target * Math.pow(10, decimals)) {
+        start = target * Math.pow(10, decimals);
+        clearInterval(timer);
+      }
       setCount(start);
     }, 16);
     return () => clearInterval(timer);
-  }, [target]);
-  return <span>{count.toLocaleString()}{suffix}</span>;
+  }, [target, decimals]);
+  return <span>{(count / Math.pow(10, decimals)).toFixed(decimals)}{suffix}</span>;
 }
 
 /* ─── Navigation ─── */
@@ -97,7 +102,7 @@ function Navbar({ onNavigate }: { onNavigate: (id: string) => void }) {
   );
 }
 
-/* ─── Hero Section ─── */
+/* ─── Hero Section (diaspora-framed) ─── */
 function HeroSection() {
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-emerald-50 via-white to-amber-50">
@@ -109,21 +114,21 @@ function HeroSection() {
             transition={{ duration: 0.6 }}
           >
             <Badge variant="outline" className="mb-4 border-emerald-200 text-emerald-700 bg-emerald-50">
-              <Globe className="mr-1 h-3 w-3" /> Africa&apos;s Wealth Platform
+              <Plane className="mr-1 h-3 w-3" /> Built for the African Diaspora
             </Badge>
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 leading-tight">
-              Invest in Africa&apos;s <br />
-              <span className="text-emerald-600">Growing Markets</span>
+              Your Wealth,<br />
+              <span className="text-emerald-600">Connected to Home</span>
             </h1>
             <p className="mt-6 text-lg md:text-xl text-gray-600 leading-relaxed max-w-2xl">
-              Trade stocks across Nairobi, Lagos, and Johannesburg exchanges. Send and receive payments across Africa. All from one powerful platform.
+              Invest in African stock exchanges, send money to family, and pay bills across the continent — all from one platform, wherever you live in the world.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
               <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white px-8">
-                Start Trading <ArrowRight className="ml-2 h-5 w-5" />
+                Start Investing <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               <Button size="lg" variant="outline" className="px-8">
-                Explore Markets
+                Send Money Home
               </Button>
             </div>
           </motion.div>
@@ -135,14 +140,15 @@ function HeroSection() {
   );
 }
 
-/* ─── Stock Markets Section ─── */
+/* ─── Stock Markets Section (FIXED: proper currency per exchange) ─── */
 const MARKETS = [
-  { name: 'Nairobi Securities Exchange', code: 'NSE', country: 'Kenya', flag: '🇰🇪', color: 'text-emerald-600', bg: 'bg-emerald-50', borderColor: 'border-emerald-200' },
-  { name: 'Nigerian Exchange Group', code: 'NGX', country: 'Nigeria', flag: '🇳🇬', color: 'text-green-600', bg: 'bg-green-50', borderColor: 'border-green-200' },
-  { name: 'Johannesburg Stock Exchange', code: 'JSE', country: 'South Africa', flag: '🇿🇦', color: 'text-amber-600', bg: 'bg-amber-50', borderColor: 'border-amber-200' },
+  { name: 'Nairobi Securities Exchange', code: 'NSE', country: 'Kenya', flag: '🇰🇪', currency: 'KES', color: 'text-emerald-600', bg: 'bg-emerald-50', borderColor: 'border-emerald-200' },
+  { name: 'Nigerian Exchange Group', code: 'NGX', country: 'Nigeria', flag: '🇳🇬', currency: 'NGN', color: 'text-green-600', bg: 'bg-green-50', borderColor: 'border-green-200' },
+  { name: 'Johannesburg Stock Exchange', code: 'JSE', country: 'South Africa', flag: '🇿🇦', currency: 'ZAR', color: 'text-amber-600', bg: 'bg-amber-50', borderColor: 'border-amber-200' },
 ];
 
-const SAMPLE_STOCKS: Record<string, { symbol: string; name: string; price: string; change: number; volume: string }[]> = {
+type StockEntry = { symbol: string; name: string; price: string; change: number; volume: string };
+const SAMPLE_STOCKS: Record<string, StockEntry[]> = {
   NSE: [
     { symbol: 'SCOM', name: 'Safaricom', price: '17.25', change: 2.3, volume: '12.4M' },
     { symbol: 'KCB', name: 'KCB Group', price: '44.50', change: -0.8, volume: '3.2M' },
@@ -166,9 +172,7 @@ const SAMPLE_STOCKS: Record<string, { symbol: string; name: string; price: strin
 function MarketCard({ market }: { market: typeof MARKETS[0] }) {
   const stocks = SAMPLE_STOCKS[market.code] || [];
   return (
-    <Card className={`${market.borderColor} border`}
-      ref={undefined as never}
-    >
+    <Card className={`${market.borderColor} border`}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -192,7 +196,7 @@ function MarketCard({ market }: { market: typeof MARKETS[0] }) {
                 <p className="text-xs text-muted-foreground truncate">{s.name}</p>
               </div>
               <div className="text-right ml-3">
-                <p className="text-sm font-semibold tabular-nums">KES {s.price}</p>
+                <p className="text-sm font-semibold tabular-nums">{market.currency} {s.price}</p>
                 <div className={`flex items-center justify-end text-xs font-medium ${s.change >= 0 ? 'text-green-600' : 'text-red-500'}`}>
                   {s.change >= 0 ? <ChevronUp className="h-3 w-3 mr-0.5" /> : <ChevronDown className="h-3 w-3 mr-0.5" />}
                   {s.change >= 0 ? '+' : ''}{s.change}%
@@ -227,7 +231,7 @@ function MarketsSection() {
             African Stock Markets
           </h2>
           <p className="mt-3 text-gray-500 max-w-2xl mx-auto">
-            Access real-time data from Africa&apos;s leading stock exchanges. Trade equities, track portfolios, and grow your wealth.
+            Access real-time data from Africa&apos;s leading exchanges. Invest in Kenya, Nigeria, and South Africa from wherever you are.
           </p>
         </motion.div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -238,14 +242,14 @@ function MarketsSection() {
   );
 }
 
-/* ─── Payments Section ─── */
+/* ─── Payments Section (FIXED: diaspora-focused, Fincra only, no Flutterwave) ─── */
 const PAYMENT_FEATURES = [
-  { icon: <Send className="h-6 w-6" />, title: 'Cross-Border Transfers', desc: 'Send money instantly across African borders with competitive exchange rates.', provider: 'Fincra' },
-  { icon: <Wallet className="h-6 w-6" />, title: 'Mobile Money', desc: 'Pay and receive via M-Pesa, MTN MoMo, Airtel Money and more.', provider: 'Flutterwave' },
-  { icon: <CreditCard className="h-6 w-6" />, title: 'Card Payments', desc: 'Accept Visa, Mastercard, and local card payments across Africa.', provider: 'Flutterwave' },
-  { icon: <Smartphone className="h-6 w-6" />, title: 'Bank Transfers', desc: 'Direct bank-to-bank transfers supporting all major African banks.', provider: 'Fincra' },
-  { icon: <RefreshCw className="h-6 w-6" />, title: 'Currency Exchange', desc: 'Real-time FX rates for KES, NGN, ZAR, UGX, TZS, GHS and more.', provider: 'Fincra' },
-  { icon: <Lock className="h-6 w-6" />, title: 'Secure Collections', desc: 'PCI-DSS compliant payment collection with automated reconciliation.', provider: 'Flutterwave' },
+  { icon: <Send className="h-6 w-6" />, title: 'Send Money Home', desc: 'Transfer funds instantly to family and friends across Africa with competitive exchange rates.', provider: 'Fincra' },
+  { icon: <Wallet className="h-6 w-6" />, title: 'Mobile Money', desc: 'Pay directly to M-Pesa, MTN MoMo, Airtel Money and more — reach anyone with a phone.', provider: 'Fincra' },
+  { icon: <CreditCard className="h-6 w-6" />, title: 'Card Payments', desc: 'Send via Visa and Mastercard to bank accounts and mobile wallets across 30+ African markets.', provider: 'Fincra' },
+  { icon: <Landmark className="h-6 w-6" />, title: 'Bank Transfers', desc: 'Direct bank-to-bank transfers supporting all major African banks — no intermediaries.', provider: 'Fincra' },
+  { icon: <ArrowLeftRight className="h-6 w-6" />, title: 'Currency Exchange', desc: 'Real-time FX rates for KES, NGN, ZAR, UGX, TZS, GHS and more. Get the best rate, every time.', provider: 'Fincra' },
+  { icon: <Lock className="h-6 w-6" />, title: 'Secure Collections', desc: 'PCI-DSS compliant payment collection with automated reconciliation and audit trails.', provider: 'Fincra' },
 ];
 
 function PaymentsSection() {
@@ -263,10 +267,10 @@ function PaymentsSection() {
             <CreditCard className="mr-1 h-3 w-3" /> Payments
           </Badge>
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-            Seamless African Payments
+            Send Money Across Africa
           </h2>
           <p className="mt-3 text-gray-500 max-w-2xl mx-auto">
-            Powered by Fincra and Flutterwave. Send, receive, and collect payments across Africa with bank-grade security.
+            Powered by Fincra. Support your family, pay bills, and move money across borders with bank-grade security and transparent exchange rates.
           </p>
         </motion.div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -296,12 +300,12 @@ function PaymentsSection() {
   );
 }
 
-/* ─── Trust & Stats Section ─── */
+/* ─── Trust & Stats Section (FIXED: counter targets use decimals for 99.9%) ─── */
 const STATS = [
-  { value: 3, suffix: '+', label: 'African Exchanges', icon: <Globe className="h-5 w-5" /> },
-  { value: 50, suffix: 'M+', label: 'Stocks Accessible', icon: <BarChart3 className="h-5 w-5" /> },
-  { value: 30, suffix: '+', label: 'Currencies Supported', icon: <RefreshCw className="h-5 w-5" /> },
-  { value: 99, suffix: '.9%', label: 'Platform Uptime', icon: <Shield className="h-5 w-5" /> },
+  { value: 3, suffix: '+', decimals: 0, label: 'African Exchanges', icon: <Globe className="h-5 w-5" /> },
+  { value: 50, suffix: 'M+', decimals: 0, label: 'Stocks Accessible', icon: <BarChart3 className="h-5 w-5" /> },
+  { value: 30, suffix: '+', decimals: 0, label: 'Currencies Supported', icon: <RefreshCw className="h-5 w-5" /> },
+  { value: 99.9, suffix: '%', decimals: 1, label: 'Platform Uptime', icon: <Shield className="h-5 w-5" /> },
 ];
 
 function TrustSection() {
@@ -316,7 +320,7 @@ function TrustSection() {
         setHealthData(json);
       }
     } catch {
-      // Silently fail - stats section still shows static data
+      // Silently fail — stats section still shows static data
     } finally {
       setLoading(false);
     }
@@ -355,7 +359,7 @@ function TrustSection() {
                 {s.icon}
               </div>
               <p className="text-3xl md:text-4xl font-bold">
-                <Counter target={s.value} suffix={s.suffix} />
+                <Counter target={s.value} suffix={s.suffix} decimals={s.decimals} />
               </p>
               <p className="text-sm text-emerald-200 mt-1">{s.label}</p>
             </motion.div>
@@ -400,89 +404,89 @@ function TrustSection() {
   );
 }
 
-/* ─── About Section ─── */
+/* ─── About Section (diaspora-framed) ─── */
 function AboutSection() {
   return (
-      <section id="about" className="py-16 md:py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-            >
-              <Badge variant="outline" className="mb-3 border-emerald-200 text-emerald-700">
-                About AfriSpine
-              </Badge>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-                Building Africa&apos;s Financial Future
-              </h2>
-              <p className="mt-4 text-gray-600 leading-relaxed">
-                AfriSpine is a comprehensive wealth management platform designed for Africa. We connect you to the continent&apos;s major stock exchanges and payment infrastructure, enabling seamless investing and financial operations across borders.
-              </p>
-              <p className="mt-4 text-gray-600 leading-relaxed">
-                Our platform integrates with leading African financial APIs — MyStocks for market data, Fincra for payment infrastructure, and Flutterwave for mobile money — providing a unified experience for investors and businesses.
-              </p>
-              <div className="mt-6 grid grid-cols-2 gap-4">
-                <div className="flex items-center gap-2 text-sm text-gray-700">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Bank-grade security
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-700">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Real-time data
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-700">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Multi-currency
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-700">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Cross-border
-                </div>
+    <section id="about" className="py-16 md:py-20 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid md:grid-cols-2 gap-12 items-center">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <Badge variant="outline" className="mb-3 border-emerald-200 text-emerald-700">
+              About AfriSpine
+            </Badge>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+              Built for Africans,<br />Wherever You Are
+            </h2>
+            <p className="mt-4 text-gray-600 leading-relaxed">
+              AfriSpine was built for the millions of Africans living abroad who want a single platform to invest back home, support their families, and grow their wealth across the continent.
+            </p>
+            <p className="mt-4 text-gray-600 leading-relaxed">
+              We integrate with Africa&apos;s leading financial infrastructure — MyStocks for real-time market data and Fincra for cross-border payments — giving you the same access as someone standing on the trading floor in Nairobi, Lagos, or Johannesburg.
+            </p>
+            <div className="mt-6 grid grid-cols-2 gap-4">
+              <div className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Diaspora-first design
               </div>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-            >
-              <div className="grid grid-cols-2 gap-4">
-                <Card className="bg-emerald-50 border-emerald-200">
-                  <CardContent className="pt-6 text-center">
-                    <TrendingUp className="h-8 w-8 text-emerald-600 mx-auto mb-2" />
-                    <h4 className="font-semibold text-sm">Stock Trading</h4>
-                    <p className="text-xs text-muted-foreground mt-1">NSE, NGX, JSE</p>
-                  </CardContent>
-                </Card>
-                <Card className="bg-amber-50 border-amber-200">
-                  <CardContent className="pt-6 text-center">
-                    <CreditCard className="h-8 w-8 text-amber-600 mx-auto mb-2" />
-                    <h4 className="font-semibold text-sm">Payments</h4>
-                    <p className="text-xs text-muted-foreground mt-1">Fincra, Flutterwave</p>
-                  </CardContent>
-                </Card>
-                <Card className="bg-green-50 border-green-200">
-                  <CardContent className="pt-6 text-center">
-                    <Shield className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                    <h4 className="font-semibold text-sm">Security</h4>
-                    <p className="text-xs text-muted-foreground mt-1">Encrypted & Compliant</p>
-                  </CardContent>
-                </Card>
-                <Card className="bg-orange-50 border-orange-200">
-                  <CardContent className="pt-6 text-center">
-                    <Users className="h-8 w-8 text-orange-600 mx-auto mb-2" />
-                    <h4 className="font-semibold text-sm">Growing Fast</h4>
-                    <p className="text-xs text-muted-foreground mt-1">Across Africa</p>
-                  </CardContent>
-                </Card>
+              <div className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Real-time market data
               </div>
-            </motion.div>
-          </div>
+              <div className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Multi-currency support
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-700">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Cross-border payments
+              </div>
+            </div>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="grid grid-cols-2 gap-4">
+              <Card className="bg-emerald-50 border-emerald-200">
+                <CardContent className="pt-6 text-center">
+                  <TrendingUp className="h-8 w-8 text-emerald-600 mx-auto mb-2" />
+                  <h4 className="font-semibold text-sm">Stock Trading</h4>
+                  <p className="text-xs text-muted-foreground mt-1">NSE, NGX, JSE</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-amber-50 border-amber-200">
+                <CardContent className="pt-6 text-center">
+                  <Send className="h-8 w-8 text-amber-600 mx-auto mb-2" />
+                  <h4 className="font-semibold text-sm">Remittances</h4>
+                  <p className="text-xs text-muted-foreground mt-1">Send money home</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-green-50 border-green-200">
+                <CardContent className="pt-6 text-center">
+                  <Shield className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                  <h4 className="font-semibold text-sm">Security</h4>
+                  <p className="text-xs text-muted-foreground mt-1">Encrypted & Compliant</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-orange-50 border-orange-200">
+                <CardContent className="pt-6 text-center">
+                  <Globe className="h-8 w-8 text-orange-600 mx-auto mb-2" />
+                  <h4 className="font-semibold text-sm">30+ Markets</h4>
+                  <p className="text-xs text-muted-foreground mt-1">Across Africa</p>
+                </CardContent>
+              </Card>
+            </div>
+          </motion.div>
         </div>
-      </section>
-    );
+      </div>
+    </section>
+  );
 }
 
-/* ─── CTA Section ─── */
+/* ─── CTA Section (diaspora-framed) ─── */
 function CTASection() {
   return (
     <section className="py-16 md:py-20 bg-gray-900 text-white">
@@ -493,16 +497,16 @@ function CTASection() {
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
         >
-          <h2 className="text-3xl md:text-4xl font-bold">Ready to Get Started?</h2>
+          <h2 className="text-3xl md:text-4xl font-bold">Ready to Invest Back Home?</h2>
           <p className="mt-4 text-gray-400 text-lg max-w-2xl mx-auto">
-            Join thousands of investors and businesses using AfriSpine to access African markets and payments.
+            Join thousands of Africans abroad using AfriSpine to build wealth, support family, and stay connected to the continent&apos;s markets.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-4">
             <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white px-8">
-              Open Account <ArrowRight className="ml-2 h-5 w-5" />
+              Create Your Account <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
             <Button size="lg" variant="outline" className="border-gray-600 text-white hover:bg-gray-800 px-8">
-              Contact Sales
+              Learn More
             </Button>
           </div>
         </motion.div>
@@ -524,7 +528,7 @@ function Footer() {
               </div>
               <span className="text-lg font-bold text-gray-900">AfriSpine</span>
             </div>
-            <p className="text-sm text-muted-foreground">Africa&apos;s wealth management platform. Trade stocks, make payments, grow your wealth.</p>
+            <p className="text-sm text-muted-foreground">Africa&apos;s wealth management platform for the diaspora. Invest, remit, and grow.</p>
           </div>
           <div>
             <h4 className="font-semibold text-sm text-gray-900 mb-3">Markets</h4>
@@ -538,9 +542,9 @@ function Footer() {
           <div>
             <h4 className="font-semibold text-sm text-gray-900 mb-3">Payments</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>Transfers</li>
+              <li>Send Money Home</li>
               <li>Mobile Money</li>
-              <li>Card Payments</li>
+              <li>Bank Transfers</li>
               <li>Currency Exchange</li>
             </ul>
           </div>
@@ -559,7 +563,7 @@ function Footer() {
             &copy; {new Date().getFullYear()} AfriSpine. All rights reserved.
           </p>
           <p className="text-xs text-muted-foreground">
-            Empowering African wealth, one trade at a time.
+            Empowering African wealth, wherever you are.
           </p>
         </div>
       </div>

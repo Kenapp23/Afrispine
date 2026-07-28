@@ -14,16 +14,16 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AfriSpine - Africa's Wealth Management Platform",
-  description: "Trade African stocks across NSE, NGX, and JSE exchanges. Send and receive payments across Africa with Fincra and Flutterwave. All from one platform.",
-  keywords: ["AfriSpine", "African stocks", "NSE", "NGX", "JSE", "fintech", "payments", "Africa", "wealth management", "MyStocks", "Fincra", "Flutterwave"],
+  title: "AfriSpine - Invest in Africa From Anywhere",
+  description: "Built for the African diaspora. Trade stocks on NSE, NGX, and JSE exchanges. Send money home with Fincra. Invest, remit, and grow your wealth across Africa from one platform.",
+  keywords: ["AfriSpine", "African diaspora", "African stocks", "NSE", "NGX", "JSE", "fintech", "remittances", "Africa", "wealth management", "MyStocks", "Fincra"],
   authors: [{ name: "AfriSpine Team" }],
   icons: {
     icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>",
   },
   openGraph: {
-    title: "AfriSpine - Africa's Wealth Management Platform",
-    description: "Trade African stocks, make cross-border payments, and grow your wealth with AfriSpine.",
+    title: "AfriSpine - Invest in Africa From Anywhere",
+    description: "Built for the African diaspora. Trade stocks, send money home, and grow your wealth across Africa.",
     type: "website",
   },
   twitter: {

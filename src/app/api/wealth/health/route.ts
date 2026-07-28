@@ -8,7 +8,6 @@ const PROVIDERS = [
   { key: 'mystocks', displayName: 'MyStocks', needsAuth: true },
   { key: 'fincra', displayName: 'Fincra', needsAuth: true },
   { key: 'openverse', displayName: 'Openverse', needsAuth: false },
-  { key: 'flutterwave', displayName: 'Flutterwave', needsAuth: true },
 ];
 
 async function checkProviderHealth(provider: typeof PROVIDERS[number]): Promise<ProviderHealthSummary> {
@@ -47,15 +46,7 @@ async function checkProviderHealth(provider: typeof PROVIDERS[number]): Promise<
       });
       const ms = Date.now() - start;
       endpoints = [{ name: 'Image Search', result: { status: r.ok ? 'healthy' : 'unhealthy', latencyMs: ms, message: r.ok ? 'OK' : `HTTP ${r.status}` } }];
-    } else if (provider.key === 'flutterwave') {
-      const r = await fetch('https://api.flutterwave.com/v3/transactions', {
-        headers: { Authorization: `Bearer ${cred!.apiKey}`, Accept: 'application/json' },
-        signal: AbortSignal.timeout(8000),
-      });
-      const ms = Date.now() - start;
-      const ok = r.ok || r.status === 400;
-      endpoints = [{ name: 'Transactions', result: { status: ok ? 'healthy' : 'unhealthy', latencyMs: ms, message: ok ? 'Reachable' : `HTTP ${r.status}` } }];
-    }
+
   } catch (err) {
     const ms = Date.now() - start;
     endpoints = [{ name: 'Connection', result: { status: 'error', latencyMs: ms, message: (err as Error).message } }];

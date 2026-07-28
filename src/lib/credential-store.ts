@@ -79,7 +79,7 @@ export async function getCredential(provider: string): Promise<StoredCredential 
 export async function listCredentials(): Promise<{ provider: string; environment: string; updatedAt: string; source: string }[]> {
   const results: { provider: string; environment: string; updatedAt: string; source: string }[] = [];
 
-  const providers = ['mystocks', 'fincra', 'openverse', 'flutterwave'];
+  const providers = ['mystocks', 'fincra', 'openverse'];
 
   for (const p of providers) {
     const cred = await getCredential(p);

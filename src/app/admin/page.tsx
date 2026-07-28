@@ -14,7 +14,7 @@ import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
 import {
   Activity, Settings2, RefreshCw, Shield, TrendingUp, CreditCard, ImageIcon,
-  Zap, AlertCircle, CheckCircle2, XCircle, Clock, ArrowLeft,
+  AlertCircle, CheckCircle2, XCircle, Clock, ArrowLeft,
 } from 'lucide-react';
 import type { WealthHealthResponse, ProviderHealthSummary } from '@/lib/services/types';
 
@@ -23,7 +23,6 @@ const PROVIDER_META: Record<string, { icon: React.ReactNode; color: string; cate
   mystocks: { icon: <TrendingUp className="h-5 w-5" />, color: 'text-emerald-500', category: 'Markets' },
   fincra: { icon: <CreditCard className="h-5 w-5" />, color: 'text-amber-500', category: 'Payments', hasSecret: true, hasBaseUrl: true, baseUrlLabel: 'Business ID' },
   openverse: { icon: <ImageIcon className="h-5 w-5" />, color: 'text-sky-500', category: 'Images' },
-  flutterwave: { icon: <Zap className="h-5 w-5" />, color: 'text-orange-500', category: 'Payments', hasSecret: true },
 };
 
 function statusBadge(status: string) {
