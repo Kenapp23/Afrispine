@@ -151,3 +151,31 @@ Stage Summary:
 - FIXED: Relinked and deployed to 'afrispine' project → afri-spine.com now serves correct content
 - Both / and /admin confirmed working on production via Agent Browser
 - New Vercel token: vcp_7OpJGmzFsvShGaDFGo9Pt8t0k1axSWJmVE5LTH9bY5iT9ShvRB10kbsn
+
+---
+Task ID: 5
+Agent: Main Orchestrator  
+Task: Execute Section 0 (non-negotiables), Section 1 (immediate fixes), Section 2.1 (diaspora positioning) — audit, fix, deploy, push, tag
+
+Work Log:
+- Full audit of current codebase state (what exists vs. what was lost)
+- Created ARCHITECTURE.md — living document covering schema, API routes, services, env vars, rebuild sequence
+- Fixed Counter component: added `decimals` parameter so 99.9% uptime renders correctly
+- Fixed currency mapping: added `currency` field to MARKETS (KES/NGN/ZAR per exchange)
+- Removed Flutterwave from homepage — all payments now show Fincra-only
+- Documented Flutterwave status in ARCHITECTURE.md for owner decision
+- Restored diaspora positioning: Hero, About, CTA, Payments, Footer, all metadata
+- Fixed syntax error in /api/wealth/health/route.ts (missing closing brace)
+- Removed unused Lucide icon imports (Heart, Home, Banknote, Building2, Smartphone, Users)
+- Added .vercel/ to .gitignore to prevent project-link drift between my-project and afrispine
+- Committed with descriptive message, tagged v0.2.0-post-audit
+- Pushed to GitHub (Kenapp23/Afrispine)
+- Deployed to Vercel (afrispine project) — confirmed afri-spine.com serves correct content
+- Agent Browser verified: homepage and admin, zero errors
+
+Stage Summary:
+- Production at afri-spine.com now shows: diaspora positioning, correct currencies, no Flutterwave, working counters
+- Admin at afri-spine.com/admin: Wealth API Status dashboard working
+- Git: commit fe78ba8 pushed, tag v0.2.0-post-audit on GitHub
+- ARCHITECTURE.md is the living state document in the repo
+- Next step: Section 2.2 (payments layer stabilization) and 2.3 (investment layer stabilization)
