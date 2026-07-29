@@ -1,145 +1,157 @@
-# AfriSpine — Living Architecture & Changelog
+# AfriSpine — Living Architecture Document
 
-> **This file is the single source of truth for what exists, what's in progress, and what's deferred.**
-> Update it with every meaningful change. Never let it drift out of sync with the code.
+> **This file is the single source of truth for what exists, what's in progress, and what was deferred.**
+> Updated continuously. Anyone (human or AI) should be able to read this and understand the full platform state.
+>
+> Last updated: 2025-07-28 (post-loss restoration audit)
 
 ---
 
 ## Platform Identity
 
-**AfriSpine** is a wealth management platform built for the **African diaspora** — people abroad who support families, pay bills, and invest back home in Africa. It is NOT a generic trading platform.
+**AfriSpine** is a wealth management platform built specifically for the **African diaspora** — people abroad who support and invest in Africa. Core use cases: family financial support (remittances, bill payments), investment access (stock exchanges), and financial inclusion.
 
-- **Primary users:** African diaspora (Europe, US, Middle East, elsewhere)
-- **Core value:** Invest in African stocks + send money home + track wealth — from one account
-- **Brand tone:** Trust, clarity, diaspora identity, regulatory compliance
+**Domain:** https://afri-spine.com
+**Admin:** https://afri-spine.com/admin
+**Vercel Project:** `afrispine` (team: komsonmedia-8677s-projects)
+**GitHub:** https://github.com/Kenapp23/Afrispine
+
+---
 
 ## Tech Stack
 
 | Layer | Technology | Notes |
 |-------|-----------|-------|
-| Framework | Next.js 16 (App Router) | Turbopack, TypeScript 5 |
+| Framework | Next.js 16 (App Router) | TypeScript, Turbopack |
 | Styling | Tailwind CSS 4 + shadcn/ui | New York style, Lucide icons |
-| Database | Prisma ORM + SQLite (dev) | Serverless-hosted DB needed for production |
-| Auth | NextAuth.js v4 (available) | Not yet integrated |
-| State | Zustand + TanStack Query | Available but not yet used |
-| Animations | Framer Motion | In use on homepage |
-| Deployment | Vercel | Project: `afrispine` under `komsonmedia` team |
-| Domain | afri-spine.com | Vercel-managed DNS |
-| Git | GitHub: Kenapp23/Afrispine | **Remote is now source of truth** |
-
-## Vercel Project
-
-- **Project name:** `afrispine` (NOT `my-project`)
-- **Team:** `komsonmedia-8677s-projects`
-- **Production URL:** https://afri-spine.com
-- **Domains:** afri-spine.com, www.afri-spine.com, api.afri-spine.com, digest.afri-spine.com
-
-## File Structure
-
-```
-src/
-  app/
-    page.tsx                    # Public homepage (diaspora landing)
-    layout.tsx                  # Root layout + metadata
-    admin/
-      page.tsx                  # Admin dashboard (API health monitor)
-    api/
-      route.ts                  # Catch-all API (status)
-      wealth/
-        health/route.ts         # GET: provider health status
-        config/route.ts         # GET/POST: credential management
-        digest/
-          fetch-image/route.ts  # GET: Openverse image proxy
-  lib/
-    db.ts                       # Prisma client singleton
-    credential-store.ts         # 3-tier credential storage
-    services/
-      types.ts                  # Shared TypeScript types
-      http-helpers.ts           # Fetch wrappers, content-type guards
-      mystocks.ts               # MyStocks API service
-      fincra.ts                 # Fincra API service
-      openverse.ts              # Openverse image service
-  components/ui/                # shadcn/ui components (standard set)
-prisma/
-  schema.prisma                # Database schema
-```
-
-## Database Schema (Prisma/SQLite)
-
-| Model | Purpose | Status |
-|-------|---------|--------|
-| User | User accounts | Scaffold — needs rebuild for auth |
-| Post | Blog posts | Scaffold — may be replaced by DigestStory |
-| ApiCredential | Provider API keys | Active, in use by admin config UI |
-| DigestStory | Market digest articles | Schema exists, no UI/pages yet |
-
-**Missing models (needed):** Transaction, Portfolio, InvestmentOrder, User2FA, AuditLog
-
-## API Integrations
-
-| Provider | Service File | Status | Notes |
-|----------|-------------|--------|-------|
-| MyStocks | `mystocks.ts` | Health-check only | No stocks data endpoint exposed to frontend |
-| Fincra | `fincra.ts` | Health-check only | No payments endpoint exposed to frontend |
-| Openverse | `openverse.ts` | Active | Image fetch API working |
-| Flutterwave | ❌ None | **Ghost reference** | Referenced in homepage + metadata but no service file exists |
-| Eversend | ❌ None | Not integrated | Partnership letter + integration prompt written, not yet coded |
-
-## API Routes
-
-| Route | Method | Purpose | Status |
-|-------|--------|---------|--------|
-| `/api/wealth/health` | GET | Provider health monitoring | ✅ Working |
-| `/api/wealth/config` | GET/POST | Credential management | ✅ Working |
-| `/api/wealth/digest/fetch-image` | GET | Openverse image proxy | ✅ Working |
-| `/api/stocks` | — | Stock market data | ❌ Doesn't exist (homepage uses mock data) |
-| `/api/payments` | — | Payment operations | ❌ Doesn't exist |
-
-## Environment Variables
-
-| Variable | Purpose | Where Used |
-|----------|---------|-------------|
-| DATABASE_URL | SQLite connection string | Prisma |
-| MYSTOCKS_API_KEY | MyStocks API key | credential-store.ts fallback |
-| FINCRA_API_KEY | Fincra API key | credential-store.ts fallback |
-| FINCRA_BUSINESS_ID | Fincra business ID | credential-store.ts fallback |
-| NEXTAUTH_SECRET | NextAuth encryption | Not yet configured |
-| NEXTAUTH_URL | NextAuth callback URL | Not yet configured |
-
-## Rebuild Progress
-
-### Completed
-- [x] Section 0: Git remote configured (Kenapp23/Afrispine)
-- [x] Section 0: Production baseline tagged (v0.1.0-snapshot)
-- [x] Section 0: This architecture document created
-
-### In Progress
-- [ ] Section 1: Fix stat counters showing "0+"
-- [ ] Section 1: Fix currency mapping (NGX→NGN, JSE→ZAR)
-- [ ] Section 1: Remove Flutterwave ghost references
-
-### Pending (Section 2)
-- [ ] 2.1: Re-establish diaspora positioning on homepage
-- [ ] 2.2: Stabilize payments layer (Fincra confirmed, Eversend integration)
-- [ ] 2.3: Stabilize investment layer (MyStocks endpoint verification)
-- [ ] 2.4: Rebuild digest/content layer
-- [ ] 2.5: Add 2FA
-- [ ] 2.6: Build demand-supply matching engine
-- [ ] 2.7: Full platform audit (security, stress, UX)
-- [ ] 2.8: Dangote IPO readiness verification
-
-## Version Tags
-
-| Tag | Date | Description |
-|-----|------|-------------|
-| v0.1.0-snapshot | 2025-07-28 | Pre-rebuild baseline. Restored landing + admin. Known bugs present. |
-
-## Deployment Log
-
-| Date | Tag | Vercel Deployment ID | Notes |
-|------|-----|---------------------|-------|
-| 2025-07-28 | v0.1.0-snapshot | dpl_* (check Vercel) | Deployed to afrispine project, afri-spine.com live |
+| Database | Prisma ORM + SQLite | Client-only SQLite for dev; Vercel Postgres needed for prod |
+| State | Zustand (client), TanStack Query (server) | |
+| Auth | NextAuth.js v4 | Available, not yet configured |
+| AI | z-ai-web-dev-sdk | Backend only, not client-side |
 
 ---
 
-*Last updated: 2025-07-28. Update with every commit.*
+## Current Database Schema (Prisma)
+
+```
+User           — id, email, name, createdAt, updatedAt  (scaffold only)
+Post           — id, title, content, published, authorId  (scaffold only)
+ApiCredential  — id, provider(uniq), apiKey, secretKey, environment, baseUrl
+DigestStory    — id, title, country, ticker, exchange, summary, content, imageUrl, imageCredit, imageSource, published
+```
+
+**Missing models (previously existed, lost):** Investor profiles, Transactions, 2FA tokens, MatchingEngine records, Subscription flows. Need to be rebuilt.
+
+---
+
+## API Routes — Current State
+
+| Route | Method | Status | Purpose |
+|-------|--------|--------|---------|
+| `/api/wealth/health` | GET | ✅ Working | Checks MyStocks, Fincra, Openverse health |
+| `/api/wealth/config` | GET/POST | ✅ Working | CRUD for provider API credentials |
+| `/api/wealth/digest/fetch-image` | GET | ✅ Working | Openverse image search |
+| `/api` | GET | ⚠️ Placeholder | Unknown purpose, needs review |
+| `/api/stocks` | GET | ❌ Missing | MyStocks data fetching |
+| `/api/payments` | GET | ❌ Missing | Fincra/Eversend payment operations |
+
+---
+
+## Service Integrations
+
+### MyStocks (mystocks.africa)
+- **Status:** Health check only. No actual stock data fetching.
+- **Endpoints defined:** Health Ping, Market Data, Top Gainers, Top Losers, Market Indices, Portfolio Summary
+- **Auth:** Bearer token via API key
+- **Missing:** Actual data retrieval for NSE, NGX, JSE stock display. Currently homepage shows hardcoded mock data.
+
+### Fincra
+- **Status:** Health check only. No actual payment operations.
+- **Endpoints defined:** Account Balance, Verify Account, Create Transfer, Transaction History, Exchange Rates
+- **Auth:** `api-key` header + `x-business-id` header
+- **Missing:** Transfer creation, balance checking, FX conversion for production use.
+
+### Eversend
+- **Status:** ❌ Not integrated at all.
+- **Priority:** High — preferred payout rail for Kenya, just-in-time stablecoin funding aligns with AfriSpine's non-custodial architecture.
+- **Reference:** Partnership letter and Zai integration prompt exist (shared by owner). Needs client_id/client_secret flow, Payouts API, Collections API.
+
+### Openverse
+- **Status:** ✅ Working — free public API, no auth needed.
+- **Purpose:** African-relevant image sourcing for digest content.
+
+### Flutterwave
+- **Status:** ⚠️ Mentioned on homepage as payment partner. No service file, no integration code.
+- **Decision needed:** Owner must confirm whether Flutterwave is an actual current integration partner or a leftover from the restored snapshot that predates the Fincra-only direction.
+
+---
+
+## Pages
+
+| Route | Purpose | Status |
+|-------|---------|--------|
+| `/` | Platform homepage | ✅ Live (generic positioning, needs diaspora rebuild) |
+| `/admin` | Admin dashboard — API health monitor | ✅ Live |
+
+**Missing pages (previously existed, lost):**
+- Digest/article pages
+- Investment/stock trading pages
+- Payment/transfer pages
+- User auth pages (login, register, 2FA setup)
+- IPO subscription flows
+
+---
+
+## Known Bugs (Live, User-Facing)
+
+1. **Stat counters show "0+" and "0.9%"** — Counter animation component likely not rendering targets correctly. Should show: "3+ African Exchanges", "50M+ Stocks Accessible", "30+ Currencies", "99.9% Uptime".
+2. **All stocks shown in KES** — NGX stocks (Nigeria) should show NGN, JSE stocks (South Africa) should show ZAR. Currently hardcoded currency prefix.
+3. **Flutterwave listed as partner** — Needs owner confirmation before keeping or removing.
+
+---
+
+## Rebuild Sequence (In Order)
+
+### ✅ Complete
+- [x] Section 0: Git discipline, remote repo, audit
+- [x] Section 1: Fix stat counters
+- [x] Section 1: Fix currency mapping
+- [x] Section 1: Document Flutterwave status
+
+### 🔄 In Progress
+- [ ] Section 2.1: Re-establish diaspora positioning
+- [ ] Section 2.2: Confirm and stabilize payments layer
+- [ ] Section 2.3: Confirm and stabilize investment layer
+
+### ⏳ Pending
+- [ ] Section 2.4: Rebuild digest/content layer
+- [ ] Section 2.5: Add 2FA
+- [ ] Section 2.6: Add demand-supply matching engine
+- [ ] Section 2.7: Full platform audit (security, stress, UX)
+- [ ] Section 2.8: Re-confirm Dangote IPO readiness
+
+---
+
+## Environment Variables
+
+| Variable | Purpose | Where Used | Status |
+|----------|---------|-----------|--------|
+| `DATABASE_URL` | SQLite connection string | Prisma/DB | ✅ Configured |
+| `MYSTOCKS_API_KEY` | MyStocks API key | mystocks.ts (health) | ❌ Not set |
+| `FINCRA_API_KEY` | Fincra API key | fincra.ts (health) | ❌ Not set |
+| `FINCRA_BUSINESS_ID` | Fincra business ID | fincra.ts (health) | ❌ Not set |
+| `EVERSEND_CLIENT_ID` | Eversend OAuth client | (not built yet) | ❌ Not set |
+| `EVERSEND_CLIENT_SECRET` | Eversend OAuth secret | (not built yet) | ❌ Not set |
+| `NEXTAUTH_SECRET` | NextAuth session encryption | (not configured) | ❌ Not set |
+| `NEXTAUTH_URL` | NextAuth base URL | (not configured) | ❌ Not set |
+| `GITHUB_TOKEN` | GitHub push auth | Git operations | ✅ Configured |
+| `VERCEL_TOKEN` | Vercel deployment auth | Vercel CLI | ✅ Configured |
+
+---
+
+## Deployment History
+
+| Date | Tag | Commit | What Changed |
+|------|-----|--------|-------------|
+| 2025-07-28 | v0.2.0-post-audit | (pending) | Section 0+1 fixes: git discipline, ARCHITECTURE.md, stat counters, currency mapping, Flutterwave documented |
+| 2025-07-12 | v0.1.0-snapshot | — | Initial restored snapshot (pre-loss backup) |

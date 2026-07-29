@@ -28,8 +28,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "AfriSpine - Africa's Wealth Management Platform",
-    description: "Trade African stocks, make cross-border payments, and grow your wealth.",
+    title: "AfriSpine - Invest in Africa From Anywhere",
+    description: "Built for the African diaspora. Trade stocks, send money home, and grow your wealth across Africa.",
   },
 };
 

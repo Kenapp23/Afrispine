@@ -9,9 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   TrendingUp, Shield, Zap, CreditCard, ArrowRight, BarChart3,
-  Globe, Lock, Smartphone, ChevronUp, ChevronDown, Menu, X,
-  Send, Wallet, RefreshCw, CheckCircle2, Clock, AlertCircle, Users,
-  Heart, Home, Banknote, ArrowLeftRight, Landmark, Plane, Building2,
+  Globe, Lock, ChevronUp, ChevronDown, Menu, X,
+  Send, Wallet, RefreshCw, CheckCircle2, Clock, AlertCircle,
+  ArrowLeftRight, Landmark, Plane,
 } from 'lucide-react';
 
 /* ─── Animated counter (fixed: uses ceil on step, handles 99→99.9 correctly) ─── */

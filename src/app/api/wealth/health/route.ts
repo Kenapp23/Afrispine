@@ -46,7 +46,7 @@ async function checkProviderHealth(provider: typeof PROVIDERS[number]): Promise<
       });
       const ms = Date.now() - start;
       endpoints = [{ name: 'Image Search', result: { status: r.ok ? 'healthy' : 'unhealthy', latencyMs: ms, message: r.ok ? 'OK' : `HTTP ${r.status}` } }];
-
+    }
   } catch (err) {
     const ms = Date.now() - start;
     endpoints = [{ name: 'Connection', result: { status: 'error', latencyMs: ms, message: (err as Error).message } }];
