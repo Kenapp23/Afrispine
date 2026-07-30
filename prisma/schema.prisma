@@ -1,0 +1,568 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Auth Models ───────────────────────────────────────────────
+
+model Sender {
+  id              String   @id @default(cuid())
+  firstName       String?
+  lastName        String?
+  email           String   @unique
+  phone           String?
+  passwordHash    String
+  kycStatus       String   @default("pending")
+  accountStatus   String   @default("active")
+  dailyLimitGbp   Float    @default(1000)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  transactions    Transaction[]
+  recipients      Recipient[]
+}
+
+model AdminUser {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  fullName        String?
+  passwordHash    String
+  role            String   @default("admin")
+  isActive        Boolean  @default(true)
+  lastLoginAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// ─── Core Business Models ─────────────────────────────────────
+
+model Transaction {
+  id                String   @id @default(cuid())
+  reference         String   @unique
+  senderId          String
+  recipientId       String?
+  status            String   @default("pending")
+  sendCurrency      String
+  sendAmount        Float
+  receiveCurrency   String
+  receiveAmount     Float?
+  fxRate            Float?
+  feeAmount         Float    @default(0)
+  totalCharged      Float?
+  corridor          String?
+  rail              String?
+  providerSlug      String?
+  recipientName     String?
+  recipientPhone    String?
+  recipientBank     String?
+  recipientAccount  String?
+  matchType         String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  sender            Sender   @relation(fields: [senderId], references: [id])
+  events            TransactionEvent[]
+
+  @@index([senderId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model TransactionEvent {
+  id             String      @id @default(cuid())
+  transactionId  String
+  type           String
+  status         String?
+  provider       String?
+  payload        String?
+  createdAt      DateTime    @default(now())
+
+  transaction    Transaction  @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  @@index([transactionId])
+}
+
+model Recipient {
+  id            String   @id @default(cuid())
+  senderId      String
+  name          String?
+  phone         String?
+  country       String?
+  bankName      String?
+  bankCode      String?
+  accountNumber String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  sender        Sender   @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([senderId])
+}
+
+// ─── Provider & Config Models (for seed) ───────────────────────
+
+model Provider {
+  id                    String   @id @default(cuid())
+  name                  String
+  displayName           String?
+  slug                  String   @unique
+  apiBaseUrl            String?
+  apiKey                String?
+  apiSecret             String?
+  webhookSecret         String?
+  supportedRails        String?
+  supportedCorridors    String?
+  weightSpeed           Float    @default(0.33)
+  weightCost            Float    @default(0.33)
+  weightReliability     Float    @default(0.34)
+  billingModel          String?
+  billingRate           Float?
+  billingEmail          String?
+  isActive              Boolean  @default(true)
+  successRate30d        Int      @default(0)
+  avgDeliverySec30d     Int      @default(0)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  logs                  ProviderLog[]
+}
+
+model ProviderLog {
+  id          String   @id @default(cuid())
+  providerId  String?
+  direction   String?
+  endpoint    String?
+  statusCode  Int?
+  payload     String?
+  response    String?
+  durationMs  Int?
+  createdAt   DateTime @default(now())
+
+  provider    Provider? @relation(fields: [providerId], references: [id], onDelete: SetNull)
+
+  @@index([providerId])
+  @@index([createdAt])
+}
+
+model NotificationTemplate {
+  id       String @id @default(cuid())
+  trigger  String @unique
+  channel  String @default("email")
+  subject  String?
+  body     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SettlementConfig {
+  id                   String   @id @default(cuid())
+  companyName          String?
+  registeredAddress    String?
+  companyRegNumber     String?
+  vatNumber            String?
+  settlementAccounts   String?
+  sweepCurrency        String?
+  sweepAccountId       String?
+  sweepSchedule        String?
+  sweepMinimum         Float?
+  sweepNotifyEmail     String?
+  flwAccountId         String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model FxMarginOverride {
+  id        String  @id @default(cuid())
+  corridor  String  @unique
+  marginPct Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Additional models for admin pages (minimal stubs) ────────
+
+model Corridor {
+  id              String   @id @default(cuid())
+  sendCountry     String?
+  receiveCountry  String?
+  sendCurrency    String?
+  receiveCurrency String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model RevenueRecord {
+  id            String   @id @default(cuid())
+  type          String?
+  amount        Float?
+  currency      String?
+  corridor      String?
+  reference     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Invoice {
+  id            String   @id @default(cuid())
+  providerId    String?
+  providerName  String?
+  amount        Float?
+  currency      String?
+  status        String   @default("pending")
+  dueDate       DateTime?
+  paidAt        DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model SplitRule {
+  id            String   @id @default(cuid())
+  name          String?
+  description   String?
+  corridor      String?
+  percentage    Float?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model PlatformSetting {
+  id        String @id @default(cuid())
+  key       String @unique
+  value     String?
+  updatedAt DateTime @updatedAt
+}
+
+model RateAlert {
+  id         String   @id @default(cuid())
+  senderId   String?
+  corridor   String?
+  targetRate Float?
+  direction  String?
+  isTriggered Boolean @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model RecurringSend {
+  id            String   @id @default(cuid())
+  senderId      String?
+  recipientId   String?
+  sendCurrency  String?
+  sendAmount    Float?
+  receiveCurrency String?
+  frequency     String?
+  nextExecution DateTime?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Referral {
+  id          String   @id @default(cuid())
+  referrerId  String?
+  referredId  String?
+  code        String?
+  isClaimed   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Quote {
+  id              String   @id @default(cuid())
+  senderId        String?
+  sendCurrency    String?
+  receiveCurrency String?
+  sendAmount      Float?
+  receiveAmount   Float?
+  fxRate          Float?
+  feePct          Float?
+  feeAmount       Float?
+  expiresAt       DateTime?
+  createdAt       DateTime @default(now())
+}
+
+model GroupSend {
+  id          String   @id @default(cuid())
+  name        String?
+  creatorId   String?
+  targetAmount Float?
+  currency    String?
+  status      String   @default("active")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  contributions GroupSendContribution[]
+}
+
+model GroupSendContribution {
+  id         String  @id @default(cuid())
+  groupSendId String?
+  senderId   String?
+  amount     Float?
+  createdAt  DateTime @default(now())
+
+  groupSend  GroupSend? @relation(fields: [groupSendId], references: [id], onDelete: SetNull)
+}
+
+model GiftVoucher {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  senderId    String?
+  amount      Float?
+  currency    String?
+  status      String   @default("active")
+  recipientEmail String?
+  redeemedBy  String?
+  redeemedAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model FamilyPool {
+  id          String   @id @default(cuid())
+  name        String?
+  creatorId   String?
+  targetAmount Float?
+  currency    String?
+  status      String   @default("active")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model BillPayment {
+  id            String   @id @default(cuid())
+  senderId      String?
+  provider      String?
+  billType      String?
+  accountNumber String?
+  amount        Float?
+  currency      String?
+  status        String   @default("pending")
+  reference     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Wallet {
+  id         String  @id @default(cuid())
+  ownerId    String?
+  ownerType  String?
+  currency   String?
+  balance    Float   @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model AmlFlag {
+  id             String   @id @default(cuid())
+  transactionId  String?
+  senderId       String?
+  ruleCode       String?
+  severity       String?
+  status         String   @default("open")
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model SenderNote {
+  id        String   @id @default(cuid())
+  senderId  String?
+  authorId  String?
+  content   String?
+  createdAt DateTime @default(now())
+}
+
+model WhatsAppOptIn {
+  id        String   @id @default(cuid())
+  senderId  String?
+  phone     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model SenderSubscription {
+  id        String   @id @default(cuid())
+  senderId  String?
+  type      String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model SenderPaystackAuth {
+  id         String   @id @default(cuid())
+  senderId   String?
+  authCode   String?
+  createdAt  DateTime @default(now())
+}
+
+model BusinessAccount {
+  id              String   @id @default(cuid())
+  companyName     String?
+  registrationNumber String?
+  email           String?
+  contactName     String?
+  status          String   @default("pending")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model BusinessTransaction {
+  id            String   @id @default(cuid())
+  businessId    String?
+  sellCurrency  String?
+  buyCurrency   String?
+  sellAmount    Float?
+  buyAmount     Float?
+  fxRate        Float?
+  status        String   @default("pending")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model DigestIssue {
+  id          String   @id @default(cuid())
+  title       String?
+  slug        String?
+  status      String   @default("draft")
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model DigestSubscription {
+  id        String   @id @default(cuid())
+  email     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model InvestmentAccount {
+  id          String   @id @default(cuid())
+  senderId    String?
+  status      String   @default("pending")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model InvestmentOrder {
+  id              String   @id @default(cuid())
+  accountId       String?
+  type            String?
+  assetCode       String?
+  quantity        Float?
+  pricePerUnit    Float?
+  totalAmount     Float?
+  status          String   @default("pending")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model FxOrder {
+  id              String   @id @default(cuid())
+  senderId        String?
+  sellCurrency    String?
+  buyCurrency     String?
+  sellAmount      Float?
+  buyAmount       Float?
+  fxRate          Float?
+  status          String   @default("pending")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model DividendPayment {
+  id              String   @id @default(cuid())
+  accountId       String?
+  amount          Float?
+  currency        String?
+  status          String   @default("pending")
+  paymentDate     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model AumFeeCharge {
+  id            String   @id @default(cuid())
+  accountId     String?
+  amount        Float?
+  currency      String?
+  periodStart   DateTime?
+  periodEnd     DateTime?
+  createdAt     DateTime @default(now())
+}
+
+model ChinaCorridorPayment {
+  id            String   @id @default(cuid())
+  senderId      String?
+  sendAmount    Float?
+  sendCurrency  String?
+  receiveAmount Float?
+  receiveCurrency String?
+  status        String   @default("pending")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model PapssSession {
+  id            String   @id @default(cuid())
+  sessionId     String?
+  status        String   @default("initiated")
+  createdAt     DateTime @default(now())
+}
+
+model RippleSettlement {
+  id            String   @id @default(cuid())
+  transactionId String?
+  amount        Float?
+  currency      String?
+  status        String   @default("pending")
+  createdAt     DateTime @default(now())
+}
+
+model LiquidityProvider {
+  id          String   @id @default(cuid())
+  name        String?
+  type        String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+model PlatformConfig {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String?
+}
+
+model AchievementCard {
+  id          String @id @default(cuid())
+  title       String?
+  description String?
+  icon        String?
+  createdAt   DateTime @default(now())
+}
+
+// Keep legacy User/Post for scaffold compatibility
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  title     String
+  content   String?
+  published Boolean  @default(false)
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
