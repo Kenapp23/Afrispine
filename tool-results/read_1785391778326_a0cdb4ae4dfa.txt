@@ -1,0 +1,993 @@
+     1→generator client {
+     2→  provider = "prisma-client-js"
+     3→}
+     4→
+     5→datasource db {
+     6→  provider = "sqlite"
+     7→  url      = env("DATABASE_URL")
+     8→}
+     9→
+    10→model Sender {
+    11→  id                 String       @id @default(cuid())
+    12→  email              String       @unique
+    13→  passwordHash       String
+    14→  firstName          String       @default("")
+    15→  lastName           String       @default("")
+    16→  phone              String       @default("")
+    17→  dob                String?
+    18→  countryOfResidence String       @default("")
+    19→  kycStatus          String       @default("pending")
+    20→  kycProviderRef     String?
+    21→  kycIdType          String?
+    22→  kycIdNumber        String?
+    23→  kycCompletedAt     DateTime?
+    24→  accountStatus      String       @default("active")
+    25→  dailyLimitGbp      Float        @default(2000)
+    26→  emailVerified      Boolean      @default(false)
+    27→  emailVerifyToken   String?
+    28→  resetToken         String?
+    29→  resetTokenExpires  DateTime?
+    30→  createdAt          DateTime     @default(now())
+    31→  lastActiveAt       DateTime     @default(now())
+    32→  transactions       Transaction[]
+    33→  recipients         Recipient[]
+    34→  amlFlags           AmlFlag[]
+    35→  notes              SenderNote[]
+    36→  recurringSends     RecurringSend[]
+    37→  rateAlerts         RateAlert[]
+    38→  subscription       SenderSubscription?
+    39→  paystackAuth       SenderPaystackAuth?
+    40→  groupSends         GroupSend[]
+    41→  billPayments       BillPayment[]
+    42→  waitlistEntries    ServiceWaitlist[]
+    43→  ipoRegistrations   IpoRegistration[]
+    44→  investmentAccount  InvestmentAccount?
+    45→  investmentOrders   InvestmentOrder[]
+    46→  watchlistItems     WatchlistItem[]
+    47→  dividendPayments   DividendPayment[]
+    48→  growthEvents           GrowthEvent[]
+    49→  chinaCorridorPayments  ChinaCorridorPayment[]
+    50→  giftVouchers     GiftVoucher[]
+    51→  referralsFrom    Referral[] @relation("Referrer")
+    52→  referralsTo      Referral[] @relation("Referee")
+    53→  whatsAppOptIns   WhatsAppOptIn[]
+    54→  dripEmailsSent   DripEmailSent[]
+    55→  savingsCircles         SavingsCircle[]
+    56→  savingsCircleMemberships SavingsCircleMember[]
+    57→  investmentGoals        InvestmentGoal[]  @relation("SenderGoals")
+    58→  autoInvestRules        AutoInvestRule[]  @relation("SenderAutoInvest")
+    59→  digestSubscription     DigestSubscription? @relation("SenderDigest")
+    60→  achievementCards        AchievementCard[]  @relation("SenderCards")
+    61→}
+    62→
+    63→model Recipient {
+    64→  id             String  @id @default(cuid())
+    65→  senderId       String
+    66→  sender         Sender  @relation(fields: [senderId], references: [id], onDelete: Cascade)
+    67→  fullName       String
+    68→  nickname       String?
+    69→  phone          String  @default("")
+    70→  country        String  @default("KE")
+    71→  deliveryMethod String  @default("mobile_money")
+    72→  mobileNetwork  String?
+    73→  bankName       String?
+    74→  accountNumber  String?
+    75→  bankCode       String?
+    76→  rippleAddress  String?
+    77→  papssIban      String?
+    78→  isActive       Boolean @default(true)
+    79→  createdAt      DateTime @default(now())
+    80→  transactions       Transaction[]
+    81→  recurringSends     RecurringSend[]
+    82→  groupSends         GroupSend[]
+    83→}
+    84→
+    85→model Transaction {
+    86→  id                  String   @id @default(cuid())
+    87→  reference           String   @unique
+    88→  senderId            String?
+    89→  sender              Sender?  @relation(fields: [senderId], references: [id])
+    90→  recipientId         String?
+    91→  recipient           Recipient? @relation(fields: [recipientId], references: [id])
+    92→  status              String   @default("quote")
+    93→  amountSend          Float
+    94→  currencySend        String   @default("GBP")
+    95→  amountReceive       Float
+    96→  currencyReceive     String   @default("KES")
+    97→  fxRate              Float
+    98→  feePct              Float    @default(1.5)
+    99→  feeAmount           Float
+   100→  totalCharged        Float
+   101→  rail                String   @default("mobile_money")
+   102→  providerId          String?
+   103→  provider            Provider? @relation(fields: [providerId], references: [id])
+   104→  providerRef         String?
+   105→  quoteExpiresAt      DateTime?
+   106→  flwRef              String?
+   107→  flwTxId             String?
+   108→  paystackRef         String?
+   109→  paystackTxId        String?
+   110→  paymentConfirmedAt  DateTime?
+   111→  providerInstructedAt DateTime?
+   112→  deliveredAt         DateTime?
+   113→  failedAt            DateTime?
+   114→  failureReason       String?
+   115→  amlResult           String   @default("pending")
+   116→  feeConfirmed        Boolean  @default(false)
+   117→  createdAt           DateTime @default(now())
+   118→  updatedAt           DateTime @updatedAt
+   119→  events              TransactionEvent[]
+   120→  amlFlags            AmlFlag[]
+   121→}
+   122→
+   123→model TransactionEvent {
+   124→  id            String   @id @default(cuid())
+   125→  transactionId String
+   126→  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+   127→  eventType     String
+   128→  payload       String   @default("{}")
+   129→  actor         String   @default("system")
+   130→  createdAt     DateTime @default(now())
+   131→}
+   132→
+   133→model Provider {
+   134→  id                String         @id @default(cuid())
+   135→  name              String
+   136→  displayName       String
+   137→  slug              String         @unique
+   138→  logoUrl           String         @default("")
+   139→  apiBaseUrl        String         @default("")
+   140→  apiKey            String         @default("")
+   141→  apiSecret         String         @default("")
+   142→  webhookSecret     String         @default("")
+   143→  supportedRails    String         @default("mobile_money")
+   144→  supportedCorridors String        @default("[]")
+   145→  weightSpeed       Float          @default(70)
+   146→  weightCost        Float          @default(70)
+   147→  weightReliability Float          @default(70)
+   148→  billingModel      String         @default("per_transaction")
+   149→  billingRate       Float          @default(0.5)
+   150→  billingEmail      String         @default("")
+   151→  isActive          Boolean        @default(true)
+   152→  successRate30d    Float          @default(95)
+   153→  avgDeliverySec30d Float          @default(900)
+   154→  lastTestedAt      DateTime?
+   155→  lastTestResult    String?
+   156→  createdAt         DateTime       @default(now())
+   157→  updatedAt         DateTime       @updatedAt
+   158→  transactions      Transaction[]
+   159→  invoices          Invoice[]
+   160→  logs              ProviderLog[]
+   161→}
+   162→
+   163→model ProviderLog {
+   164→  id            String   @id @default(cuid())
+   165→  providerId    String?
+   166→  provider      Provider? @relation(fields: [providerId], references: [id])
+   167→  transactionId String?
+   168→  eventType     String
+   169→  direction     String   @default("outbound")
+   170→  payload       String   @default("{}")
+   171→  statusCode    Int?
+   172→  createdAt     DateTime @default(now())
+   173→}
+   174→
+   175→model FxRate {
+   176→  id           String   @id @default(cuid())
+   177→  fromCurrency String
+   178→  toCurrency   String
+   179→  rate         Float
+   180→  fetchedAt    DateTime @default(now())
+   181→  expiresAt    DateTime
+   182→}
+   183→
+   184→model AdminUser {
+   185→  id          String    @id @default(cuid())
+   186→  email       String    @unique
+   187→  passwordHash String
+   188→  fullName    String    @default("")
+   189→  role        String    @default("superadmin")
+   190→  isActive    Boolean   @default(true)
+   191→  lastLoginAt DateTime?
+   192→  createdAt   DateTime  @default(now())
+   193→}
+   194→
+   195→model SettlementConfig {
+   196→  id                 String  @id @default(cuid())
+   197→  companyName        String  @default("")
+   198→  addressLine1       String  @default("")
+   199→  addressLine2       String  @default("")
+   200→  city               String  @default("")
+   201→  country            String  @default("")
+   202→  companyRegNumber   String  @default("")
+   203→  vatNumber          String  @default("")
+   204→  invoiceEmail       String  @default("")
+   205→  logoUrl            String  @default("")
+   206→  settlementAccounts String  @default("[]")
+   207→  sweepCurrency      String  @default("GBP")
+   208→  sweepAccountId     String  @default("")
+   209→  sweepSchedule      String  @default("daily")
+   210→  sweepMinimum       Float   @default(50)
+   211→  sweepNotifyEmail   String  @default("")
+   212→  updatedAt          DateTime @updatedAt
+   213→}
+   214→
+   215→model FeeSettlement {
+   216→  id              String   @id @default(cuid())
+   217→  date            String
+   218→  amount          Float
+   219→  flwSettlementId String?
+   220→  status          String   @default("pending")
+   221→  accountLast4    String?
+   222→  createdAt       DateTime @default(now())
+   223→}
+   224→
+   225→model Invoice {
+   226→  id               String    @id @default(cuid())
+   227→  invoiceNumber    String    @unique
+   228→  providerId       String?
+   229→  provider         Provider? @relation(fields: [providerId], references: [id])
+   230→  periodStart      DateTime
+   231→  periodEnd        DateTime
+   232→  transactionCount Int       @default(0)
+   233→  volumeGbp        Float     @default(0)
+   234→  subtotal         Float     @default(0)
+   235→  vatAmount        Float     @default(0)
+   236→  totalDue         Float     @default(0)
+   237→  currency         String    @default("USD")
+   238→  status           String    @default("draft")
+   239→  sentAt           DateTime?
+   240→  paidAt           DateTime?
+   241→  amountPaid       Float?
+   242→  pdfUrl           String?
+   243→  notes            String    @default("")
+   244→  createdAt        DateTime  @default(now())
+   245→  updatedAt        DateTime  @updatedAt
+   246→}
+   247→
+   248→model AmlFlag {
+   249→  id              String      @id @default(cuid())
+   250→  transactionId   String?
+   251→  transaction     Transaction? @relation(fields: [transactionId], references: [id])
+   252→  senderId        String?
+   253→  sender          Sender?     @relation(fields: [senderId], references: [id])
+   254→  screenType      String      @default("transaction")
+   255→  flagReason      String
+   256→  result          String      @default("flagged")
+   257→  rawResponse     String      @default("{}")
+   258→  reviewedById    String?
+   259→  reviewedByName  String      @default("")
+   260→  reviewedAt      DateTime?
+   261→  outcome         String      @default("")
+   262→  notes           String      @default("")
+   263→  createdAt       DateTime    @default(now())
+   264→  updatedAt       DateTime    @updatedAt
+   265→}
+   266→
+   267→model SenderNote {
+   268→  id            String    @id @default(cuid())
+   269→  senderId      String
+   270→  sender        Sender    @relation(fields: [senderId], references: [id], onDelete: Cascade)
+   271→  note          String
+   272→  createdById   String?
+   273→  createdByName String    @default("")
+   274→  createdAt     DateTime  @default(now())
+   275→}
+   276→
+   277→model NotificationTemplate {
+   278→  id        String  @id @default(cuid())
+   279→  trigger   String  @unique
+   280→  channel   String  @default("email")
+   281→  subject   String  @default("")
+   282→  body      String  @default("")
+   283→  smsBody   String  @default("")
+   284→  updatedAt DateTime @updatedAt
+   285→}
+   286→
+   287→model FxMarginOverride {
+   288→  id        String  @id @default(cuid())
+   289→  corridor  String  @unique
+   290→  marginPct Float  @default(1.5)
+   291→}
+   292→
+   293→model PlatformSetting {
+   294→  id        String  @id @default(cuid())
+   295→  key       String  @unique
+   296→  value     String  @default("")
+   297→  updatedAt DateTime @updatedAt
+   298→}
+   299→
+   300→model RecurringSend {
+   301→  id              String    @id @default(cuid())
+   302→  senderId        String
+   303→  sender          Sender    @relation(fields: [senderId], references: [id], onDelete: Cascade)
+   304→  recipientId     String?
+   305→  recipient       Recipient? @relation(fields: [recipientId], references: [id])
+   306→  amount          Float
+   307→  currencySend    String    @default("GBP")
+   308→  currencyReceive String    @default("KES")
+   309→  rail            String    @default("mobile_money")
+   310→  network         String?
+   311→  frequency       String    @default("monthly")
+   312→  dayOfMonth      Int       @default(1)
+   313→  nextRunAt       DateTime
+   314→  isActive        Boolean   @default(true)
+   315→  totalRuns       Int       @default(0)
+   316→  lastRunAt       DateTime?
+   317→  createdAt       DateTime  @default(now())
+   318→  updatedAt       DateTime  @updatedAt
+   319→}
+   320→
+   321→model GroupSend {
+   322→  id              String    @id @default(cuid())
+   323→  createdBy       String
+   324→  creator         Sender    @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+   325→  title           String
+   326→  description     String    @default("")
+   327→  targetAmount    Float
+   328→  currency        String    @default("GBP")
+   329→  recipientId     String?
+   330→  recipient       Recipient? @relation(fields: [recipientId], references: [id])
+   331→  rail            String    @default("mobile_money")
+   332→  deadlineAt      DateTime?
+   333→  status          String    @default("collecting")
+   334→  createdAt       DateTime  @default(now())
+   335→  updatedAt       DateTime  @updatedAt
+   336→  contributions   GroupSendContribution[]
+   337→}
+   338→
+   339→model GroupSendContribution {
+   340→  id                String    @id @default(cuid())
+   341→  groupSendId       String
+   342→  groupSend         GroupSend @relation(fields: [groupSendId], references: [id], onDelete: Cascade)
+   343→  contributorEmail  String
+   344→  contributorName   String    @default("")
+   345→  amount            Float
+   346→  paystackRef       String?
+   347→  status            String    @default("pending")
+   348→  paidAt            DateTime?
+   349→  createdAt         DateTime  @default(now())
+   350→}
+   351→
+   352→model RateAlert {
+   353→  id              String    @id @default(cuid())
+   354→  senderId        String
+   355→  sender          Sender    @relation(fields: [senderId], references: [id], onDelete: Cascade)
+   356→  fromCurrency    String
+   357→  toCurrency      String
+   358→  targetRate      Float
+   359→  direction       String    @default("above")
+   360→  notifyEmail     Boolean   @default(true)
+   361→  notifySms       Boolean   @default(false)
+   362→  isActive        Boolean   @default(true)
+   363→  triggeredAt     DateTime?
+   364→  createdAt       DateTime  @default(now())
+   365→}
+   366→
+   367→model SenderSubscription {
+   368→  id                        String    @id @default(cuid())
+   369→  senderId                  String    @unique
+   370→  sender                    Sender    @relation(fields: [senderId], references: [id], onDelete: Cascade)
+   371→  plan                      String    @default("free")
+   372→  paystackSubscriptionCode  String?
+   373→  status                    String    @default("active")
+   374→  currentPeriodEnd          DateTime?
+   375→  createdAt                 DateTime  @default(now())
+   376→  updatedAt                 DateTime  @updatedAt
+   377→}
+   378→
+   379→model SenderPaystackAuth {
+   380→  id                String    @id @default(cuid())
+   381→  senderId          String    @unique
+   382→  sender            Sender    @relation(fields: [senderId], references: [id], onDelete: Cascade)
+   383→  authorizationCode String
+   384→  email             String
+   385→  signature         String    @default("")
+   386→  bin               String    @default("")
+   387→  last4             String    @default("")
+   388→  expiryMonth       Int       @default(0)
+   389→  expiryYear        Int       @default(0)
+   390→  cardType          String    @default("")
+   391→  bank              String    @default("")
+   392→  isActive          Boolean   @default(true)
+   393→  createdAt         DateTime  @default(now())
+   394→}
+   395→
+   396→model BillPayment {
+   397→  id                   String    @id @default(cuid())
+   398→  reference            String    @unique
+   399→  senderId             String?
+   400→  sender               Sender?   @relation(fields: [senderId], references: [id])
+   401→  status               String    @default("pending")
+   402→  billType             String
+   403→  billerName           String
+   404→  billerPaybill        String    @default("")
+   405→  accountReference     String
+   406→  accountHolderName    String    @default("")
+   407→  billAmountKes        Float     @default(0)
+   408→  billAmountUsd        Float     @default(0)
+   409→  convenienceFeeUsd    Float     @default(1.50)
+   410→  totalChargedUsd      Float     @default(0)
+   411→  fxRate               Float     @default(0)
+   412→  paystackRef          String?
+   413→  paystackTxId         String?
+   414→  providerReference    String?
+   415→  tokenGenerated       String?
+   416→  deliveredAt          DateTime?
+   417→  failedAt             DateTime?
+   418→  failureReason        String?
+   419→  createdAt            DateTime  @default(now())
+   420→  updatedAt            DateTime  @updatedAt
+   421→}
+   422→
+   423→model IpoRegistration {
+   424→  id                String    @id @default(cuid())
+   425→  senderId          String?
+   426→  sender            Sender?   @relation(fields: [senderId], references: [id], onDelete: Cascade)
+   427→  ipoSlug           String    @default("dangote")
+   428→  ipoName           String    @default("Dangote Refinery IPO")
+   429→  exchange          String    @default("NGX")
+   430→  email             String
+   431→  phone             String    @default("")
+   432→  fullName          String    @default("")
+   433→  country           String    @default("")
+   434→  intendedAmountUsd String    @default("")
+   435→  currency          String    @default("USD")
+   436→  bvnConfirmed      Boolean   @default(false)
+   437→  bvnNumber         String    @default("")
+   438→  notifiedAt        DateTime?
+   439→  subscribed        Boolean   @default(false)
+   440→  subscriptionRef   String?
+   441→  subscriptionAmountUsd Float  @default(0)
+   442→  source            String    @default("dangote-ipo")
+   443→  utmSource         String    @default("")
+   444→  utmMedium         String    @default("")
+   445→  utmCampaign       String    @default("")
+   446→  createdAt         DateTime  @default(now())
+   447→  @@unique([email, source])
+   448→}
+   449→
+   450→model InvestmentAccount {
+   451→  id                     String    @id @default(cuid())
+   452→  senderId               String    @unique
+   453→  sender                 Sender    @relation(fields: [senderId], references: [id], onDelete: Cascade)
+   454→  mystocksAccountId      String    @unique
+   455→  kycAssertedAt          DateTime?
+   456→  kycAssertedStatus      String    @default("pending")
+   457→  cashBalanceUsd         Float     @default(0)
+   458→  totalInvestedUsd       Float     @default(0)
+   459→  totalValueUsd          Float     @default(0)
+   460→  totalGainLossUsd       Float     @default(0)
+   461→  dividendsEarnedUsd     Float     @default(0)
+   462→  autoReinvestDividends  Boolean   @default(false)
+   463→  status                 String    @default("active")
+   464→  createdAt              DateTime  @default(now())
+   465→  updatedAt              DateTime  @updatedAt
+   466→  orders                 InvestmentOrder[]
+   467→  dividendPayments       DividendPayment[]
+   468→  aumFeeCharges          AumFeeCharge[]
+   469→}
+   470→
+   471→model InvestmentOrder {
+   472→  id                     String    @id @default(cuid())
+   473→  reference              String    @unique
+   474→  senderId               String
+   475→  sender                 Sender    @relation(fields: [senderId], references: [id])
+   476→  investmentAccountId    String
+   477→  investmentAccount      InvestmentAccount @relation(fields: [investmentAccountId], references: [id])
+   478→  orderDirection         String    @default("BUY")
+   479→  status                 String    @default("pending")
+   480→  ticker                 String
+   481→  exchange               String
+   482→  companyName            String    @default("")
+   483→  assetType              String    @default("equity")
+   484→  orderType              String    @default("market")
+   485→  sharesRequested        Float     @default(0)
+   486→  sharesFilled           Float     @default(0)
+   487→  priceLocal             Float     @default(0)
+   488→  currencyLocal          String    @default("")
+   489→  limitPriceUsd          Float?
+   490→  fillPriceUsd           Float?
+   491→  fillPriceLocal         Float?
+   492→  amountGbp              Float     @default(0)
+   493→  investmentAmountUsd    Float     @default(0)
+   494→  fxRateGbpUsd           Float     @default(0)
+   495→  fxMarginPct            Float     @default(1.5)
+   496→  fxFeeGbp               Float     @default(0)
+   497→  tradingFeeGbp          Float     @default(0)
+   498→  totalChargedGbp        Float     @default(0)
+   499→  totalChargedUsd        Float     @default(0)
+   500→  quoteExpiresAt         DateTime?
+   501→  paystackRef            String?
+   502→  paystackTxId           String?
+   503→  paymentConfirmedAt     DateTime?
+   504→  mystocksDepositId      String?
+   505→  mystocksOrderId        String?
+   506→  submittedAt            DateTime?
+   507→  filledAt               DateTime?
+   508→  settlementDate         DateTime?
+   509→  settled                Boolean   @default(false)
+   510→  settledAt              DateTime?
+   511→  dividendPayments       String    @default("[]")
+   512→  failedAt               DateTime?
+   513→  failureReason          String?
+   514→  refundedAt             DateTime?
+   515→  createdAt              DateTime  @default(now())
+   516→  updatedAt              DateTime  @updatedAt
+   517→}
+   518→
+   519→model WatchlistItem {
+   520→  id              String    @id @default(cuid())
+   521→  senderId        String
+   522→  sender          Sender    @relation(fields: [senderId], references: [id], onDelete: Cascade)
+   523→  ticker          String
+   524→  exchange        String
+   525→  companyName     String    @default("")
+   526→  addedPrice      Float     @default(0)
+   527→  priceAlertAbove Float?
+   528→  priceAlertBelow Float?
+   529→  alertTriggered  Boolean   @default(false)
+   530→  createdAt       DateTime  @default(now())
+   531→  @@unique([senderId, ticker, exchange])
+   532→}
+   533→
+   534→model DividendPayment {
+   535→  id                     String    @id @default(cuid())
+   536→  senderId               String
+   537→  sender                 Sender    @relation(fields: [senderId], references: [id], onDelete: Cascade)
+   538→  investmentAccountId    String
+   539→  investmentAccount      InvestmentAccount @relation(fields: [investmentAccountId], references: [id])
+   540→  ticker                 String
+   541→  exchange               String
+   542→  companyName            String    @default("")
+   543→  sharesHeld             Float     @default(0)
+   544→  dividendPerShareLocal  Float     @default(0)
+   545→  amountLocal            Float     @default(0)
+   546→  currencyLocal          String    @default("")
+   547→  amountUsd              Float     @default(0)
+   548→  amountGbp              Float     @default(0)
+   549→  withheldTaxPct         Float     @default(0)
+   550→  withheldTaxAmountUsd   Float     @default(0)
+   551→  netUsd                 Float     @default(0)
+   552→  exDate                 DateTime?
+   553→  payDate                DateTime?
+   554→  receivedAt             DateTime?
+   555→  reinvested             Boolean   @default(false)
+   556→  reinvestOrderId        String?
+   557→  creditedToWallet       Boolean   @default(false)
+   558→  mystocksDividendId     String?
+   559→  createdAt              DateTime  @default(now())
+   560→}
+   561→
+   562→model AumFeeCharge {
+   563→  id                   String    @id @default(cuid())
+   564→  senderId             String
+   565→  investmentAccountId  String
+   566→  investmentAccount    InvestmentAccount @relation(fields: [investmentAccountId], references: [id])
+   567→  periodStart          DateTime
+   568→  periodEnd            DateTime
+   569→  aumValueUsd          Float     @default(0)
+   570→  feeRatePct           Float     @default(0.125)
+   571→  feeAmountUsd         Float     @default(0)
+   572→  chargedAt            DateTime?
+   573→  status               String    @default("pending")
+   574→  createdAt            DateTime  @default(now())
+   575→}
+   576→
+   577→model ServiceWaitlist {
+   578→  id         String   @id @default(cuid())
+   579→  senderId   String?
+   580→  sender     Sender?  @relation(fields: [senderId], references: [id], onDelete: Cascade)
+   581→  serviceKey String
+   582→  email      String
+   583→  createdAt  DateTime @default(now())
+   584→  @@unique([senderId, serviceKey])
+   585→}
+   586→
+   587→model BusinessAccount {
+   588→  id                       String    @id @default(cuid())
+   589→  companyName              String
+   590→  companyRegNumber         String
+   591→  countryOfIncorporation   String
+   592→  industry                 String    @default("")
+   593→  signatoryName            String
+   594→  email                    String    @unique
+   595→  phone                    String    @default("")
+   596→  monthlyVolumeUsd         Float     @default(0)
+   597→  useCase                  String    @default("")
+   598→  kybStatus                String    @default("pending")
+   599→  kybReviewedById          String?
+   600→  kybReviewedByName        String    @default("")
+   601→  kybReviewedAt            DateTime?
+   602→  feePct                   Float     @default(1.0)
+   603→  dailyLimitUsd            Float     @default(100000)
+   604→  accountStatus            String    @default("pending")
+   605→  createdAt                DateTime  @default(now())
+   606→  updatedAt                DateTime  @updatedAt
+   607→  transactions             BusinessTransaction[]
+   608→}
+   609→
+   610→model BusinessTransaction {
+   611→  id                   String          @id @default(cuid())
+   612→  reference            String          @unique
+   613→  businessAccountId    String
+   614→  businessAccount      BusinessAccount @relation(fields: [businessAccountId], references: [id])
+   615→  status               String          @default("quote")
+   616→  sellCurrency         String
+   617→  sellAmount           Float
+   618→  buyCurrency          String
+   619→  buyAmount            Float           @default(0)
+   620→  fxRate               Float           @default(0)
+   621→  marginPct            Float           @default(0)
+   622→  marginAmount         Float           @default(0)
+   623→  settlementMethod     String          @default("")
+   624→  beneficiaryName      String          @default("")
+   625→  beneficiaryBank      String          @default("")
+   626→  beneficiaryAccount   String          @default("")
+   627→  beneficiarySwift     String          @default("")
+   628→  beneficiaryCountry   String          @default("")
+   629→  paystackRef          String?
+   630→  paystackTxId         String?
+   631→  totalChargedUsd      Float           @default(0)
+   632→  providerReference    String?
+   633→  providerInstructedAt DateTime?
+   634→  settledAt            DateTime?
+   635→  failedAt             DateTime?
+   636→  failureReason        String          @default("")
+   637→  amlResult            String          @default("pending")
+   638→  purposeOfPayment     String          @default("")
+   639→  createdAt            DateTime        @default(now())
+   640→  updatedAt            DateTime        @updatedAt
+   641→}
+   642→
+   643→model ChinaCorridorWaitlist {
+   644→  id        String   @id @default(cuid())
+   645→  name      String
+   646→  email     String
+   647→  country   String
+   648→  createdAt DateTime @default(now())
+   649→  @@unique([email])
+   650→}
+   651→
+   652→model ChinaCorridorPayment {
+   653→  id                  String   @id @default(cuid())
+   654→  reference           String   @unique
+   655→  senderId            String?
+   656→  sender              Sender?  @relation(fields: [senderId], references: [id])
+   657→  status              String   @default("pending")
+   658→  amountSend          Float
+   659→  currencyFrom        String
+   660→  fxRate              Float
+   661→  cnyAmount           Float
+   662→  feePct              Float    @default(0.8)
+   663→  feeAmount           Float
+   664→  supplierName        String   @default("")
+   665→  supplierBankName    String   @default("")
+   666→  supplierAccountNumber String @default("")
+   667→  supplierBankCode    String   @default("")
+   668→  deliveryMethod      String   @default("bank_transfer")
+   669→  supplierAlipayAccount String @default("")
+   670→  purposeOfPayment    String   @default("goods_payment")
+   671→  invoiceUrl          String?
+   672→  paystackRef         String?
+   673→  paystackTxId        String?
+   674→  paymentConfirmedAt  DateTime?
+   675→  completedAt         DateTime?
+   676→  failedAt            DateTime?
+   677→  failureReason       String?
+   678→  createdAt           DateTime @default(now())
+   679→}
+   680→
+   681→model Referral {
+   682→  id            String   @id @default(cuid())
+   683→  referrerId    String?
+   684→  refereeEmail  String
+   685→  refereeId     String?
+   686→  code          String   @unique
+   687→  status        String   @default("pending")  // pending|converted|rewarded
+   688→  rewardType    String   @default("fee_waiver")
+   689→  rewardAmount  Float    @default(0)
+   690→  createdAt     DateTime @default(now())
+   691→  convertedAt   DateTime?
+   692→  referrer      Sender?  @relation("Referrer", fields: [referrerId], references: [id])
+   693→  referee       Sender?  @relation("Referee", fields: [refereeId], references: [id])
+   694→}
+   695→
+   696→model GrowthEvent {
+   697→  id          String   @id @default(cuid())
+   698→  senderId    String?
+   699→  eventType   String
+   700→  metadata    String   @default("{}")  // JSON string
+   701→  triggeredAt DateTime @default(now())
+   702→  sender      Sender?  @relation(fields: [senderId], references: [id])
+   703→}
+   704→
+   705→model GiftVoucher {
+   706→  id               String    @id @default(cuid())
+   707→  reference        String    @unique
+   708→  senderId         String?
+   709→  merchantId       String?
+   710→  occasion         String    @default("")
+   711→  amountGbp        Float
+   712→  amountLocal      Float     @default(0)
+   713→  currencyLocal    String    @default("")
+   714→  fxRate           Float     @default(0)
+   715→  voucherFeeGbp    Float     @default(1.5)
+   716→  totalChargedGbp  Float     @default(0)
+   717→  recipientName    String    @default("")
+   718→  recipientPhone   String    @default("")
+   719→  recipientEmail   String    @default("")
+   720→  senderMessage    String    @default("")
+   721→  deliveryMethod   String    @default("link")
+   722→  qrCodeUrl        String    @default("")
+   723→  status           String    @default("pending")
+   724→  paystackRef      String?
+   725→  issuedAt         DateTime  @default(now())
+   726→  redeemedAt       DateTime?
+   727→  expiresAt        DateTime?
+   728→  createdAt        DateTime  @default(now())
+   729→  updatedAt        DateTime  @updatedAt
+   730→  sender           Sender?   @relation(fields: [senderId], references: [id])
+   731→}
+   732→
+   733→model Merchant {
+   734→  id              String   @id @default(cuid())
+   735→  name            String
+   736→  slug            String   @unique
+   737→  country         String   @default("")
+   738→  category        String   @default("")
+   739→  logoUrl         String   @default("")
+   740→  businessReg     String   @default("")
+   741→  contactEmail    String   @default("")
+   742→  payoutBankDetails String  @default("{}")
+   743→  payoutMethods   String   @default("[]")  // JSON: [{type,country,till_number,paybill_number,...,is_primary,verified}]
+   744→  primaryPayoutCurrency String @default("KES")
+   745→  posType         String   @default("online")
+   746→  isActive        Boolean  @default(false)
+   747→  commissionPct   Float    @default(2)
+   748→  createdAt       DateTime @default(now())
+   749→  updatedAt       DateTime @updatedAt
+   750→}
+   751→
+   752→model WhatsAppOptIn {
+   753→  id        String   @id @default(cuid())
+   754→  senderId  String
+   755→  phone     String
+   756→  optIn     Boolean  @default(true)
+   757→  createdAt DateTime @default(now())
+   758→  sender    Sender   @relation(fields: [senderId], references: [id])
+   759→}
+   760→
+   761→model DripEmailSent {
+   762→  id          String   @id @default(cuid())
+   763→  senderId    String
+   764→  eventType   String
+   765→  emailType   String
+   766→  sentAt      DateTime @default(now())
+   767→  sender      Sender   @relation(fields: [senderId], references: [id])
+   768→}
+   769→
+   770→model SavingsCircle {
+   771→  id               String   @id @default(cuid())
+   772→  name             String
+   773→  slug             String   @unique
+   774→  organiserId      String
+   775→  type             String   @default("chama")       // chama|esusu|susu|roscas
+   776→  memberCount      Int      @default(0)
+   777→  contributionAmount Float
+   778→  contributionCurrency String @default("GBP")
+   779→  frequency        String   @default("monthly")     // monthly|weekly
+   780→  currentCycle     Int      @default(1)
+   781→  nextPayoutDate   DateTime?
+   782→  totalPot         Float    @default(0)
+   783→  whatsappGroupId  String   @default("")
+   784→  status           String   @default("active")      // active|paused|completed
+   785→  createdAt        DateTime @default(now())
+   786→  updatedAt        DateTime @updatedAt
+   787→  members          SavingsCircleMember[]
+   788→  payments         SavingsCirclePayment[]
+   789→  organiser        Sender   @relation(fields: [organiserId], references: [id])
+   790→}
+   791→
+   792→model SavingsCircleMember {
+   793→  id                 String    @id @default(cuid())
+   794→  circleId           String
+   795→  senderId           String?
+   796→  memberName         String
+   797→  phone              String    @default("")
+   798→  email              String    @default("")
+   799→  positionInRotation Int       @default(1)
+   800→  totalContributed   Float     @default(0)
+   801→  lastPaymentAt      DateTime?
+   802→  nextPaymentDue     DateTime?
+   803→  hasReceivedPayout  Boolean   @default(false)
+   804→  createdAt          DateTime  @default(now())
+   805→  circle             SavingsCircle @relation(fields: [circleId], references: [id])
+   806→  sender             Sender?      @relation(fields: [senderId], references: [id])
+   807→}
+   808→
+   809→model SavingsCirclePayment {
+   810→  id           String   @id @default(cuid())
+   811→  circleId     String
+   812→  memberName   String
+   813→  amount       Float
+   814→  currency     String   @default("GBP")
+   815→  cycleMonth   String   @default("")
+   816→  status       String   @default("pending")  // pending|paid|failed
+   817→  paidAt       DateTime?
+   818→  createdAt    DateTime @default(now())
+   819→  circle       SavingsCircle @relation(fields: [circleId], references: [id])
+   820→}
+   821→
+   822→// ─── Phase 3: AUM Engine ──────────────────────────────────────
+   823→
+   824→model InvestmentGoal {
+   825→  id                    String    @id @default(cuid())
+   826→  senderId              String
+   827→  goalType              String    @default("wealth")  // education|property|retirement|business|wealth|legacy
+   828→  goalName              String
+   829→  targetAmountUsd       Float     @default(0)
+   830→  targetDate            DateTime?
+   831→  currentValueUsd       Float     @default(0)
+   832→  monthlyContributionUsd Float    @default(0)
+   833→  autoInvestEnabled     Boolean   @default(false)
+   834→  autoInvestDayOfMonth  Int       @default(1)
+   835→  status                String    @default("active")  // active|paused|achieved
+   836→  achievedAt            DateTime?
+   837→  createdAt             DateTime  @default(now())
+   838→  sender                Sender    @relation("SenderGoals", fields: [senderId], references: [id])
+   839→  autoInvestRules       AutoInvestRule[]
+   840→}
+   841→
+   842→model AutoInvestRule {
+   843→  id                   String    @id @default(cuid())
+   844→  senderId             String
+   845→  investmentAccountId  String    @default("")
+   846→  goalId               String?
+   847→  ticker               String
+   848→  exchange             String
+   849→  amountGbp            Float
+   850→  frequency            String    @default("monthly")  // weekly|monthly|quarterly
+   851→  dayOfMonth           Int       @default(1)
+   852→  isActive             Boolean   @default(true)
+   853→  nextRunAt            DateTime?
+   854→  lastRunAt            DateTime?
+   855→  totalInvestedGbp     Float     @default(0)
+   856→  runCount             Int       @default(0)
+   857→  paystackAuthCode     String    @default("")
+   858→  createdAt            DateTime  @default(now())
+   859→  sender               Sender    @relation("SenderAutoInvest", fields: [senderId], references: [id])
+   860→  goal                 InvestmentGoal? @relation(fields: [goalId], references: [id])
+   861→}
+   862→
+   863→// ─── Phase 3: Financial Digest ────────────────────────────────
+   864→
+   865→model DigestSubscription {
+   866→  id              String   @id @default(cuid())
+   867→  senderId        String?  @unique
+   868→  email           String
+   869→  firstName       String   @default("")
+   870→  country         String   @default("")
+   871→  whatsappOptIn   Boolean  @default(false)
+   872→  frequency       String   @default("weekly")
+   873→  marketFocus     String   @default("all")
+   874→  isActive        Boolean  @default(true)
+   875→  isPro           Boolean  @default(false)
+   876→  paystackSubCode String   @default("")
+   877→  joinedAt        DateTime @default(now())
+   878→  lastSentAt      DateTime?
+   879→  source          String   @default("platform") // platform|digest_website|referral
+   880→  sender          Sender?  @relation("SenderDigest", fields: [senderId], references: [id])
+   881→}
+   882→
+   883→model DigestIssue {
+   884→  id              String       @id @default(cuid())
+   885→  issueNumber     Int          @default(1)
+   886→  slug            String       @unique
+   887→  issueDate       DateTime     @unique
+   888→  status          String       @default("draft") // draft|published
+   889→  subject         String
+   890→  coverHeadline   String       @default("")
+   891→  coverImageUrl   String       @default("")
+   892→  podcastUrl      String       @default("")
+   893→  htmlContent     String       @default("")
+   894→  emailHtml       String       @default("")
+   895→  whatsappText    String       @default("")
+   896→  sentCount       Int          @default(0)
+   897→  openRate        Float        @default(0)
+   898→  clickRate       Float        @default(0)
+   899→  createdAt       DateTime     @default(now())
+   900→  publishedAt     DateTime?
+   901→  stories         DigestStory[]
+   902→  sponsorSlots    SponsoredDigestSlot[]
+   903→}
+   904→
+   905→model DigestStory {
+   906→  id              String   @id @default(cuid())
+   907→  issueId         String
+   908→  slug            String
+   909→  section         String   // cover_story|market_pulse|company_spotlight|opportunity|diaspora_story|podcast
+   910→  title           String
+   911→  subtitle        String   @default("")
+   912→  bodyHtml        String   @default("")
+   913→  bodyText        String   @default("")
+   914→  author          String   @default("AfriSpine Digest AI")
+   915→  imageUrl        String   @default("")
+   916→  readTime        Int      @default(5)
+   917→  sortOrder       Int      @default(0)
+   918→  seoTitle        String   @default("")
+   919→  seoDescription  String   @default("")
+   920→  meta            String   @default("{}") // JSON: extra data per section type
+   921→  createdAt       DateTime @default(now())
+   922→  issue           DigestIssue @relation(fields: [issueId], references: [id])
+   923→  @@unique([issueId, slug])
+   924→}
+   925→
+   926→model SponsoredDigestSlot {
+   927→  id              String        @id @default(cuid())
+   928→  issueDate       DateTime?
+   929→  sponsorName     String
+   930→  sponsorLogoUrl  String        @default("")
+   931→  adHeadline      String        @default("")
+   932→  adBody          String        @default("")
+   933→  adCtaText       String        @default("")
+   934→  adCtaUrl        String        @default("")
+   935→  impressions     Int           @default(0)
+   936→  clicks          Int           @default(0)
+   937→  paidAmountUsd   Float         @default(0)
+   938→  status          String        @default("pending_review") // pending_review|approved|rejected|published
+   939→  aiReviewResult  String        @default("{}") // JSON
+   940→  createdAt       DateTime      @default(now())
+   941→  digestIssueId   String?
+   942→  digestIssue     DigestIssue?  @relation(fields: [digestIssueId], references: [id])
+   943→  advertiserId    String?
+   944→  advertiser      DigestAdvertiser? @relation(fields: [advertiserId], references: [id])
+   945→}
+   946→
+   947→model DigestAdvertiser {
+   948→  id                String       @id @default(cuid())
+   949→  companyName       String
+   950→  logoUrl           String       @default("")
+   951→  industry          String       @default("")
+   952→  contactEmail      String
+   953→  contactName       String       @default("")
+   954→  paystackCustomerId String      @default("")
+   955→  totalSpendUsd     Float        @default(0)
+   956→  ads               SponsoredDigestSlot[]
+   957→  payments          DigestAdPayment[]
+   958→  createdAt         DateTime     @default(now())
+   959→}
+   960→
+   961→model DigestAdPayment {
+   962→  id              String   @id @default(cuid())
+   963→  advertiserId    String
+   964→  adId            String
+   965→  package         String   // single|monthly|quarterly|ipo_feature
+   966→  amountUsd       Float
+   967→  paystackRef     String   @default("")
+   968→  status          String   @default("pending") // pending|completed|failed
+   969→  createdAt       DateTime @default(now())
+   970→  advertiser      DigestAdvertiser @relation(fields: [advertiserId], references: [id])
+   971→}
+   972→
+   973→model DigestAnalytics {
+   974→  id           String   @id @default(cuid())
+   975→  issueId      String
+   976→  eventType    String   // impression|click|share|subscribe
+   977→  source       String   @default("") // email|web|whatsapp|organic
+   978→  metadata     String   @default("{}") // JSON
+   979→  createdAt    DateTime @default(now())
+   980→}
+   981→
+   982→// ─── Phase 3: Achievement Cards ───────────────────────────────
+   983→
+   984→model AchievementCard {
+   985→  id           String   @id @default(cuid())
+   986→  senderId     String
+   987→  cardType     String   // stock_purchase|first_send|ipo_registration|savings_milestone|dividend_received
+   988→  cardData     String   @default("{}")  // JSON
+   989→  imageUrl     String   @default("")
+   990→  sharedCount  Int      @default(0)
+   991→  createdAt    DateTime @default(now())
+   992→  sender       Sender   @relation("SenderCards", fields: [senderId], references: [id])
+   993→}
