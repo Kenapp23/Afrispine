@@ -58,6 +58,7 @@ model Sender {
   autoInvestRules        AutoInvestRule[]  @relation("SenderAutoInvest")
   digestSubscription     DigestSubscription? @relation("SenderDigest")
   achievementCards        AchievementCard[]  @relation("SenderCards")
+  eversendTransactions    EversendTransaction[]
 }
 
 model Recipient {
