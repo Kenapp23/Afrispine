@@ -1,0 +1,993 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Sender {
+  id                 String       @id @default(cuid())
+  email              String       @unique
+  passwordHash       String
+  firstName          String       @default("")
+  lastName           String       @default("")
+  phone              String       @default("")
+  dob                String?
+  countryOfResidence String       @default("")
+  kycStatus          String       @default("pending")
+  kycProviderRef     String?
+  kycIdType          String?
+  kycIdNumber        String?
+  kycCompletedAt     DateTime?
+  accountStatus      String       @default("active")
+  dailyLimitGbp      Float        @default(2000)
+  emailVerified      Boolean      @default(false)
+  emailVerifyToken   String?
+  resetToken         String?
+  resetTokenExpires  DateTime?
+  createdAt          DateTime     @default(now())
+  lastActiveAt       DateTime     @default(now())
+  transactions       Transaction[]
+  recipients         Recipient[]
+  amlFlags           AmlFlag[]
+  notes              SenderNote[]
+  recurringSends     RecurringSend[]
+  rateAlerts         RateAlert[]
+  subscription       SenderSubscription?
+  paystackAuth       SenderPaystackAuth?
+  groupSends         GroupSend[]
+  billPayments       BillPayment[]
+  waitlistEntries    ServiceWaitlist[]
+  ipoRegistrations   IpoRegistration[]
+  investmentAccount  InvestmentAccount?
+  investmentOrders   InvestmentOrder[]
+  watchlistItems     WatchlistItem[]
+  dividendPayments   DividendPayment[]
+  growthEvents           GrowthEvent[]
+  chinaCorridorPayments  ChinaCorridorPayment[]
+  giftVouchers     GiftVoucher[]
+  referralsFrom    Referral[] @relation("Referrer")
+  referralsTo      Referral[] @relation("Referee")
+  whatsAppOptIns   WhatsAppOptIn[]
+  dripEmailsSent   DripEmailSent[]
+  savingsCircles         SavingsCircle[]
+  savingsCircleMemberships SavingsCircleMember[]
+  investmentGoals        InvestmentGoal[]  @relation("SenderGoals")
+  autoInvestRules        AutoInvestRule[]  @relation("SenderAutoInvest")
+  digestSubscription     DigestSubscription? @relation("SenderDigest")
+  achievementCards        AchievementCard[]  @relation("SenderCards")
+}
+
+model Recipient {
+  id             String  @id @default(cuid())
+  senderId       String
+  sender         Sender  @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  fullName       String
+  nickname       String?
+  phone          String  @default("")
+  country        String  @default("KE")
+  deliveryMethod String  @default("mobile_money")
+  mobileNetwork  String?
+  bankName       String?
+  accountNumber  String?
+  bankCode       String?
+  rippleAddress  String?
+  papssIban      String?
+  isActive       Boolean @default(true)
+  createdAt      DateTime @default(now())
+  transactions       Transaction[]
+  recurringSends     RecurringSend[]
+  groupSends         GroupSend[]
+}
+
+model Transaction {
+  id                  String   @id @default(cuid())
+  reference           String   @unique
+  senderId            String?
+  sender              Sender?  @relation(fields: [senderId], references: [id])
+  recipientId         String?
+  recipient           Recipient? @relation(fields: [recipientId], references: [id])
+  status              String   @default("quote")
+  amountSend          Float
+  currencySend        String   @default("GBP")
+  amountReceive       Float
+  currencyReceive     String   @default("KES")
+  fxRate              Float
+  feePct              Float    @default(1.5)
+  feeAmount           Float
+  totalCharged        Float
+  rail                String   @default("mobile_money")
+  providerId          String?
+  provider            Provider? @relation(fields: [providerId], references: [id])
+  providerRef         String?
+  quoteExpiresAt      DateTime?
+  flwRef              String?
+  flwTxId             String?
+  paystackRef         String?
+  paystackTxId        String?
+  paymentConfirmedAt  DateTime?
+  providerInstructedAt DateTime?
+  deliveredAt         DateTime?
+  failedAt            DateTime?
+  failureReason       String?
+  amlResult           String   @default("pending")
+  feeConfirmed        Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  events              TransactionEvent[]
+  amlFlags            AmlFlag[]
+}
+
+model TransactionEvent {
+  id            String   @id @default(cuid())
+  transactionId String
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  eventType     String
+  payload       String   @default("{}")
+  actor         String   @default("system")
+  createdAt     DateTime @default(now())
+}
+
+model Provider {
+  id                String         @id @default(cuid())
+  name              String
+  displayName       String
+  slug              String         @unique
+  logoUrl           String         @default("")
+  apiBaseUrl        String         @default("")
+  apiKey            String         @default("")
+  apiSecret         String         @default("")
+  webhookSecret     String         @default("")
+  supportedRails    String         @default("mobile_money")
+  supportedCorridors String        @default("[]")
+  weightSpeed       Float          @default(70)
+  weightCost        Float          @default(70)
+  weightReliability Float          @default(70)
+  billingModel      String         @default("per_transaction")
+  billingRate       Float          @default(0.5)
+  billingEmail      String         @default("")
+  isActive          Boolean        @default(true)
+  successRate30d    Float          @default(95)
+  avgDeliverySec30d Float          @default(900)
+  lastTestedAt      DateTime?
+  lastTestResult    String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  transactions      Transaction[]
+  invoices          Invoice[]
+  logs              ProviderLog[]
+}
+
+model ProviderLog {
+  id            String   @id @default(cuid())
+  providerId    String?
+  provider      Provider? @relation(fields: [providerId], references: [id])
+  transactionId String?
+  eventType     String
+  direction     String   @default("outbound")
+  payload       String   @default("{}")
+  statusCode    Int?
+  createdAt     DateTime @default(now())
+}
+
+model FxRate {
+  id           String   @id @default(cuid())
+  fromCurrency String
+  toCurrency   String
+  rate         Float
+  fetchedAt    DateTime @default(now())
+  expiresAt    DateTime
+}
+
+model AdminUser {
+  id          String    @id @default(cuid())
+  email       String    @unique
+  passwordHash String
+  fullName    String    @default("")
+  role        String    @default("superadmin")
+  isActive    Boolean   @default(true)
+  lastLoginAt DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model SettlementConfig {
+  id                 String  @id @default(cuid())
+  companyName        String  @default("")
+  addressLine1       String  @default("")
+  addressLine2       String  @default("")
+  city               String  @default("")
+  country            String  @default("")
+  companyRegNumber   String  @default("")
+  vatNumber          String  @default("")
+  invoiceEmail       String  @default("")
+  logoUrl            String  @default("")
+  settlementAccounts String  @default("[]")
+  sweepCurrency      String  @default("GBP")
+  sweepAccountId     String  @default("")
+  sweepSchedule      String  @default("daily")
+  sweepMinimum       Float   @default(50)
+  sweepNotifyEmail   String  @default("")
+  updatedAt          DateTime @updatedAt
+}
+
+model FeeSettlement {
+  id              String   @id @default(cuid())
+  date            String
+  amount          Float
+  flwSettlementId String?
+  status          String   @default("pending")
+  accountLast4    String?
+  createdAt       DateTime @default(now())
+}
+
+model Invoice {
+  id               String    @id @default(cuid())
+  invoiceNumber    String    @unique
+  providerId       String?
+  provider         Provider? @relation(fields: [providerId], references: [id])
+  periodStart      DateTime
+  periodEnd        DateTime
+  transactionCount Int       @default(0)
+  volumeGbp        Float     @default(0)
+  subtotal         Float     @default(0)
+  vatAmount        Float     @default(0)
+  totalDue         Float     @default(0)
+  currency         String    @default("USD")
+  status           String    @default("draft")
+  sentAt           DateTime?
+  paidAt           DateTime?
+  amountPaid       Float?
+  pdfUrl           String?
+  notes            String    @default("")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model AmlFlag {
+  id              String      @id @default(cuid())
+  transactionId   String?
+  transaction     Transaction? @relation(fields: [transactionId], references: [id])
+  senderId        String?
+  sender          Sender?     @relation(fields: [senderId], references: [id])
+  screenType      String      @default("transaction")
+  flagReason      String
+  result          String      @default("flagged")
+  rawResponse     String      @default("{}")
+  reviewedById    String?
+  reviewedByName  String      @default("")
+  reviewedAt      DateTime?
+  outcome         String      @default("")
+  notes           String      @default("")
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model SenderNote {
+  id            String    @id @default(cuid())
+  senderId      String
+  sender        Sender    @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  note          String
+  createdById   String?
+  createdByName String    @default("")
+  createdAt     DateTime  @default(now())
+}
+
+model NotificationTemplate {
+  id        String  @id @default(cuid())
+  trigger   String  @unique
+  channel   String  @default("email")
+  subject   String  @default("")
+  body      String  @default("")
+  smsBody   String  @default("")
+  updatedAt DateTime @updatedAt
+}
+
+model FxMarginOverride {
+  id        String  @id @default(cuid())
+  corridor  String  @unique
+  marginPct Float  @default(1.5)
+}
+
+model PlatformSetting {
+  id        String  @id @default(cuid())
+  key       String  @unique
+  value     String  @default("")
+  updatedAt DateTime @updatedAt
+}
+
+model RecurringSend {
+  id              String    @id @default(cuid())
+  senderId        String
+  sender          Sender    @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  recipientId     String?
+  recipient       Recipient? @relation(fields: [recipientId], references: [id])
+  amount          Float
+  currencySend    String    @default("GBP")
+  currencyReceive String    @default("KES")
+  rail            String    @default("mobile_money")
+  network         String?
+  frequency       String    @default("monthly")
+  dayOfMonth      Int       @default(1)
+  nextRunAt       DateTime
+  isActive        Boolean   @default(true)
+  totalRuns       Int       @default(0)
+  lastRunAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model GroupSend {
+  id              String    @id @default(cuid())
+  createdBy       String
+  creator         Sender    @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  title           String
+  description     String    @default("")
+  targetAmount    Float
+  currency        String    @default("GBP")
+  recipientId     String?
+  recipient       Recipient? @relation(fields: [recipientId], references: [id])
+  rail            String    @default("mobile_money")
+  deadlineAt      DateTime?
+  status          String    @default("collecting")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  contributions   GroupSendContribution[]
+}
+
+model GroupSendContribution {
+  id                String    @id @default(cuid())
+  groupSendId       String
+  groupSend         GroupSend @relation(fields: [groupSendId], references: [id], onDelete: Cascade)
+  contributorEmail  String
+  contributorName   String    @default("")
+  amount            Float
+  paystackRef       String?
+  status            String    @default("pending")
+  paidAt            DateTime?
+  createdAt         DateTime  @default(now())
+}
+
+model RateAlert {
+  id              String    @id @default(cuid())
+  senderId        String
+  sender          Sender    @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  fromCurrency    String
+  toCurrency      String
+  targetRate      Float
+  direction       String    @default("above")
+  notifyEmail     Boolean   @default(true)
+  notifySms       Boolean   @default(false)
+  isActive        Boolean   @default(true)
+  triggeredAt     DateTime?
+  createdAt       DateTime  @default(now())
+}
+
+model SenderSubscription {
+  id                        String    @id @default(cuid())
+  senderId                  String    @unique
+  sender                    Sender    @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  plan                      String    @default("free")
+  paystackSubscriptionCode  String?
+  status                    String    @default("active")
+  currentPeriodEnd          DateTime?
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+}
+
+model SenderPaystackAuth {
+  id                String    @id @default(cuid())
+  senderId          String    @unique
+  sender            Sender    @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  authorizationCode String
+  email             String
+  signature         String    @default("")
+  bin               String    @default("")
+  last4             String    @default("")
+  expiryMonth       Int       @default(0)
+  expiryYear        Int       @default(0)
+  cardType          String    @default("")
+  bank              String    @default("")
+  isActive          Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+}
+
+model BillPayment {
+  id                   String    @id @default(cuid())
+  reference            String    @unique
+  senderId             String?
+  sender               Sender?   @relation(fields: [senderId], references: [id])
+  status               String    @default("pending")
+  billType             String
+  billerName           String
+  billerPaybill        String    @default("")
+  accountReference     String
+  accountHolderName    String    @default("")
+  billAmountKes        Float     @default(0)
+  billAmountUsd        Float     @default(0)
+  convenienceFeeUsd    Float     @default(1.50)
+  totalChargedUsd      Float     @default(0)
+  fxRate               Float     @default(0)
+  paystackRef          String?
+  paystackTxId         String?
+  providerReference    String?
+  tokenGenerated       String?
+  deliveredAt          DateTime?
+  failedAt             DateTime?
+  failureReason        String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+}
+
+model IpoRegistration {
+  id                String    @id @default(cuid())
+  senderId          String?
+  sender            Sender?   @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  ipoSlug           String    @default("dangote")
+  ipoName           String    @default("Dangote Refinery IPO")
+  exchange          String    @default("NGX")
+  email             String
+  phone             String    @default("")
+  fullName          String    @default("")
+  country           String    @default("")
+  intendedAmountUsd String    @default("")
+  currency          String    @default("USD")
+  bvnConfirmed      Boolean   @default(false)
+  bvnNumber         String    @default("")
+  notifiedAt        DateTime?
+  subscribed        Boolean   @default(false)
+  subscriptionRef   String?
+  subscriptionAmountUsd Float  @default(0)
+  source            String    @default("dangote-ipo")
+  utmSource         String    @default("")
+  utmMedium         String    @default("")
+  utmCampaign       String    @default("")
+  createdAt         DateTime  @default(now())
+  @@unique([email, source])
+}
+
+model InvestmentAccount {
+  id                     String    @id @default(cuid())
+  senderId               String    @unique
+  sender                 Sender    @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  mystocksAccountId      String    @unique
+  kycAssertedAt          DateTime?
+  kycAssertedStatus      String    @default("pending")
+  cashBalanceUsd         Float     @default(0)
+  totalInvestedUsd       Float     @default(0)
+  totalValueUsd          Float     @default(0)
+  totalGainLossUsd       Float     @default(0)
+  dividendsEarnedUsd     Float     @default(0)
+  autoReinvestDividends  Boolean   @default(false)
+  status                 String    @default("active")
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+  orders                 InvestmentOrder[]
+  dividendPayments       DividendPayment[]
+  aumFeeCharges          AumFeeCharge[]
+}
+
+model InvestmentOrder {
+  id                     String    @id @default(cuid())
+  reference              String    @unique
+  senderId               String
+  sender                 Sender    @relation(fields: [senderId], references: [id])
+  investmentAccountId    String
+  investmentAccount      InvestmentAccount @relation(fields: [investmentAccountId], references: [id])
+  orderDirection         String    @default("BUY")
+  status                 String    @default("pending")
+  ticker                 String
+  exchange               String
+  companyName            String    @default("")
+  assetType              String    @default("equity")
+  orderType              String    @default("market")
+  sharesRequested        Float     @default(0)
+  sharesFilled           Float     @default(0)
+  priceLocal             Float     @default(0)
+  currencyLocal          String    @default("")
+  limitPriceUsd          Float?
+  fillPriceUsd           Float?
+  fillPriceLocal         Float?
+  amountGbp              Float     @default(0)
+  investmentAmountUsd    Float     @default(0)
+  fxRateGbpUsd           Float     @default(0)
+  fxMarginPct            Float     @default(1.5)
+  fxFeeGbp               Float     @default(0)
+  tradingFeeGbp          Float     @default(0)
+  totalChargedGbp        Float     @default(0)
+  totalChargedUsd        Float     @default(0)
+  quoteExpiresAt         DateTime?
+  paystackRef            String?
+  paystackTxId           String?
+  paymentConfirmedAt     DateTime?
+  mystocksDepositId      String?
+  mystocksOrderId        String?
+  submittedAt            DateTime?
+  filledAt               DateTime?
+  settlementDate         DateTime?
+  settled                Boolean   @default(false)
+  settledAt              DateTime?
+  dividendPayments       String    @default("[]")
+  failedAt               DateTime?
+  failureReason          String?
+  refundedAt             DateTime?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+}
+
+model WatchlistItem {
+  id              String    @id @default(cuid())
+  senderId        String
+  sender          Sender    @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  ticker          String
+  exchange        String
+  companyName     String    @default("")
+  addedPrice      Float     @default(0)
+  priceAlertAbove Float?
+  priceAlertBelow Float?
+  alertTriggered  Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  @@unique([senderId, ticker, exchange])
+}
+
+model DividendPayment {
+  id                     String    @id @default(cuid())
+  senderId               String
+  sender                 Sender    @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  investmentAccountId    String
+  investmentAccount      InvestmentAccount @relation(fields: [investmentAccountId], references: [id])
+  ticker                 String
+  exchange               String
+  companyName            String    @default("")
+  sharesHeld             Float     @default(0)
+  dividendPerShareLocal  Float     @default(0)
+  amountLocal            Float     @default(0)
+  currencyLocal          String    @default("")
+  amountUsd              Float     @default(0)
+  amountGbp              Float     @default(0)
+  withheldTaxPct         Float     @default(0)
+  withheldTaxAmountUsd   Float     @default(0)
+  netUsd                 Float     @default(0)
+  exDate                 DateTime?
+  payDate                DateTime?
+  receivedAt             DateTime?
+  reinvested             Boolean   @default(false)
+  reinvestOrderId        String?
+  creditedToWallet       Boolean   @default(false)
+  mystocksDividendId     String?
+  createdAt              DateTime  @default(now())
+}
+
+model AumFeeCharge {
+  id                   String    @id @default(cuid())
+  senderId             String
+  investmentAccountId  String
+  investmentAccount    InvestmentAccount @relation(fields: [investmentAccountId], references: [id])
+  periodStart          DateTime
+  periodEnd            DateTime
+  aumValueUsd          Float     @default(0)
+  feeRatePct           Float     @default(0.125)
+  feeAmountUsd         Float     @default(0)
+  chargedAt            DateTime?
+  status               String    @default("pending")
+  createdAt            DateTime  @default(now())
+}
+
+model ServiceWaitlist {
+  id         String   @id @default(cuid())
+  senderId   String?
+  sender     Sender?  @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  serviceKey String
+  email      String
+  createdAt  DateTime @default(now())
+  @@unique([senderId, serviceKey])
+}
+
+model BusinessAccount {
+  id                       String    @id @default(cuid())
+  companyName              String
+  companyRegNumber         String
+  countryOfIncorporation   String
+  industry                 String    @default("")
+  signatoryName            String
+  email                    String    @unique
+  phone                    String    @default("")
+  monthlyVolumeUsd         Float     @default(0)
+  useCase                  String    @default("")
+  kybStatus                String    @default("pending")
+  kybReviewedById          String?
+  kybReviewedByName        String    @default("")
+  kybReviewedAt            DateTime?
+  feePct                   Float     @default(1.0)
+  dailyLimitUsd            Float     @default(100000)
+  accountStatus            String    @default("pending")
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+  transactions             BusinessTransaction[]
+}
+
+model BusinessTransaction {
+  id                   String          @id @default(cuid())
+  reference            String          @unique
+  businessAccountId    String
+  businessAccount      BusinessAccount @relation(fields: [businessAccountId], references: [id])
+  status               String          @default("quote")
+  sellCurrency         String
+  sellAmount           Float
+  buyCurrency          String
+  buyAmount            Float           @default(0)
+  fxRate               Float           @default(0)
+  marginPct            Float           @default(0)
+  marginAmount         Float           @default(0)
+  settlementMethod     String          @default("")
+  beneficiaryName      String          @default("")
+  beneficiaryBank      String          @default("")
+  beneficiaryAccount   String          @default("")
+  beneficiarySwift     String          @default("")
+  beneficiaryCountry   String          @default("")
+  paystackRef          String?
+  paystackTxId         String?
+  totalChargedUsd      Float           @default(0)
+  providerReference    String?
+  providerInstructedAt DateTime?
+  settledAt            DateTime?
+  failedAt             DateTime?
+  failureReason        String          @default("")
+  amlResult            String          @default("pending")
+  purposeOfPayment     String          @default("")
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+}
+
+model ChinaCorridorWaitlist {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  country   String
+  createdAt DateTime @default(now())
+  @@unique([email])
+}
+
+model ChinaCorridorPayment {
+  id                  String   @id @default(cuid())
+  reference           String   @unique
+  senderId            String?
+  sender              Sender?  @relation(fields: [senderId], references: [id])
+  status              String   @default("pending")
+  amountSend          Float
+  currencyFrom        String
+  fxRate              Float
+  cnyAmount           Float
+  feePct              Float    @default(0.8)
+  feeAmount           Float
+  supplierName        String   @default("")
+  supplierBankName    String   @default("")
+  supplierAccountNumber String @default("")
+  supplierBankCode    String   @default("")
+  deliveryMethod      String   @default("bank_transfer")
+  supplierAlipayAccount String @default("")
+  purposeOfPayment    String   @default("goods_payment")
+  invoiceUrl          String?
+  paystackRef         String?
+  paystackTxId        String?
+  paymentConfirmedAt  DateTime?
+  completedAt         DateTime?
+  failedAt            DateTime?
+  failureReason       String?
+  createdAt           DateTime @default(now())
+}
+
+model Referral {
+  id            String   @id @default(cuid())
+  referrerId    String?
+  refereeEmail  String
+  refereeId     String?
+  code          String   @unique
+  status        String   @default("pending")  // pending|converted|rewarded
+  rewardType    String   @default("fee_waiver")
+  rewardAmount  Float    @default(0)
+  createdAt     DateTime @default(now())
+  convertedAt   DateTime?
+  referrer      Sender?  @relation("Referrer", fields: [referrerId], references: [id])
+  referee       Sender?  @relation("Referee", fields: [refereeId], references: [id])
+}
+
+model GrowthEvent {
+  id          String   @id @default(cuid())
+  senderId    String?
+  eventType   String
+  metadata    String   @default("{}")  // JSON string
+  triggeredAt DateTime @default(now())
+  sender      Sender?  @relation(fields: [senderId], references: [id])
+}
+
+model GiftVoucher {
+  id               String    @id @default(cuid())
+  reference        String    @unique
+  senderId         String?
+  merchantId       String?
+  occasion         String    @default("")
+  amountGbp        Float
+  amountLocal      Float     @default(0)
+  currencyLocal    String    @default("")
+  fxRate           Float     @default(0)
+  voucherFeeGbp    Float     @default(1.5)
+  totalChargedGbp  Float     @default(0)
+  recipientName    String    @default("")
+  recipientPhone   String    @default("")
+  recipientEmail   String    @default("")
+  senderMessage    String    @default("")
+  deliveryMethod   String    @default("link")
+  qrCodeUrl        String    @default("")
+  status           String    @default("pending")
+  paystackRef      String?
+  issuedAt         DateTime  @default(now())
+  redeemedAt       DateTime?
+  expiresAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  sender           Sender?   @relation(fields: [senderId], references: [id])
+}
+
+model Merchant {
+  id              String   @id @default(cuid())
+  name            String
+  slug            String   @unique
+  country         String   @default("")
+  category        String   @default("")
+  logoUrl         String   @default("")
+  businessReg     String   @default("")
+  contactEmail    String   @default("")
+  payoutBankDetails String  @default("{}")
+  payoutMethods   String   @default("[]")  // JSON: [{type,country,till_number,paybill_number,...,is_primary,verified}]
+  primaryPayoutCurrency String @default("KES")
+  posType         String   @default("online")
+  isActive        Boolean  @default(false)
+  commissionPct   Float    @default(2)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model WhatsAppOptIn {
+  id        String   @id @default(cuid())
+  senderId  String
+  phone     String
+  optIn     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  sender    Sender   @relation(fields: [senderId], references: [id])
+}
+
+model DripEmailSent {
+  id          String   @id @default(cuid())
+  senderId    String
+  eventType   String
+  emailType   String
+  sentAt      DateTime @default(now())
+  sender      Sender   @relation(fields: [senderId], references: [id])
+}
+
+model SavingsCircle {
+  id               String   @id @default(cuid())
+  name             String
+  slug             String   @unique
+  organiserId      String
+  type             String   @default("chama")       // chama|esusu|susu|roscas
+  memberCount      Int      @default(0)
+  contributionAmount Float
+  contributionCurrency String @default("GBP")
+  frequency        String   @default("monthly")     // monthly|weekly
+  currentCycle     Int      @default(1)
+  nextPayoutDate   DateTime?
+  totalPot         Float    @default(0)
+  whatsappGroupId  String   @default("")
+  status           String   @default("active")      // active|paused|completed
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  members          SavingsCircleMember[]
+  payments         SavingsCirclePayment[]
+  organiser        Sender   @relation(fields: [organiserId], references: [id])
+}
+
+model SavingsCircleMember {
+  id                 String    @id @default(cuid())
+  circleId           String
+  senderId           String?
+  memberName         String
+  phone              String    @default("")
+  email              String    @default("")
+  positionInRotation Int       @default(1)
+  totalContributed   Float     @default(0)
+  lastPaymentAt      DateTime?
+  nextPaymentDue     DateTime?
+  hasReceivedPayout  Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  circle             SavingsCircle @relation(fields: [circleId], references: [id])
+  sender             Sender?      @relation(fields: [senderId], references: [id])
+}
+
+model SavingsCirclePayment {
+  id           String   @id @default(cuid())
+  circleId     String
+  memberName   String
+  amount       Float
+  currency     String   @default("GBP")
+  cycleMonth   String   @default("")
+  status       String   @default("pending")  // pending|paid|failed
+  paidAt       DateTime?
+  createdAt    DateTime @default(now())
+  circle       SavingsCircle @relation(fields: [circleId], references: [id])
+}
+
+// ─── Phase 3: AUM Engine ──────────────────────────────────────
+
+model InvestmentGoal {
+  id                    String    @id @default(cuid())
+  senderId              String
+  goalType              String    @default("wealth")  // education|property|retirement|business|wealth|legacy
+  goalName              String
+  targetAmountUsd       Float     @default(0)
+  targetDate            DateTime?
+  currentValueUsd       Float     @default(0)
+  monthlyContributionUsd Float    @default(0)
+  autoInvestEnabled     Boolean   @default(false)
+  autoInvestDayOfMonth  Int       @default(1)
+  status                String    @default("active")  // active|paused|achieved
+  achievedAt            DateTime?
+  createdAt             DateTime  @default(now())
+  sender                Sender    @relation("SenderGoals", fields: [senderId], references: [id])
+  autoInvestRules       AutoInvestRule[]
+}
+
+model AutoInvestRule {
+  id                   String    @id @default(cuid())
+  senderId             String
+  investmentAccountId  String    @default("")
+  goalId               String?
+  ticker               String
+  exchange             String
+  amountGbp            Float
+  frequency            String    @default("monthly")  // weekly|monthly|quarterly
+  dayOfMonth           Int       @default(1)
+  isActive             Boolean   @default(true)
+  nextRunAt            DateTime?
+  lastRunAt            DateTime?
+  totalInvestedGbp     Float     @default(0)
+  runCount             Int       @default(0)
+  paystackAuthCode     String    @default("")
+  createdAt            DateTime  @default(now())
+  sender               Sender    @relation("SenderAutoInvest", fields: [senderId], references: [id])
+  goal                 InvestmentGoal? @relation(fields: [goalId], references: [id])
+}
+
+// ─── Phase 3: Financial Digest ────────────────────────────────
+
+model DigestSubscription {
+  id              String   @id @default(cuid())
+  senderId        String?  @unique
+  email           String
+  firstName       String   @default("")
+  country         String   @default("")
+  whatsappOptIn   Boolean  @default(false)
+  frequency       String   @default("weekly")
+  marketFocus     String   @default("all")
+  isActive        Boolean  @default(true)
+  isPro           Boolean  @default(false)
+  paystackSubCode String   @default("")
+  joinedAt        DateTime @default(now())
+  lastSentAt      DateTime?
+  source          String   @default("platform") // platform|digest_website|referral
+  sender          Sender?  @relation("SenderDigest", fields: [senderId], references: [id])
+}
+
+model DigestIssue {
+  id              String       @id @default(cuid())
+  issueNumber     Int          @default(1)
+  slug            String       @unique
+  issueDate       DateTime     @unique
+  status          String       @default("draft") // draft|published
+  subject         String
+  coverHeadline   String       @default("")
+  coverImageUrl   String       @default("")
+  podcastUrl      String       @default("")
+  htmlContent     String       @default("")
+  emailHtml       String       @default("")
+  whatsappText    String       @default("")
+  sentCount       Int          @default(0)
+  openRate        Float        @default(0)
+  clickRate       Float        @default(0)
+  createdAt       DateTime     @default(now())
+  publishedAt     DateTime?
+  stories         DigestStory[]
+  sponsorSlots    SponsoredDigestSlot[]
+}
+
+model DigestStory {
+  id              String   @id @default(cuid())
+  issueId         String
+  slug            String
+  section         String   // cover_story|market_pulse|company_spotlight|opportunity|diaspora_story|podcast
+  title           String
+  subtitle        String   @default("")
+  bodyHtml        String   @default("")
+  bodyText        String   @default("")
+  author          String   @default("AfriSpine Digest AI")
+  imageUrl        String   @default("")
+  readTime        Int      @default(5)
+  sortOrder       Int      @default(0)
+  seoTitle        String   @default("")
+  seoDescription  String   @default("")
+  meta            String   @default("{}") // JSON: extra data per section type
+  createdAt       DateTime @default(now())
+  issue           DigestIssue @relation(fields: [issueId], references: [id])
+  @@unique([issueId, slug])
+}
+
+model SponsoredDigestSlot {
+  id              String        @id @default(cuid())
+  issueDate       DateTime?
+  sponsorName     String
+  sponsorLogoUrl  String        @default("")
+  adHeadline      String        @default("")
+  adBody          String        @default("")
+  adCtaText       String        @default("")
+  adCtaUrl        String        @default("")
+  impressions     Int           @default(0)
+  clicks          Int           @default(0)
+  paidAmountUsd   Float         @default(0)
+  status          String        @default("pending_review") // pending_review|approved|rejected|published
+  aiReviewResult  String        @default("{}") // JSON
+  createdAt       DateTime      @default(now())
+  digestIssueId   String?
+  digestIssue     DigestIssue?  @relation(fields: [digestIssueId], references: [id])
+  advertiserId    String?
+  advertiser      DigestAdvertiser? @relation(fields: [advertiserId], references: [id])
+}
+
+model DigestAdvertiser {
+  id                String       @id @default(cuid())
+  companyName       String
+  logoUrl           String       @default("")
+  industry          String       @default("")
+  contactEmail      String
+  contactName       String       @default("")
+  paystackCustomerId String      @default("")
+  totalSpendUsd     Float        @default(0)
+  ads               SponsoredDigestSlot[]
+  payments          DigestAdPayment[]
+  createdAt         DateTime     @default(now())
+}
+
+model DigestAdPayment {
+  id              String   @id @default(cuid())
+  advertiserId    String
+  adId            String
+  package         String   // single|monthly|quarterly|ipo_feature
+  amountUsd       Float
+  paystackRef     String   @default("")
+  status          String   @default("pending") // pending|completed|failed
+  createdAt       DateTime @default(now())
+  advertiser      DigestAdvertiser @relation(fields: [advertiserId], references: [id])
+}
+
+model DigestAnalytics {
+  id           String   @id @default(cuid())
+  issueId      String
+  eventType    String   // impression|click|share|subscribe
+  source       String   @default("") // email|web|whatsapp|organic
+  metadata     String   @default("{}") // JSON
+  createdAt    DateTime @default(now())
+}
+
+// ─── Phase 3: Achievement Cards ───────────────────────────────
+
+model AchievementCard {
+  id           String   @id @default(cuid())
+  senderId     String
+  cardType     String   // stock_purchase|first_send|ipo_registration|savings_milestone|dividend_received
+  cardData     String   @default("{}")  // JSON
+  imageUrl     String   @default("")
+  sharedCount  Int      @default(0)
+  createdAt    DateTime @default(now())
+  sender       Sender   @relation("SenderCards", fields: [senderId], references: [id])
+}

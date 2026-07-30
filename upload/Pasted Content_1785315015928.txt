@@ -1,0 +1,299 @@
+# Brief for Zai — Afrispine: Stabilize, Secure, Add Two Things Only
+
+## 🚨 STATUS UPDATE — login/signup is fixed; two new precise findings below need attention next
+
+The Prisma schema drift root-caused above is confirmed resolved: login, signup, admin loading, and Fincra key persistence are all working. Good, verified progress. **Two new issues have surfaced via the API health dashboard Zai built (a genuinely useful addition — keep it and treat it as the source of truth going forward, not status reports.)** See Section 7.4 for the precise diagnosis of both — neither is fixed yet, and neither should be marked as "connected" or "resolved" until the health dashboard itself shows green, not before.
+
+---
+
+
+*(Refined against the live site, afri-spine.com. Positioning confirmed: AfriSpine is a diaspora-to-home platform — the African diaspora abroad sending financial support, paying bills, and investing in African markets/stocks back home, on one unified rail. That "diaspora" framing changes the risk profile and the opportunity below, so it's built into this version. Note: the site is a client-rendered app — I could only confirm positioning from metadata, not walk the actual screens. Share a sitemap, screen recordings, or an app-store listing and I can go further.)*
+
+## 0. The directive, stated plainly
+
+We are past the "build features" phase. From now on the priority is **stability, security, and simplicity** — not expansion. We are explicitly freezing new features except the two listed in Sections 3 and 4. If you (Zai) see an opportunity for something else, log it as a backlog idea — do not build it now. Every screen, flow, and feature that already exists needs to earn its complexity, or it gets simplified or removed. Users need to get fluent with what exists before we add anything else.
+
+Please treat this document as the working spec. Where you don't have an answer yet (e.g. marketing engine status), flag it explicitly rather than assuming.
+
+---
+
+## 1. Full Platform Audit — scope and deliverables
+
+### A. Security audit
+- **Auth**: password policy, session/token lifetime and rotation, JWT handling, brute-force protection on login.
+- **API security**: rate limiting, input validation, injection testing (SQL/NoSQL/command), authorization checks on every endpoint — specifically IDOR risk on send/pay/invest endpoints (can user A ever touch user B's wallet, transaction, or KYC record by manipulating an ID?).
+- **Data protection**: encryption at rest and in transit, PII handling, where KYC documents are stored and who can access them.
+- **Payment security**: PCI-DSS scope, tokenization of card/mobile money credentials (never store raw PAN or mobile money PINs), webhook signature verification for every payment provider callback.
+- **Cross-border / diaspora-specific compliance** (this is the part generic fintech audits miss): AfriSpine sits across at least two regulatory regimes per user — the sending country (money transmitter licensing, e.g. US MSB/state licenses, UK FCA, EU PSD2) and the receiving country (CBK and equivalent regulators across whichever African markets are live). Confirm: sanctions/PEP screening runs on both sender and recipient, not just the account holder; dual KYC is enforced where recipients aren't the account holder (common in remittance — the sender is verified, but is the recipient?); FX conversion logic and spread disclosure is transparent and logged per transaction; transaction monitoring thresholds match each corridor's actual AML reporting requirements, not one global default.
+- **Access control**: role-based permissions, admin panel exposure, especially anything reachable without proper auth.
+- **Dependency audit**: outdated libraries, known CVEs in the stack.
+- **Deliverable**: a vulnerability report ranked Critical / High / Medium / Low, each with a remediation plan and timeline.
+
+### B. Stress and performance testing
+- Load test the three money-moving paths (send, pay, invest) under concurrent users — find the real TPS ceiling, not the assumed one.
+- Failure-mode testing: what happens when a payment provider (M-Pesa, Airtel Money, card processor) times out or double-calls mid-transaction? Confirm idempotency on every payment endpoint.
+- Concurrency testing on wallet balance updates — this is the single most important test. Race conditions here mean double-spend or lost funds.
+- Retry/queue behavior for failed transactions — do they resolve safely, or can they get stuck half-completed?
+- **Deliverable**: performance report with current capacity ceiling and bottlenecks.
+
+### C. Functional / regression testing
+- End-to-end tests across send, pay, invest, AUM fee computation, ad delivery, subscription billing.
+- Edge cases: partial failures, currency rounding, refunds and reversals, expired sessions mid-transaction.
+
+### D. UX/UI and user-journey audit
+- Map the actual current journey end to end: signup → KYC → fund wallet → send/pay/invest → withdraw.
+- Flag friction points, redundant screens, inconsistent components, dead ends.
+- Identify anything that's built but not surfaced to users — this is where you confirm the marketing engine / UGC question below.
+- For every screen, ask: does removing this hurt the user, or just us? Simplify aggressively.
+- **Deliverable**: journey map plus a prioritized list of UI simplifications.
+
+### E. Code health cleanup
+- Dead code, duplicated logic, unused feature flags, orphaned endpoints.
+- Consolidate before anything new gets added.
+- **Deliverable**: tech debt list, prioritized by risk and effort.
+
+---
+
+## 2. Explicit question for Zai — marketing engine / UGC status
+
+We need a direct answer, not an assumption: **was the automated marketing engine and UGC feature actually built and deployed, or does it only exist in planning?** If it's live, audit it as part of Section 1D and tell us its current performance. If it isn't live, say so clearly — that gap directly affects Section 4 below, since the matching engine is meant to feed it.
+
+---
+
+## 3. Approved addition #1 — Security & 2FA
+
+- Multi-factor login: OTP via SMS and an authenticator app (TOTP), plus biometric where the device supports it.
+- **Step-up authentication** for high-risk actions specifically: large transfers, adding/changing a bank or mobile money account, login from a new device. Do not require 2FA for low-risk actions like checking a balance — friction has to be proportional to risk.
+- Account recovery flow that is convenient but resistant to social engineering (this is usually where 2FA gets defeated in practice — spend real effort here).
+- New-device / new-location login alerts, sent immediately.
+- **Deliverable**: implementation, plus a short threat model showing what this 2FA design does and doesn't protect against.
+
+---
+
+## 4. Approved addition #2 — Demand–Supply Matching Engine
+
+**Purpose**: find users who are actually likely to invest (demand), and route them to the right investment product and messaging (supply) on Afrispine — instead of marketing broadly to everyone.
+
+Given AfriSpine's actual model, the highest-signal opportunity is this: **a remittance sender is a pre-qualified investment lead.** Someone sending money home consistently has already demonstrated three things a cold lead hasn't — disposable income, an active emotional/financial tie to a specific country or even specific family back home, and trust in the platform to move real money. That's a fundamentally warmer audience than generic ad targeting, and it's the core insight the matching engine should be built around.
+
+Core components:
+1. **Signal collection** — remittance frequency, amount, and consistency (senders on a stable monthly rhythm are a different segment than one-off senders); which country/corridor they send to (maps directly to which African market/stock products are relevant to them); bill-pay usage for family (another trust and consistency signal); balance trends and idle-cash patterns; prior engagement with investment content; session behavior (viewing a product repeatedly without committing is a strong signal).
+2. **Propensity scoring** — a model that ranks users by likelihood to invest, segmented by corridor/market where possible, updated continuously rather than as a one-off batch.
+3. **Routing logic** — matches high-propensity users to the specific product and offer most relevant to them (e.g. a consistent Kenya-corridor sender sees Kenya-market products first), not a generic campaign.
+4. **Feedback loop** — track actual conversion against predicted propensity, retrain regularly. Without this loop, the model decays and this becomes another unused feature.
+5. **Integration with the marketing engine/UGC** (pending answer to Section 2) — this is where diaspora finance apps win or lose trust. UGC in this context works best as real senders/investors from the same community or corridor sharing their own experience — "people like me, sending to the same place I do, investing here" — not generic testimonials. A high-propensity user should automatically receive UGC and campaign content matched to their corridor, so the pipeline is: *find demand → route to supply → convert with content from someone they'd actually trust.*
+
+This is deliberately the only new "intelligence" feature we're adding right now — it directly supports revenue (Afrispine investment conversions), which is why it's in scope despite the freeze.
+
+---
+
+## 5. Revenue reconciliation — how AUM, ads, subscriptions, and other non-transactional revenue actually reach our account
+
+This needs a clear answer, and right now the honest answer is probably "it's not fully unified." Here's the thinking and what we want Zai to build toward:
+
+**One likely missing revenue stream worth naming explicitly**: on a cross-border diaspora platform, the **FX spread** (the margin between the rate AfriSpine gets and the rate the user is shown) is often the single largest and least visible revenue source — larger than the flat transaction fee in many remittance businesses. Confirm with Zai whether this is currently tracked as its own reconciled revenue line, or whether it's invisibly bundled into "transaction revenue" without being broken out. If it's not broken out, that's a gap: you can't see if margin is shrinking on a given corridor if it's not measured separately.
+
+**The problem**: send/pay/invest revenue (transaction fees, and FX spread as above) likely already settles through your existing payment processor flow, corridor by corridor. But AUM fees, ad revenue, and subscription revenue are structurally different — they don't originate from a single transaction event, so they need their own settlement path:
+
+- **AUM fees**: normally accrue against the AUM balance daily or monthly, not per-transaction. This needs a scheduled "fee sweep" job that calculates the accrued fee, deducts it from the managed balance, and moves it to the operating account on a fixed cycle (e.g. monthly).
+- **Ad revenue**: paid out by the ad network or direct advertiser on their schedule (commonly monthly), landing in a separate collection account — not something the app controls directly. This needs to be reconciled against what the platform actually logged (impressions/clicks/campaigns served) to catch discrepancies.
+- **Subscription revenue**: recurring billing via whichever processor is integrated (e.g. a card/mobile money processor), auto-debited on the billing cycle and settled per that processor's own schedule.
+
+**What we want built — a single treasury/reconciliation layer**:
+- One internal ledger that normalizes every revenue stream (transaction fees, AUM fees, ad revenue, subscription revenue) into a common entry format, regardless of source.
+- Daily automated reconciliation: what the platform believes it earned vs. what actually landed in the bank/mobile money account, with alerts on any mismatch.
+- Scheduled automated sweeps from any holding/collection account into the primary operating account, rather than manual transfers.
+- A single dashboard showing revenue by stream, in near-real time, so "total revenue recognized" and "total cash confirmed received" are always visible side by side.
+- Given AfriSpine operates across multiple sending countries and multiple African receiving markets: settlement needs to be tracked **per corridor**, not just per revenue type — a reconciliation layer that shows "total revenue" without breaking it down by corridor will hide which corridors are actually profitable after FX cost, processor fees, and compliance overhead. This should account for mobile money rails (e.g. M-Pesa Paybill/Till) on the receiving side alongside card/bank processors on the sending side.
+
+**Ask Zai to document**: the current settlement path for each revenue stream as it exists today, then propose the unified reconciliation architecture above as a build item — but only after the audit in Section 1 is complete. This is infrastructure, not a user-facing feature, so it doesn't conflict with the feature freeze.
+
+---
+
+## 6. Investment process audit — will the Dangote IPO actually sell on AfriSpine?
+
+This is the highest-stakes test of the whole platform, so it gets its own section. Here's the current state of the actual IPO, confirmed as of this writing: the Dangote Petroleum Refinery & Petrochemicals listing on the Nigerian Exchange (NGX) is expected to be **Africa's largest-ever IPO** — reporting points to a raise of roughly <cite index="21-1">$4 billion at a $40 billion valuation</cite>, with some estimates going as high as <cite index="24-1">$5 billion raised at up to a $50 billion valuation</cite>. Demand is already visibly cross-cutting — <cite index="25-1">reporting describes a Nigerian tycoon preparing a $100 million investment alongside a 28-year-old security guard planning to invest money borrowed from his grandmother, and a diaspora investor in Texas lining up a $3,000 stake</cite>, which is exactly AfriSpine's target user in miniature. As of this writing, <cite index="27-1">no official IPO date, price range, allocation timetable, or SEC-approved prospectus has been published yet</cite>, so there's still time to get this right — but the window will move fast once it opens, and this is not a product where "we'll patch it after launch" is acceptable. Real money, real allotments, real refunds, real reputational risk.
+
+Ask Zai to walk through and confirm each of the following, explicitly, not just "it works":
+
+1. **Confirmed model: AfriSpine routes through a partner broker, not its own CSCS/NGX access.** That's a normal and sensible choice — building a broker-dealer license is not a diaspora fintech's job. But it means AfriSpine's entire Dangote experience is only as strong as this one partner relationship, so the audit needs to interrogate the partnership itself, not just AfriSpine's own code.
+
+   **Take the historical precedent seriously — this has already happened at this scale in East Africa.** Kenya's 2008 Safaricom IPO is the closest real analogue to what Dangote could become, and it's worth naming specifically because of what actually went wrong operationally, not just financially: the offer was <cite index="43-1">oversubscribed by 453% overall, with the local retail pool oversubscribed by 669.7%</cite>, producing <cite index="40-1">an average allocation of just 21% of what investors had actually paid for</cite>. The operational strain was visible in real time — <cite index="38-1">long queues formed at brokerage firms and investment banks, with people travelling from rural areas to apply, while banks offered loans to help people buy in</cite>. And the refund mechanics broke down badly enough that <cite index="39-1">investors were still waiting for refunds eleven years later, with unclaimed money sitting at a bank amid unresolved reconciliation and suspected fraud around subscription cheques</cite>. Read that last part again: **a well-known, well-run IPO in a market with a functioning central exchange still left retail investors unpaid for over a decade because the refund/reconciliation layer wasn't built to survive the volume.** Dangote is being pitched at up to 10x Safaricom's raise, with diaspora-app access making participation frictionless in a way 2008 never had. If anything, the failure mode risk is higher here, not lower — assume this precedent, not a best-case scenario, when pressure-testing AfriSpine's own readiness.
+
+   **Map the full chain, because "the partner" is not one link — it's several, and most of them aren't AfriSpine's or even the partner's to control:**
+   AfriSpine's app → partner broker's order system → the designated receiving bank(s) that actually collect and confirm subscription funds → the share registrar that processes applications → CSCS (national clearing) → NGX itself. A true bottleneck at Safaricom-2008 scale is as likely to happen at the registrar or receiving-bank layer — genuinely national infrastructure — as at the partner broker's own systems. Ask Zai to get the partner to map this full chain explicitly, because "our partner's API held up fine" is a hollow assurance if the registrar behind them buckled.
+
+   **A layered liability framework, so responsibility doesn't quietly default to "AfriSpine's problem" when something breaks:**
+   - **Layer 1 — AfriSpine's own platform** (order capture, funds collection, submission to the partner in time): this is 100% AfriSpine's responsibility and should be held to zero-tolerance, bank-grade reliability. No excuses here.
+   - **Layer 2 — the partner broker's own systems and their submission to registrar/CSCS**: this needs a real contractual SLA — documented capacity commitments for the specific subscription window, and an explicit indemnification clause covering what happens if an order AfriSpine delivered on time and correctly still fails because of a partner-side fault. Get this in writing before the window opens, not after a failure.
+   - **Layer 3 — national infrastructure (registrar, CSCS, NGX, receiving banks)**: this is systemic risk that neither AfriSpine nor its partner fully controls, and Safaricom 2008 shows it's exactly where things broke down hardest. This needs to be disclosed plainly in AfriSpine's own terms of service — "your order may be delayed or affected by processing capacity at the exchange, registrar, or clearing systems, outside our control" — so users have realistic expectations going in, rather than AfriSpine silently absorbing blame for a systemic failure it never caused.
+   - **Practical mitigation**: push the partner to commit to an internal cutoff meaningfully earlier than NGX's official window close — building in a buffer rather than accepting orders up to the literal wire — and ask whether AfriSpine carries any errors & omissions / professional indemnity coverage relevant to this specific exposure, given the amounts involved.
+
+   **On the specific claim that AfriSpine is now a MyStocks partner:** I checked, and MyStocks Africa does run a genuine "Partner API" business — a real, documented product letting fintechs embed African stock trading (including a Pre-IPO hub) via API, covering NGX among other exchanges, with sandbox and production key tiers. So it's plausible this partnership is real. But a few things from what I found should be verified directly with Zai before anyone treats it as settled, not assumed from a document:
+   - **The exact endpoint doesn't match.** The document you showed me references `GET https://mystocks.africa/api/v1/opportunities`. What I could find of MyStocks' actual documented API uses a `/api/v1/partner/...` or `/api/sandbox/v1/partner/...` namespace (e.g. `partner/stocks`, `partner/trade`, `partner/etfs`) — not an `/opportunities` endpoint. That may just mean I didn't find every endpoint, or it may mean whatever produced that "Part 6" document got the specifics wrong. Either way, get Zai to pull the *actual current* endpoint straight from MyStocks' own partner docs and confirm the Dangote pre-IPO listing is really reachable through it, rather than trusting a document's paraphrase of an API.
+   - **MyStocks is not itself the licensed executor — there's another layer underneath it.** MyStocks states it operates under an FSCA (South African) license held by TanFox (Pty) Ltd, with MyStocks as TanFox's Juristic Representative — and that actual order execution in each local market, including Nigeria, is handled by separate "licensed broker-dealer partners" that MyStocks contracts with. That means the real chain is now: **AfriSpine → MyStocks (SA-regulated API layer) → an unnamed licensed Nigerian broker-dealer → registrar/CSCS/NGX.** A South African FSCA license does not itself authorize trading on the NGX — get Zai to have MyStocks name their actual Nigerian execution partner, and independently confirm that entity's SEC Nigeria/NGX/CSCS standing, rather than accepting "we're regulated" as covering the whole chain.
+   - **Verify the license claim independently, not from MyStocks' own marketing pages.** The FSP 52040 / TanFox claim appears consistently across MyStocks' own site, but that's their own copy, repeated. The JSE publishes a public broker/FSP verification tool at jse.co.za/verify-a-broker-or-fsp, and the FSCA maintains its own public register — either should be checked directly rather than taking a vendor's self-description at face value, especially before real user funds depend on it.
+   - **Treat the marketing language with a healthy discount.** Phrases like "unified liquidity nodes," "institutional-grade," and "settlement via international wire or blockchain stablecoins" read as fairly standard startup-marketing copy, repeated near-verbatim across dozens of their pages. That's not disqualifying on its own, but it's a reason to lean on hard verification (licenses, named sub-partners, actual contract terms) rather than the pitch when this much money is on the line.
+
+
+   - **Partner due diligence**: is the partner broker fully licensed and CSCS-cleared, and does it have a credible track record handling large-scale retail subscription volume (not just routine trading)? Given this is expected to be Africa's largest-ever IPO, ask what the *partner's own* capacity and stress commitments are — AfriSpine's platform being fast is meaningless if the partner's pipe to NGX/CSCS chokes under volume.
+   - **Integration reliability**: is the AfriSpine-to-partner connection built on webhooks, polling, or manual reconciliation? What's the partner's documented uptime/SLA during the specific subscription window, and does AfriSpine have a fallback if the partner's API degrades at the worst possible moment (the last hour before close)?
+   - **Contractual liability**: if an order is placed on AfriSpine but the partner fails to submit it to NGX in time (partner outage, partner error, partner capacity limit), who is responsible — AfriSpine or the partner — and is that actually documented, not assumed? Users will blame AfriSpine regardless of where the fault sits, so this needs a real answer before the window opens, not after a failure.
+   - **Sub-ledger of truth**: since shares will sit inside the partner's omnibus/CSCS structure, AfriSpine needs its own accurate internal sub-ledger mapping each user to their real allotment and refund — the partner is the ultimate custodian, but AfriSpine's app is the source users see and trust, so those two records must reconcile automatically, continuously, not just at the end.
+   - **Same credential-persistence risk applies here** — confirm whatever API keys/credentials authenticate AfriSpine to the partner broker are stored with the same rigor demanded in Section 7 below. If Fincra sandbox keys weren't persisting reliably, the partner-broker credentials need to be checked for the identical failure mode, given the stakes are far higher here.
+
+2. **KYC/subscription eligibility** — does onboarding actually collect what NGX/SEC Nigeria requires to subscribe to a public offering (this is typically stricter than everyday remittance KYC — BVN/NIN linkage, CSCS clearing house number, etc.), and is that requirement enforced *before* a user is allowed to place an order, not discovered after? Confirm this data is also what the partner broker actually requires on their side — a mismatch between what AfriSpine collects and what the partner needs will surface as failed orders at the worst time.
+
+3. **Funds flow and timing under a hard deadline** — this is where things most commonly break under real pressure. Confirm: funds collected in the user's currency are converted and delivered into the broker/CSCS escrow *before the subscription window closes*, with real margin for delay, not a best-case assumption. Confirm exactly what happens to a user's money if the order is placed but funds settle late, if the IPO is oversubscribed and only partially allotted, if the IPO is delayed or cancelled, or if the user cancels before the window shuts — and confirm refunds route back automatically, not via a manual support ticket.
+
+4. **Allotment reconciliation** — after NGX processes allotments, is there an automated way to reconcile shares requested vs. shares allotted vs. cash to refund, per user? Given the retail interest already being reported at this scale, this cannot be a spreadsheet exercise — it will fail under volume exactly when it matters most.
+
+5. **Custody and the post-IPO experience** — confirm what the partner broker's omnibus/CSCS structure actually looks like, and that AfriSpine's own sub-ledger (per point 1 above) gives each user an accurate, real-time view of their holding — not a static confirmation screen. Reporting suggests this listing may carry USD dividends — confirm dividend crediting from the partner is automated end-to-end, and that shares can eventually be sold or transferred without a support ticket.
+
+6. **IPO-specific load testing** — this needs its own war-game inside Section 1B, separate from normal daily-transaction stress testing, because the load shape is different: a hard deadline, a compressed window, and a flood of first-time investors — and now, a hard dependency on the partner broker's own capacity. Ask Zai directly: what happens if tens of thousands of users try to subscribe in the final hour before the window closes, and the partner's API slows down at the same time?
+
+7. **Status transparency** — given a large share of expected demand is first-time investors, the flow needs explicit status states at every stage (order placed → funds received → submitted to partner broker → submitted to NGX → allotment confirmed → refund issued if applicable), not silence or a spinner during what will likely be a multi-day settlement process. Ambiguity here is what generates panic and support tickets on a deal this size.
+
+8. **Build it as a reusable module, not a one-off** — Dangote is the immediate test case, but confirm the subscription flow is a generalized "IPO/offer" module built against the partner's API in a way that will work for the next listing too, not something hardcoded to this one deal.
+
+---
+
+### 6.1 The flow Zai needs to cement — non-custodial, indirect access via MyStocks
+
+This is the architecture to confirm and lock down, in order. It applies to the live Safaricom test today and has to hold for Dangote later — the two are the same flow, one is just lower-stakes to get wrong first.
+
+**The four-layer chain, and what each layer is and isn't allowed to touch:**
+1. **AfriSpine** — UX, KYC capture and assertion, payment/FX collection, order origination, and a *read-only* dashboard mirroring the user's real position. AfriSpine never advises, never executes, never holds securities, and — critically — never holds investment funds as its own asset, not even transiently.
+2. **MyStocks** — the regulated API/routing layer (via TanFox's FSCA license), aggregating market access and accepting AfriSpine's asserted KYC per their documented model.
+3. **The local licensed broker** — a different named entity per market: one for Kenya/NSE (relevant to the live Safaricom test), a separate one for Nigeria/NGX (relevant to Dangote). Each must be independently confirmed against that country's own securities regulator (Capital Markets Authority for Kenya, SEC Nigeria for NGX) — a South African FSCA license does not itself authorize either.
+4. **The exchange/CSCS/registrar** — where legal ownership and settlement actually happen.
+
+**The non-custodial test to apply to the current pre-funded flow, right now:** ask Zai to answer, precisely — when a user pre-funds the $100 Safaricom test, does that money land in an account AfriSpine controls (even briefly, even labeled a "wallet"), or does it land directly in a MyStocks-controlled, user-tagged, segregated account? If it's the former, that is custody in substance regardless of what it's called internally, and it's the single biggest regulatory exposure in the whole flow — it risks pulling AfriSpine into custodian/securities-holding obligations it isn't licensed for, on top of whatever money-transmission license it already operates under.
+
+**The fix to require, regardless of which answer comes back:**
+- Collapse the gap between "user pays" and "funds are tagged to MyStocks" as close to zero as possible — a true pass-through, not a hold-and-batch model.
+- If a wallet-style pre-funding UX is kept for product reasons, that balance must sit in a properly segregated account held by a regulated party (e.g. AfriSpine's existing licensed payment partner, in a designated client/trust account) — never AfriSpine's own operating balance. This is the same client-money-segregation principle regulated payment institutions already have to follow; it isn't a new concept, it just has to actually be implemented this way.
+- Every unit of pre-funded money needs a clear, timestamped state at all times: collected → in transit to MyStocks → confirmed received by MyStocks → order placed → filled/refunded. If Zai can't produce that state trail today for the $100 Safaricom test, that's the first thing to fix, before Dangote, because it's the same trail that has to survive IPO-scale volume later.
+
+**Formalize AfriSpine's legal role as an introducer, not a dealer.** Get this in writing with MyStocks/TanFox: AfriSpine markets, onboards, and passes KYC — it does not "render a financial service" in the advice or dealing sense. This determines what AfriSpine's own marketing, UGC, and matching-engine output (Sections 2 and 4) are legally allowed to say — informational and risk-disclosed, never advisory-sounding.
+
+**Before Dangote specifically**, require written, named confirmation of the Nigerian execution broker and their SEC Nigeria/NGX/CSCS standing — the Safaricom test currently running proves the Kenya leg of this chain works (or reveals if it doesn't); it says nothing about the Nigeria leg, which is a separate broker relationship that has to be verified on its own.
+
+---
+
+### 6.2 The recommended architecture — a proven pattern, not a hypothetical
+
+Here is the concrete, working precedent to build against, found while checking Kestrel: **Safaricom already runs this exact non-custodial model, live, in Kenya, today.** Safaricom's "Ziidi Trader" product lets users buy NSE shares via M-Pesa without opening their own CDSC account — <cite index="92-1">trading happens through an omnibus account, where Safaricom holds a CDSC account through its partner broker, Kestrel Capital, and individual trades are recorded within the platform under each customer's profile</cite>. Confirming this independently, <cite index="93-1">Ziidi Trader uses a pooled omnibus/nominee structure where shares are held on the user's behalf by the appointed broker rather than in a personal CDS account</cite>. This is not an experimental idea — it's a regulator-accepted, currently-operating structure in the same market AfriSpine is testing in. Build against it rather than inventing a new pattern from scratch.
+
+**The architecture, mapped to AfriSpine:**
+1. **Custody stays with a single named, licensed broker** — the broker (not AfriSpine, not MyStocks as an intermediary layer) holds one CDSC omnibus account. AfriSpine never becomes a custodian; it does exactly what Ziidi Trader does — hold an internal, real-time mirror of each user's position, sourced from the broker's records, never from AfriSpine's own books.
+2. **The funding gap gets closed technically, not just contractually.** This is the piece that goes beyond copying Ziidi Trader: since AfriSpine already has virtual-account infrastructure available through Fincra, use it to generate a **dedicated virtual collection account per order or per user**, pre-registered as belonging to the broker's settlement account rather than any AfriSpine-controlled account. The user's payment is then routed directly there by construction. This turns "AfriSpine is non-custodial" from a policy statement into a technical fact — the money is never capable of resting in AfriSpine's name, not even briefly, because the account it lands in was never AfriSpine's to begin with. Ask Zai to scope this specifically: can Fincra (or the broker's own bank) issue single-use or per-user virtual accounts tagged to the broker's settlement account, and can that be wired into the order flow so funding and order placement become the same atomic step?
+3. **AfriSpine's own sub-ledger is still required** (as established in Section 6.1) — it reconciles continuously against the broker's records, exactly as Ziidi Trader must be doing today. This isn't optional infrastructure; it's the only reason the mirror is trustworthy.
+4. **Legal role stays "introducer," formalized in writing** — same requirement as Section 6.1, now easier to point to precedent: Safaricom's relationship with Kestrel for Ziidi Trader is the model to ask Kestrel (or whichever broker) to replicate contractually with AfriSpine.
+
+### 6.3 Kestrel Capital — exploration for the NSE leg specifically
+
+Kestrel Capital (East Africa) Ltd is a real, verifiable entity worth pursuing directly: <cite index="75-1">founded in 1994, licensed by Kenya's Capital Markets Authority and a member of the Nairobi Securities Exchange</cite>, and <cite index="74-1">consistently ranked among the top stockbroking firms on the NSE since inception</cite>. Unlike the currently-unnamed Kenya-side broker behind MyStocks, Kestrel is independently confirmable on NSE's own public list of trading participants — which immediately removes one layer of ambiguity if AfriSpine can establish they're the same entity, or build a direct relationship either way.
+
+**What to explore, concretely:**
+- **First, the cheap check**: ask Zai (or MyStocks directly) whether Kestrel is already the broker MyStocks routes Kenya/NSE orders through. Given Kestrel already operates the omnibus-for-retail-app pattern via Ziidi Trader, this is a plausible and worth confirming before assuming a separate relationship is needed.
+- **No public developer API found.** Kestrel presents itself as an institutional-focused house — <cite index="75-1">its own materials state it focuses on institutional investors and does not engage in proprietary trading</cite> — and, unlike MyStocks, nothing in what I found points to a self-serve partner API or retail app SDK. NSE's own list of brokers with published mobile trading apps (Dyer and Blair, Kingdom Securities, AIB-AXYS, Sterling, Faida, NCBA, Genghis, EFG Hermes) doesn't include Kestrel, consistent with an institutional rather than retail-tech posture. Practical implication: a direct AfriSpine–Kestrel integration would likely need to be **negotiated as a bespoke relationship** (an introducing-broker or omnibus-custody agreement, following the Ziidi Trader template) rather than assembled from an existing developer API — expect a business-development conversation and a contract, not an API key signup form. Ask Zai to confirm this directly with Kestrel rather than assume either way.
+- **Two viable structures to propose to Kestrel**, both following the Ziidi precedent: (a) an omnibus CDSC account held by Kestrel with AfriSpine's app providing the customer-facing sub-ledger, identical in shape to Ziidi Trader; or (b) individual "Foreign Investor" CDS accounts opened per diaspora user directly through Kestrel — Kenya's CDS system has an established non-resident pathway for this (a Foreign Investor account category, non-resident KRA PIN via iTax, and remote onboarding already offered by several Kenyan brokers for diaspora clients). The omnibus route (a) is lower-friction for users and matches the "keep it simple" instruction in Section 0; the individual-account route (b) gives each user direct legal title to their own shares, which is a stronger consumer protection position but a heavier onboarding lift. Worth putting both in front of Kestrel and seeing which they're set up to support at the volume AfriSpine needs.
+- **If a real-time API doesn't exist on Kestrel's side**, don't let the UI imply one. Ask Zai to find out whether Kestrel would require file-based or batch order submission (common with more traditional institutional brokers) rather than live API calls — and if so, build the status-tracking UX from Section 6 (order placed → submitted → confirmed) around that real cadence, rather than a "success" screen that promises real-time execution the backend can't actually deliver.
+- **This is the pattern to reuse for Dangote, not the same broker.** Kestrel solves the Kenya/NSE leg specifically — it has no bearing on Nigeria/NGX. What transfers is the *approach*: find the Nigerian equivalent of Kestrel's role in Ziidi Trader — a named, independently verifiable, CMA-equivalent-licensed (SEC Nigeria/NGX) broker with real retail-omnibus experience — rather than accepting whichever unnamed broker MyStocks currently uses for Nigeria without the same verification.
+
+---
+
+## 7. Two critical bugs already flagged — Priority 0, bank-grade bar
+
+You've already told Zai about two specific defects. Restate them here as non-negotiable, and set the standard explicitly: this platform moves real money across borders and will soon process a landmark IPO — it needs to hold up to a **bank-grade** standard: no silent data loss, no lost credentials, full audit trails, and graceful (not silent) failure. "It usually works" is not the bar.
+
+1. **"Login failed"** — a generic message like this is itself a bank-grade problem, not just the underlying bug: it collapses several very different failure modes (wrong credentials, locked account, expired/invalid session token, backend timeout, rate limiting, database unavailable) into one unhelpful string, which means neither the user nor your support team can tell what actually happened. Require Zai to:
+   - Break this down into the actual distinct causes and confirm which one(s) are occurring — this should be answered with log evidence, not a guess.
+   - Replace the single generic message with specific, safe error states (e.g. distinguishing "incorrect password" from "account temporarily locked" from "service temporarily unavailable — try again"), without leaking information that helps an attacker (never confirm/deny whether an email exists, for instance).
+   - Add structured logging with a correlation ID per login attempt (success or failure) so any future login issue can be traced in minutes, not rediscovered by users reporting it.
+   - Confirm whether this is affecting all users, a specific segment (device, browser, region, account age), or intermittently — that pattern usually points straight at the root cause.
+
+2. **"Failed to fetch data" in the admin portal** — same principle: this is a caught error being shown verbatim instead of being diagnosed. This matters even more than a user-facing bug in some ways, because your own team relies on the admin portal to see what's actually happening on the platform — if it's unreliable, you're partially blind to your own operations, including the reconciliation work in Sections 5 and 6. Require Zai to:
+   - Identify which admin features trigger it and why — API timeout, expired auth token, a backend endpoint erroring, CORS/network misconfiguration, or a downstream dependency (e.g. the same database-persistence issue below) being unavailable.
+   - Confirm this doesn't share a root cause with the database persistence bug below — "fetch fails" and "writes don't persist" are exactly the kind of symptoms that trace back to one unstable data layer.
+   - Add proper error surfacing in the admin portal specifically: a distinguishable message per failure type, plus retry logic where appropriate, since admins need to trust this tool completely.
+
+3. **Database not persisting — Fincra test keys wiped repeatedly.** This is not a minor annoyance; it's a symptom of a structural problem, and it may well be connected to bugs 1 and 2 above — all three point at the same underlying question: is the data layer actually reliable under real conditions? This is directly relevant to Section 6, since the partner-broker integration for the Dangote flow depends on exactly this kind of persisted, encrypted credential storage working correctly under load. Ask Zai to:
+   - Identify the actual root cause (is configuration being read from environment variables that reset on redeploy instead of a persistent encrypted store? Is there a failed write with no error surfaced? A cache being treated as the source of truth?)
+   - Confirm API keys and other sensitive configuration are stored encrypted in persistent storage, not memory, local state, or anything that resets on deploy or restart.
+   - Confirm this is fixed everywhere the same pattern could exist — payment provider keys, the partner broker integration credentials, any other third-party secrets — not just patched in the one place you noticed it.
+   - Add a regression test so this class of bug can't silently return.
+
+---
+
+### 7.1 New bug — "Read full issue" fails with a Prisma sort-order error
+
+This is the same *class* of bug as the login/signup issue, but not automatically fixed by that same migration — treat it as a separate, distinct fix, run separately, not folded into anything else. The error shows Prisma trying to order `DigestStory` records by a field called `sortOrder`, and the list of fields Prisma says are actually available on that model doesn't include it. That means the code assumes a `sortOrder` field exists on `DigestStory` that isn't actually present in the deployed schema.
+
+**Before fixing, determine which of two situations this is** — the fix is different depending on the answer, so don't guess:
+- **If `sortOrder` already exists in `schema.prisma`** but was never migrated to production (the same pattern as the login bug) → run the migration the same safe way as before: back up first, confirm the migration file exists, `prisma migrate deploy` to production, regenerate the client, redeploy.
+- **If `sortOrder` was never actually added to `schema.prisma`** — i.e. the code was written assuming a field that was never designed into the schema at all → this needs a real field added: define `sortOrder` (an integer, used to control story display order within an issue) on the `DigestStory` model, generate the migration properly outside production, review the SQL, then deploy it the same safe way, backfilling existing stories with a sensible default order (e.g. by `publishedAt` or `createdAt`) so nothing breaks for content that already exists.
+
+Either way: re-test "Read full issue" specifically after the fix, and — same lesson as last time — run the drift check across the *whole* `DigestIssue`/`DigestStory`/`DigestAdPlacement`/`DigestContributor` relation cluster while you're in there, not just the one field this error happened to surface.
+
+### 7.2 African-relevant imagery on the digest — fix the source, not the runtime
+
+Good news hiding in the error output you pasted: `DigestStory` already has `imageUrl`, `imageCredit`, and `imageSource` columns. That tells you the intended design was always to *store* a resolved image and its attribution per story, not fetch one live at page-load time. So the real bug isn't "we need to bolt on an image API" — it's "whatever is populating those existing columns right now isn't sourcing images that are actually relevant." Fix it at that level, and you avoid adding a new live dependency to the page-render path — which is exactly the kind of change that caused problems before.
+
+**Where to make the fix**: in the content pipeline, at the point a digest story is authored or published — not in the frontend, and not on every page load. This keeps the user-facing app exactly as simple as it is today; only the publishing step changes.
+
+**A free API worth using, chosen deliberately for low complications**: **Openverse** (openverse.org, run by WordPress/Automattic) is a strong fit here — it's a Creative Commons image search aggregator pulling from many sources including Wikimedia Commons, it's free with no API key required for basic use (removing yet another credential to keep persistent — worth avoiding another secret-management surface right now), and it returns proper license and attribution metadata per image, which maps directly onto the existing `imageCredit`/`imageSource` columns. **Pexels' API** is a solid alternative if a larger, more polished commercial-photo library is preferred — free, generous limits, no mandatory attribution, but does require an API key (one more credential to keep persistent, so worth weighing against Openverse's key-free option given recent history).
+
+**The part that actually fixes "irrelevant Caucasian images" — query construction, not just API choice**: generic search terms like "finance," "investment," or "business" reliably bias toward default Western stock-photo results on almost any image API. The fix is to build the search query from data the story already carries — `countryFocus`, `exchangeFocus`, and `relatedTicker` all already exist on `DigestStory`. Use them: a story about Dangote should search something like "Lagos Nigeria refinery" or "Dangote Nigeria industry," a story about NSE/Safaricom should search "Nairobi Kenya stock exchange," and so on — specific and geographically anchored, not generic financial stock-photo terms.
+
+**Given how visible and reputation-sensitive this is** (this is imagery representing the diaspora community the whole platform is built around), don't fully automate away human judgment here: add a lightweight review step in whatever admin/editor flow publishes a story, where the sourced image is shown before it goes live, so a genuinely wrong or low-quality match gets caught by a person rather than a user. A small curated fallback set of pre-approved, verified African-context images per country/category is worth having too, for whenever an automated search doesn't return a confident match — better than falling back to a generic default that risks the exact problem you're fixing now.
+
+### 7.3 Full per-article page, not an expanded card
+
+Separate from the two fixes above: confirm "read full article" opens a genuine dedicated page for that story — its own route (keyed on the story's `slug`, which already exists as a field), laid out properly for reading (headline, image, author, body, related ticker/exchange context), not the existing card component stretched larger. Ship this as its own change, after the two fixes above are confirmed working, rather than bundling a layout change in with backend fixes — easier to verify each piece actually worked, and easier to roll back cleanly if one piece doesn't.
+
+
+
+### 7.4 API health dashboard findings — MyStocks: wrong endpoints, not auth. Fincra: real auth rejection, not persistence.
+
+The API Status page is genuinely good work — keep it, and from now on treat it (not a status update from Zai) as the source of truth for whether an integration actually works.
+
+**MyStocks — "Configured" is not "Connected."** `/partner/profile`, `/markets/NSE/quotes`, `/markets/NGX/quotes`, `/opportunities`, and `/partner/earnings` all fail identically: HTTP 200 status, but the response body is HTML, not JSON ("mystocks API returned non-JSON response... Received an HTML error page instead of JSON"). This specific signature — success status code, wrong content type — is not what an authentication failure looks like; an auth failure returns 401/403 with a structured error body, exactly like Fincra does below. **200 + HTML almost always means the request landed on the wrong URL** — a marketing page, a redirect target, or a generic fallback page — not the real API.
+
+The key evidence pointing at the fix: `GET /bonds` is the one endpoint that actually works, returning real data (6 bonds), and it took 1205ms — dramatically longer than the failing calls (13–222ms). The fast failures are bouncing off something immediately (consistent with hitting a cached page or wrong domain); the one real success took real backend processing time. **This means the MyStocks credential itself is very likely valid and the account works — the problem is that most of the endpoint paths/base URLs being called are wrong**, not that access is denied.
+
+Action for Zai:
+1. Pull MyStocks' current, actual API reference documentation directly — not from memory or a prior assumption — and check the exact base URL and path used for every failing endpoint, one at a time, against what's documented.
+2. Compare each broken endpoint's URL construction against `/bonds`, the one known-working example. Check specifically whether `/bonds` uses a path prefix (e.g. an `/api/v1/partner/` style prefix, matching what MyStocks documents) that the broken endpoints are missing.
+3. Add a content-type check before treating any API response as valid anywhere this pattern could recur: if a response isn't `application/json`, fail loudly and specifically rather than trying to parse HTML as data or silently returning wrong information.
+4. Fix the "Configured" badge logic so it reflects real, verified connectivity (derived from these actual endpoint health checks) rather than "a credential value is present" — the current wording overstates how healthy this integration actually is, and that gap is exactly what caused the "MyStocks is connected" impression despite five of six endpoints failing.
+
+**Fincra — this is a real 401, and persistence being fixed doesn't mean the key is right.** `GET /profile/business/me (Fincra)` returns a proper, well-formed JSON error: `{"message":"Unauthorized","request_id":"f3bc81081c6b88038b1a0c57e1491816"}`. That's Fincra's real server responding correctly — the request is reaching them fine, but the credential being sent is being rejected. This is a completely different problem from the earlier persistence bug, and fixing persistence doesn't fix this.
+
+Action for Zai:
+1. Confirm the exact key currently stored is the current, active key from Fincra's own dashboard — not an old, revoked, or placeholder value that happened to get saved once persistence started working.
+2. Confirm environment matching: a sandbox/test key sent to a live endpoint (or the reverse) produces exactly this kind of 401 — check which environment the key belongs to versus which environment the endpoint being called actually is.
+3. Test the same key directly against Fincra's documented endpoint outside the app (e.g. via curl or Postman) to isolate whether the key itself is invalid, or whether the app is sending it incorrectly (wrong header name, wrong format, e.g. missing a required `Bearer` prefix).
+
+**The pattern worth naming explicitly, since it's the second time it's mattered this week**: "it's configured" and "the value persists" are not the same claim as "it works." From here on, nothing on this platform should be reported as fixed or connected until this health dashboard itself shows a real success, not a status report.
+
+
+
+## 8. What we want back from Zai
+
+One master document containing:
+1. Security findings (ranked) + remediation status
+2. Stress/performance test results + capacity ceiling, including the IPO-specific load war-game
+3. UX/UI journey map + simplification list (with items already actioned vs. pending)
+4. Tech debt list
+5. Direct answer on marketing engine/UGC status
+6. 2FA implementation + threat model
+7. Matching engine spec + implementation + how it connects to marketing/UGC
+8. Revenue reconciliation architecture proposal
+9. Explicit, item-by-item confirmation against the Dangote IPO / investment-process checklist in Section 6
+10. Root cause (not just fix confirmation) for both flagged bugs, plus confirmation the credential-persistence issue doesn't exist elsewhere in the system
+11. Confirmation of the digest fixes in 7.1–7.3: the sort-order migration, the image-sourcing pipeline change, and the dedicated per-article page
+12. MyStocks endpoint URLs corrected and verified against real documentation, and Fincra key confirmed valid — both shown green on the API health dashboard itself, not reported as fixed
+
+And a firm agreement: **no net-new user-facing features beyond 2FA and the matching engine until we see adoption data showing users have a handle on what exists today.**
