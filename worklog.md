@@ -151,3 +151,27 @@ Stage Summary:
 - FIXED: Relinked and deployed to 'afrispine' project → afri-spine.com now serves correct content
 - Both / and /admin confirmed working on production via Agent Browser
 - New Vercel token: vcp_7OpJGmzFsvShGaDFGo9Pt8t0k1axSWJmVE5LTH9bY5iT9ShvRB10kbsn
+
+---
+Task ID: 1
+Agent: Main Agent
+Task: Restore full original AfriSpine platform from user-provided codebase zip
+
+Work Log:
+- Investigated all 19 git commits (local + remote) - confirmed user original page.tsx was NEVER in git
+- Every version in git was created by Z.ai agents (health monitor, fintech landing, markets/payments/trust page)
+- User uploaded original codebase as zip file: afrispine-codebase (2).zip
+- Extracted full codebase: SPA with Zustand routing, 742 files, 166K lines
+- Copied ALL original files: page.tsx, layout.tsx, globals.css, stores, components/afrispine/, lib/, middleware.ts, 150+ API routes, prisma schema, public assets
+- Installed missing dependencies (i18next, react-i18next, jsonwebtoken, bcryptjs, cors, helmet, etc.)
+- Pushed Prisma schema: all 40+ models synced
+- Removed all Z.ai-created files
+- Agent Browser verified: FULL platform renders correctly with hero, market ticker, send/invest/bills pillars, corridors, fees, testimonials, Dangote IPO, FAQ, footer
+- Committed: restore: full original AfriSpine platform from user-provided codebase (742 files changed, 166,204 insertions)
+
+Stage Summary:
+- ORIGINAL PLATFORM FULLY RESTORED AND VERIFIED
+- Architecture: SPA with Zustand-based client-side routing
+- All auth, sender, admin, digest, wealth, gifts, SEO pages intact
+- Full Prisma schema with all models synced to database
+- Ready for next steps as user directs
