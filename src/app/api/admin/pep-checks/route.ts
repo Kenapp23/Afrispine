@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getAdminFromRequest } from '@/lib/auth';
+import { ensureDb } from '@/lib/ensure-db';
 
 /** GET — Admin view of all PEP check results */
 export async function GET(req: NextRequest) {
   try {
+    await ensureDb();
     const admin = getAdminFromRequest(req);
     if (!admin || admin.role !== 'admin') {
       return NextResponse.json({ error: 'Admin authentication required' }, { status: 401 });

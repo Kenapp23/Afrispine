@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSenderFromRequest } from '@/lib/auth';
+import { ensureDb } from '@/lib/ensure-db';
 
 const PEPCHECKER_BASE_URL = 'https://pepchecker.com/api/v1/check';
 
@@ -169,7 +170,8 @@ export async function POST(req: NextRequest) {
 /** GET — Retrieve PEP check history for the authenticated sender */
 export async function GET(req: NextRequest) {
   try {
-    const user = await verifyAuth(req);
+    await ensureDb();
+    const user = getSenderFromRequest(req);
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

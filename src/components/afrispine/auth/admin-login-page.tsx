@@ -40,6 +40,7 @@ export function AdminLoginPage() {
       }
       if (!res.ok) {
         toast.error(data.error || 'Admin login failed');
+        if (data.debug) console.error('[AdminLogin debug]', data.debug);
         return;
       }
       loginAsAdmin(data.admin, data.token);

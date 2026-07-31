@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import bcrypt from 'bcryptjs';
+import { ensureDb } from '@/lib/ensure-db';
 
 export async function GET() {
   try {
+    await ensureDb();
     const admin = await db.adminUser.findUnique({ where: { email: 'admin@afrispine.com' } });
     return NextResponse.json({ needsSeed: !admin, seeded: !!admin });
   } catch (error: any) {
@@ -13,6 +15,7 @@ export async function GET() {
 
 export async function POST() {
   try {
+    await ensureDb();
     // 1. Create admin user
     const adminEmail = process.env.ADMIN_EMAIL || 'admin@afrispine.com';
     const adminPassword = process.env.ADMIN_PASSWORD || 'Admin@2024';

@@ -51,6 +51,7 @@ export function LoginPage() {
       }
       if (!res.ok) {
         toast.error(data.error || 'Login failed');
+        if (data.debug) console.error('[Login debug]', data.debug);
         return;
       }
       const senderWithFullName = {

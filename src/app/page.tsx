@@ -281,11 +281,17 @@ export default function Home() {
   // Sync URL/hash → Zustand view on mount & popstate
   useEffect(() => {
     const sync = () => {
-      // Support both path-based (/admin-login) and hash-based (/#/admin-login) routing
       const hashPath = window.location.hash.replace(/^#/, '');
       const path = hashPath || window.location.pathname;
       const v = URL_VIEW_MAP[path];
-      if (v) navigate(v);
+      if (v) {
+        // If the view came from the pathname (Vercel rewrite), clean the URL
+        // to a pure hash format to prevent doubled paths like /admin-login#/admin-login
+        if (!hashPath && window.location.pathname !== '/') {
+          window.history.replaceState({}, '', '#' + window.location.pathname);
+        }
+        navigate(v);
+      }
     };
     sync();
     window.addEventListener('popstate', sync);

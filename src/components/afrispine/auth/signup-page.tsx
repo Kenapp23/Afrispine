@@ -65,6 +65,7 @@ export function SignupPage() {
       }
       if (!res.ok) {
         toast.error(data.error || 'Signup failed');
+        if (data.debug) console.error('[Signup debug]', data.debug);
         return;
       }
       // Auto-login: the API now returns a token and sets the cookie
