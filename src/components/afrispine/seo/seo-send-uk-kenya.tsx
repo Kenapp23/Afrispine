@@ -19,6 +19,7 @@ import {
   Users,
   Calculator,
 } from 'lucide-react';
+import { PartnerDisclosure } from '@/components/afrispine/common/partner-disclosure';
 
 /* ------------------------------------------------------------------ */
 /*  FAQ data                                                           */
@@ -116,7 +117,7 @@ export function SeoSendUkKenya() {
   const [faqOpen, setFaqOpen] = useState<number | null>(null);
 
   useEffect(() => {
-    document.title = 'Send Money from UK to Kenya | AfriSpine';
+    document.title = 'Transfer Money from UK to Kenya | AfriSpine';
     const setMeta = (name: string, content: string) => {
       let el = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
       if (!el) {
@@ -137,7 +138,7 @@ export function SeoSendUkKenya() {
     };
     const desc = 'Join 10,000+ Kenyans in the UK who trust AfriSpine to deliver shillings straight to M-Pesa, Airtel Money, or their bank account. 1.5% flat fee. No hidden charges.';
     setMeta('description', desc);
-    setOg('title', 'Send Money from UK to Kenya | AfriSpine');
+    setOg('title', 'Transfer Money from UK to Kenya | AfriSpine');
     setOg('description', desc);
     setOg('url', 'https://afri-spine.com/send/uk-kenya');
     setOg('type', 'website');
@@ -151,7 +152,7 @@ export function SeoSendUkKenya() {
           __html: JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'FinancialProduct',
-            name: 'Send Money from UK to Kenya | AfriSpine',
+            name: 'Transfer Money from UK to Kenya | AfriSpine',
             description: 'Join 10,000+ Kenyans in the UK who trust AfriSpine to deliver shillings straight to M-Pesa, Airtel Money, or their bank account. 1.5% flat fee. No hidden charges. Ever.',
             provider: {
               '@type': 'Organization',
@@ -177,7 +178,7 @@ export function SeoSendUkKenya() {
         <div className="relative mx-auto max-w-5xl px-4 py-16 sm:py-24 text-center">
           {/* Search volume style breadcrumb */}
           <div className="flex items-center justify-center gap-2 mb-6">
-            <span className="text-xs text-emerald-300/60">UK → Kenya Remittance</span>
+            <span className="text-xs text-emerald-300/60">UK → Kenya Transfer</span>
             <span className="text-emerald-500/40">·</span>
             <span className="text-xs text-emerald-300/60">22,000+ monthly searches</span>
           </div>
@@ -185,7 +186,7 @@ export function SeoSendUkKenya() {
             🇬🇧 → 🇰🇪 UK to Kenya Corridor
           </div>
           <h1 className="text-3xl sm:text-5xl font-bold tracking-tight leading-tight">
-            Send Money from the UK to Kenya
+            Transfer Money from the UK to Kenya
             <br className="hidden sm:block" />
             <span className="text-amber-300"> in Minutes, Not Days</span>
           </h1>
@@ -205,7 +206,7 @@ export function SeoSendUkKenya() {
               className="bg-amber-500 hover:bg-amber-400 text-emerald-950 font-bold text-lg px-8 h-12 shadow-lg shadow-amber-500/20"
               onClick={() => navigate('signup')}
             >
-              Send Money to Kenya Now <ArrowRight className="ml-2 h-5 w-5" />
+              Transfer Money to Kenya Now <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
             <Button
               variant="outline"
@@ -216,6 +217,7 @@ export function SeoSendUkKenya() {
               See Our Rates
             </Button>
           </div>
+          <PartnerDisclosure variant="inline" className="mt-3 text-center text-white/60" />
         </div>
       </section>
 
@@ -238,11 +240,11 @@ export function SeoSendUkKenya() {
               {
                 icon: <ShieldCheck className="h-6 w-6" />,
                 title: 'FCA Registered',
-                desc: 'Fully regulated by the UK Financial Conduct Authority. Your money is safe and protected.',
+                desc: 'Fully regulated by the UK Financial Conduct Authority. Your payments are safe and protected.',
               },
               {
                 icon: <Zap className="h-6 w-6" />,
-                title: 'Instant M-Pesa Delivery',
+                title: 'Fast M-Pesa Delivery',
                 desc: 'Average delivery under 5 minutes. 24/7, including weekends and Kenyan holidays.',
               },
               {
@@ -274,7 +276,7 @@ export function SeoSendUkKenya() {
       {/* How It Works */}
       <section className="mx-auto max-w-5xl px-4 py-16 sm:py-20">
         <h2 className="text-2xl sm:text-3xl font-bold text-center text-stone-900">
-          How to Send Money from the UK to Kenya
+          How to Transfer Money from the UK to Kenya
         </h2>
         <p className="mt-2 text-center text-stone-500 max-w-xl mx-auto">
           Three simple steps and your family has money in minutes.
@@ -297,7 +299,7 @@ export function SeoSendUkKenya() {
               step: '3',
               icon: <Zap className="h-8 w-8 text-emerald-600" />,
               title: 'Delivered to M-Pesa in minutes',
-              desc: 'Your recipient gets an M-Pesa notification instantly. Bank transfers to KCB, Equity, or Co-op arrive within 1 business day.',
+              desc: 'Your recipient gets an M-Pesa notification right away. Bank transfers to KCB, Equity, or Co-op arrive within 1 business day.',
             },
           ].map((item) => (
             <div
@@ -328,7 +330,7 @@ export function SeoSendUkKenya() {
               {
                 icon: <Smartphone className="h-7 w-7 text-emerald-600" />,
                 title: 'M-Pesa',
-                desc: 'Instant delivery to any Safaricom M-Pesa wallet. Works 24/7, including holidays. Your family gets the money in under 5 minutes.',
+                desc: 'Fast delivery to any Safaricom M-Pesa wallet. Works 24/7, including holidays. Your family gets the money in under 5 minutes.',
                 tag: 'Most Popular',
               },
               {
@@ -400,7 +402,7 @@ export function SeoSendUkKenya() {
             {
               name: 'Wanjiku Muthoni',
               location: 'London, UK',
-              text: 'I used to send money through my bank and it would take 3 days and cost a fortune. With AfriSpine, my mum in Nakuru gets the money on M-Pesa before I even close the app. Brilliant!',
+              text: 'I used to transfer money through my bank and it would take 3 days and cost a fortune. With AfriSpine, my mum in Nakuru gets the money on M-Pesa before I even close the app. Brilliant!',
               rating: 5,
             },
             {
@@ -466,10 +468,10 @@ export function SeoSendUkKenya() {
       <section className="bg-emerald-900 py-16 sm:py-20">
         <div className="mx-auto max-w-3xl px-4 text-center">
           <h2 className="text-2xl sm:text-3xl font-bold text-white">
-            Ready to Send Money to Kenya?
+            Ready to Transfer Money to Kenya?
           </h2>
           <p className="mt-3 text-emerald-200 max-w-lg mx-auto">
-            Join thousands of Kenyans in the UK who send money home in minutes,
+            Join thousands of Kenyans in the UK who transfer money home in minutes,
             not days. Your first transfer is just a few taps away.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
@@ -489,6 +491,7 @@ export function SeoSendUkKenya() {
               Start Sending Now
             </Button>
           </div>
+          <PartnerDisclosure variant="inline" className="mt-4 text-center" />
         </div>
       </section>
     </div>

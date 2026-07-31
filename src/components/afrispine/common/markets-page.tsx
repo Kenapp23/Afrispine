@@ -158,12 +158,12 @@ export function MarketsPage() {
               AfriSpine Wealth
             </Badge>
             <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
-              Invest in African markets
+              Explore African markets
               <span className="block text-emerald-600 mt-2">from anywhere</span>
             </h1>
             <p className="mt-6 text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto">
               Access stock exchanges across Nigeria, Kenya, Ghana, South Africa and more.
-              AfriSpine handles FX conversion so you can invest in USD, GBP, or EUR
+              AfriSpine handles FX conversion so you can access investments in USD, GBP, or EUR
               — no local currency account needed.
             </p>
           </div>
@@ -350,7 +350,7 @@ export function MarketsPage() {
               {
                 icon: DollarSign,
                 title: 'AfriSpine handles FX',
-                desc: 'Convert USD, GBP, or EUR to KES, NGN, GHS at competitive rates. AfriSpine is the payment rail — no 3–5% bank FX fees, no wire transfers, no 5–7 step processes. Fund and invest in one flow.',
+                desc: 'Convert USD, GBP, or EUR to KES, NGN, GHS at competitive rates. AfriSpine is the payment rail — no 3–5% bank FX fees, no wire transfers, no 5–7 step processes. Fund and access investments in one flow.',
               },
             ].map((item) => (
               <div key={item.title} className="text-center">

@@ -7,6 +7,7 @@ import {
   ArrowRight, ShieldCheck, Zap, Smartphone, Building2,
   Star, ChevronDown, Clock, Globe2, Users,
 } from 'lucide-react';
+import { PartnerDisclosure } from '@/components/afrispine/common/partner-disclosure';
 
 const faqs = [
   {
@@ -18,7 +19,7 @@ const faqs = [
     a: 'Our live rate is displayed on this page. We update it every 60 seconds. You\'ll always see the exact cedi amount before confirming. No surprises, no hidden spreads.',
   },
   {
-    q: 'Can I send money to MTN MoMo from Canada?',
+    q: 'Can I transfer money to MTN MoMo from Canada?',
     a: 'Yes! MTN MoMo is our most popular delivery method in Ghana. Your recipient gets the money directly in their mobile wallet and can use it for payments, airtime, or cash-out at any MTN agent.',
   },
   {
@@ -44,7 +45,7 @@ export function SeoSendCanadaGhana() {
   const [faqOpen, setFaqOpen] = useState<number | null>(null);
 
   useEffect(() => {
-    document.title = 'Send Money from Canada to Ghana | AfriSpine';
+    document.title = 'Transfer Money from Canada to Ghana | AfriSpine';
     const setMeta = (name: string, content: string) => {
       let el = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
       if (!el) {
@@ -65,7 +66,7 @@ export function SeoSendCanadaGhana() {
     };
     const desc = 'The fastest way for Ghanaians in Toronto, Calgary, and Vancouver to send cedis home. MTN MoMo, Vodafone Cash, and bank transfers. 1.5% flat fee.';
     setMeta('description', desc);
-    setOg('title', 'Send Money from Canada to Ghana | AfriSpine');
+    setOg('title', 'Transfer Money from Canada to Ghana | AfriSpine');
     setOg('description', desc);
     setOg('url', 'https://afri-spine.com/send/canada-ghana');
     setOg('type', 'website');
@@ -79,7 +80,7 @@ export function SeoSendCanadaGhana() {
           __html: JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'FinancialProduct',
-            name: 'Send Money from Canada to Ghana | AfriSpine',
+            name: 'Transfer Money from Canada to Ghana | AfriSpine',
             description: 'The fastest way for Ghanaians in Toronto, Calgary, and Vancouver to send cedis home. MTN MoMo, Vodafone Cash, and bank transfers. 1.5% flat fee.',
             provider: {
               '@type': 'Organization',
@@ -106,7 +107,7 @@ export function SeoSendCanadaGhana() {
             🇨🇦 → 🇬🇭 Canada to Ghana Corridor
           </div>
           <h1 className="text-3xl sm:text-5xl font-bold tracking-tight leading-tight">
-            Send Money from Canada to Ghana
+            Transfer Money from Canada to Ghana
             <br className="hidden sm:block" />
             <span className="text-amber-300"> Your Family Deserves Better</span>
           </h1>
@@ -121,12 +122,13 @@ export function SeoSendCanadaGhana() {
           </div>
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button size="lg" className="bg-amber-500 hover:bg-amber-400 text-emerald-950 font-bold text-lg px-8 h-12" onClick={() => navigate('signup')}>
-              Send Money to Ghana Now <ArrowRight className="ml-2 h-5 w-5" />
+              Transfer Money to Ghana Now <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
             <Button variant="outline" size="lg" className="border-white/30 text-white hover:bg-white/10 px-8 h-12" onClick={() => navigate('pricing')}>
               View Exchange Rates
             </Button>
           </div>
+          <PartnerDisclosure variant="inline" className="mt-3 text-center text-white/60" />
         </div>
       </section>
 
@@ -136,12 +138,12 @@ export function SeoSendCanadaGhana() {
           Send Canadian Dollars, Receive Cedis Fast
         </h2>
         <p className="mt-2 text-center text-stone-500 max-w-xl mx-auto">
-          No more long queues at remittance shops. Send from your couch.
+          No more long queues at transfer shops. Send from your couch.
         </p>
         <div className="mt-12 grid gap-8 sm:grid-cols-3">
           {[
             { step: '1', icon: <Globe2 className="h-8 w-8 text-emerald-600" />, title: 'Enter amount in CAD', desc: 'Tell us how many Canadian dollars to send. We\'ll convert at the live rate and show the exact cedi amount.' },
-            { step: '2', icon: <ShieldCheck className="h-8 w-8 text-emerald-600" />, title: 'Pay securely from Canada', desc: 'Use your Canadian debit card, Interac, or bank transfer. All payments are encrypted and PCI-DSS compliant.' },
+            { step: '2', icon: <ShieldCheck className="h-8 w-8 text-emerald-600" />, title: 'Pay from Canada via secure processor', desc: 'Use your Canadian debit card, Interac, or bank transfer. All payments are encrypted and PCI-DSS compliant.' },
             { step: '3', icon: <Zap className="h-8 w-8 text-emerald-600" />, title: 'Cedis delivered in minutes', desc: 'MTN MoMo and Vodafone Cash: 2–10 minutes. Bank transfers to GCB or Ecobank Ghana: 1–2 business days.' },
           ].map((item) => (
             <div key={item.step} className="relative rounded-2xl bg-white border border-stone-200 p-6 text-center shadow-sm hover:shadow-md transition-shadow">
@@ -160,7 +162,7 @@ export function SeoSendCanadaGhana() {
           <h2 className="text-2xl sm:text-3xl font-bold text-center text-stone-900">Delivery Options in Ghana</h2>
           <div className="mt-10 grid gap-6 sm:grid-cols-3">
             {[
-              { icon: <Smartphone className="h-7 w-7 text-yellow-500" />, title: 'MTN MoMo', desc: 'The most popular mobile money in Ghana. Your recipient gets cedis in their MTN wallet instantly. Pay bills, buy airtime, or cash out at any MTN agent.', tag: 'Most Popular' },
+              { icon: <Smartphone className="h-7 w-7 text-yellow-500" />, title: 'MTN MoMo', desc: 'The most popular mobile money in Ghana. Your recipient gets cedis in their MTN wallet fast. Pay bills, buy airtime, or cash out at any MTN agent.', tag: 'Most Popular' },
               { icon: <Smartphone className="h-7 w-7 text-red-600" />, title: 'Vodafone Cash', desc: 'Send directly to Vodafone Cash wallets. Available across Ghana with fast confirmation and wide agent network.' },
               { icon: <Building2 className="h-7 w-7 text-emerald-600" />, title: 'Bank Transfer', desc: 'Direct to GCB Bank, Ecobank Ghana, Agricultural Development Bank, Stanbic, Standard Chartered, Fidelity, and Republic Bank.' },
             ].map((m) => (
@@ -182,7 +184,7 @@ export function SeoSendCanadaGhana() {
         <div className="rounded-2xl bg-emerald-700 text-white p-8 sm:p-12 text-center">
           <h2 className="text-2xl sm:text-3xl font-bold">1.5% Flat Fee. No Games.</h2>
           <p className="mt-3 text-emerald-100 max-w-xl mx-auto">
-            Other remittance services charge 3–8% when you include their hidden FX markups. We charge 1.5%. That&apos;s it.
+            Other transfer services charge 3–8% when you include their hidden FX markups. We charge 1.5%. That&apos;s it.
           </p>
           <div className="mt-8 grid gap-4 sm:grid-cols-3 max-w-2xl mx-auto text-left">
             {[
@@ -272,8 +274,9 @@ export function SeoSendCanadaGhana() {
           AfriSpine delivers cedis fast. Sign up and send in under 5 minutes.
         </p>
         <Button size="lg" className="mt-8 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-lg px-8 h-12" onClick={() => navigate('send')}>
-          Send Money to Ghana Now <ArrowRight className="ml-2 h-5 w-5" />
+          Transfer Money to Ghana Now <ArrowRight className="ml-2 h-5 w-5" />
         </Button>
+        <PartnerDisclosure variant="inline" className="mt-4 text-center" />
       </section>
     </div>
   );

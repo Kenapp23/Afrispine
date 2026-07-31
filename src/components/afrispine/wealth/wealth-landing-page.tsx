@@ -3,6 +3,7 @@
 import React from 'react';
 import { useAppStore } from '@/stores/app';
 import { Button } from '@/components/ui/button';
+import { PartnerDisclosure } from '@/components/afrispine/common/partner-disclosure';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -137,7 +138,7 @@ export function WealthLandingPage() {
             </h1>
             <p className="mt-6 text-lg sm:text-xl text-emerald-100/80 leading-relaxed max-w-2xl mx-auto">
               Buy fractional shares on Africa&apos;s fastest-growing stock exchanges — Nigeria, Kenya, Ghana, South Africa and more.
-              Invest in GBP or USD. No local bank account needed.
+              Access investments in GBP or USD. No local bank account needed.
             </p>
 
             {/* Key stat cards */}
@@ -179,6 +180,7 @@ export function WealthLandingPage() {
                 Learn More
               </Button>
             </div>
+            <PartnerDisclosure variant="inline" className="mt-4 text-center" />
           </div>
         </div>
       </section>
@@ -441,7 +443,7 @@ export function WealthLandingPage() {
               {
                 step: '2',
                 icon: DollarSign,
-                title: 'Invest in GBP or USD',
+                title: 'Access investments in GBP or USD',
                 desc: 'No need for a local currency account. Pay from your AfriSpine wallet or card — we handle the FX conversion at competitive rates.',
               },
               {

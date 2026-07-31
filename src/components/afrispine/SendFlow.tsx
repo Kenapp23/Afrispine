@@ -104,7 +104,7 @@ export function SendFlow() {
           <button onClick={() => step > 0 ? setStep(step - 1) : setRoute('dashboard')} className="p-2 hover:bg-gray-100 rounded-lg">
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </button>
-          <span className="font-semibold text-gray-900">Send Money</span>
+          <span className="font-semibold text-gray-900">Transfer Money</span>
           <div className="flex-1" />
           <span className="text-sm text-gray-400">Step {step + 1} of 5</span>
         </div>
@@ -275,7 +275,7 @@ export function SendFlow() {
                   <button onClick={() => setPayMethod('card')} className={`p-4 rounded-xl border-2 text-left transition ${payMethod === 'card' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200'}`}>
                     <CreditCard className={`w-6 h-6 mb-2 ${payMethod === 'card' ? 'text-emerald-600' : 'text-gray-400'}`} />
                     <p className="font-medium text-sm text-gray-900">Card payment</p>
-                    <p className="text-xs text-gray-500">Instant, 1.5% surcharge</p>
+                    <p className="text-xs text-gray-500">Fast, 1.5% surcharge</p>
                   </button>
                   <button onClick={() => setPayMethod('bank_transfer')} className={`p-4 rounded-xl border-2 text-left transition ${payMethod === 'bank_transfer' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200'}`}>
                     <Smartphone className={`w-6 h-6 mb-2 ${payMethod === 'bank_transfer' ? 'text-emerald-600' : 'text-gray-400'}`} />

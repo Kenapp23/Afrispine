@@ -14,8 +14,8 @@ const faqs = [
     a: 'The Dangote Refinery, located in Lagos, Nigeria, is the world\'s largest single-train refinery with a capacity of 650,000 barrels per day. The IPO (Initial Public Offering) is the public sale of shares in Dangote Petroleum Refinery, giving investors a stake in Africa\'s most ambitious industrial project.',
   },
   {
-    q: 'How can I invest in the Dangote IPO from abroad?',
-    a: 'AfriSpine facilitates investment in the Dangote IPO for the African diaspora. You register your interest, complete KYC verification, and when the IPO opens, you can purchase shares directly through our platform using GBP, USD, or CAD. We handle the compliance, FX conversion, and share allocation.',
+    q: 'How can I access the Dangote IPO from abroad?',
+    a: 'AfriSpine facilitates access to the Dangote IPO for the African diaspora. You register your interest, complete KYC verification, and when the IPO opens, you can place orders through our platform using GBP, USD, or CAD. We handle the compliance, FX conversion, and order allocation.',
   },
   {
     q: 'What is the estimated valuation of Dangote Refinery?',
@@ -34,7 +34,7 @@ const faqs = [
     a: 'Yes. AfriSpine is FCA-registered and works with licensed capital market operators in Nigeria. All investments are held through proper custodial arrangements. We follow the same regulatory framework as Nigerian stockbrokers.',
   },
   {
-    q: 'Can I invest in other Nigerian stocks through AfriSpine?',
+    q: 'Can I access other Nigerian stocks through AfriSpine?',
     a: 'Absolutely! AfriSpine\'s investment module gives you access to Nigerian equities on the Nigerian Exchange (NGX), including GTBank, Access, MTN Nigeria, Dangote Cement, Zenith Bank, and many more. The Dangote IPO is just the beginning.',
   },
 ];
@@ -104,13 +104,13 @@ export function SeoSendDangoteIpo() {
             <TrendingUp className="h-4 w-4" /> Investment Opportunity
           </div>
           <h1 className="text-3xl sm:text-5xl font-bold tracking-tight leading-tight">
-            Invest in the Dangote Refinery IPO
+            Access the Dangote Refinery IPO
             <br className="hidden sm:block" />
             <span className="text-amber-300"> From Anywhere in the World</span>
           </h1>
           <p className="mt-4 text-lg sm:text-xl text-emerald-100 max-w-2xl mx-auto">
             The world&apos;s largest single-train refinery is going public. AfriSpine gives
-            the African diaspora a front-row seat to invest in Africa&apos;s most transformative
+            the African diaspora a front-row seat to Africa’s most transformative
             industrial project — no Nigerian bank account needed.
           </p>
           <div className="mt-8 grid gap-4 sm:grid-cols-3 max-w-2xl mx-auto text-left">

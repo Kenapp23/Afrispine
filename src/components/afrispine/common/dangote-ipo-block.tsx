@@ -67,7 +67,7 @@ export default function DangoteIpoBlock() {
         {/* Description */}
         <p className="text-gray-400 text-sm sm:text-base mb-8 max-w-xl mx-auto leading-relaxed">
           Register your interest today. When the IPO opens, you&apos;ll be among the first to know.
-          AfriSpine will let you buy Dangote Refinery shares directly from the diaspora — no broker needed.
+          AfriSpine will let you access Dangote Refinery shares through our partner from the diaspora — no broker needed.
         </p>
 
         {/* Live counter */}

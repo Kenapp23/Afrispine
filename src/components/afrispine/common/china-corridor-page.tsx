@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from 'react';
 import { useAppStore } from '@/stores/app';
 import { Button } from '@/components/ui/button';
+import { PartnerDisclosure } from '@/components/afrispine/common/partner-disclosure';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
@@ -496,6 +497,7 @@ export default function ChinaCorridorPage() {
             B2B cross-border payment platform, licensed across{' '}
             <strong className="text-gray-900">20+ African countries</strong> and China.
           </p>
+          <PartnerDisclosure variant="card" className="mt-4 max-w-3xl mx-auto" />
         </div>
       </section>
 

@@ -127,7 +127,7 @@ export function DashboardPage() {
         </div>
         <div className="flex gap-2">
           <Button onClick={() => navigate('send')} className="bg-emerald-600 text-white hover:bg-emerald-700">
-            <Send className="mr-2 h-4 w-4" />Send money
+            <Send className="mr-2 h-4 w-4" />Transfer money
           </Button>
           <Button variant="outline" onClick={() => navigate('bills')} className="border-emerald-200 text-emerald-700 hover:bg-emerald-50">
             <Receipt className="mr-2 h-4 w-4" />Pay bill
@@ -209,7 +209,7 @@ export function DashboardPage() {
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-gray-900">
-                  {hasWealthAccount ? 'My Portfolio' : 'Invest in African stocks'}
+                  {hasWealthAccount ? 'My Portfolio' : 'Explore African stocks'}
                 </p>
                 <p className="text-sm text-muted-foreground truncate">
                   {hasWealthAccount

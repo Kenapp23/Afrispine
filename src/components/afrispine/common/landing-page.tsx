@@ -30,6 +30,7 @@ import DangoteIpoBlock from './dangote-ipo-block';
 import Testimonials from './testimonials';
 import ChinaCorridorTeaser from './china-corridor-teaser';
 import GiftingStrip from './gifting-strip';
+import { PartnerDisclosure } from './partner-disclosure';
 
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = React.useState(false);
@@ -80,10 +81,10 @@ export function LandingPage() {
             <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl leading-tight">
               Africa is calling.{' '}
               <span className="text-emerald-600">Answer with money</span>{' '}
-              that arrives instantly.
+              that arrives fast.
             </h1>
             <p className="mt-6 text-lg leading-8 text-muted-foreground">
-              Send money home, invest in African stocks, pay bills
+              Transfer money home, explore African stocks, pay bills
               and support your family from anywhere in the world.
               Fast, fair, and made for Africans.
             </p>
@@ -98,7 +99,7 @@ export function LandingPage() {
                 onClick={() => navigate('signup')}
                 className="bg-emerald-700 px-8 text-white hover:bg-emerald-800"
               >
-                Send money now
+                Get started
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
               <Button
@@ -110,6 +111,7 @@ export function LandingPage() {
                 Explore investments
               </Button>
             </div>
+            <PartnerDisclosure variant="inline" className="mt-4 text-center" />
           </div>
         </div>
       </section>
@@ -119,7 +121,7 @@ export function LandingPage() {
         <div className="mx-auto max-w-5xl px-4 sm:px-6">
           <div className="mx-auto max-w-2xl text-center mb-12">
             <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
-              Send money in 3 simple steps
+              Transfer money in 3 simple steps
             </h2>
             <p className="mt-2 text-muted-foreground">
               No complicated forms, no hidden steps. Just fast, fair transfers.
@@ -130,18 +132,18 @@ export function LandingPage() {
               {
                 step: 1,
                 title: 'Enter the amount',
-                desc: 'Tell us how much you want to send. We instantly show you the exchange rate and exactly what your recipient gets.',
+                desc: 'Tell us how much you want to send. We immediately show you the exchange rate and exactly what your recipient gets.',
                 Icon: Calculator,
               },
               {
                 step: 2,
-                title: 'Pay securely',
+                title: 'Pay via secure processor',
                 desc: 'Pay by debit or credit card. Your payment is processed by Fincra with bank-level encryption.',
                 Icon: CreditCard,
               },
               {
                 step: 3,
-                title: 'Delivered instantly',
+                title: 'Delivered fast',
                 desc: 'Money arrives on M-Pesa, MTN MoMo, or bank account — usually within 30 minutes. Real-time tracking included.',
                 Icon: Send,
               },
@@ -255,6 +257,8 @@ export function LandingPage() {
         </div>
       </section>
 
+      <PartnerDisclosure variant="banner" className="mt-4" />
+
       {/* Product Pillars */}
       <ProductPillars />
 
@@ -272,7 +276,7 @@ export function LandingPage() {
               How it works
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
-              Five simple steps to send money across borders
+              Five simple steps to transfer money across borders
             </p>
           </div>
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-5">
@@ -286,7 +290,7 @@ export function LandingPage() {
               {
                 step: '2',
                 title: 'Enter the amount',
-                desc: 'See your locked exchange rate instantly.',
+                desc: 'See your locked exchange rate immediately.',
                 icon: Search,
               },
               {
@@ -297,7 +301,7 @@ export function LandingPage() {
               },
               {
                 step: '4',
-                title: 'Pay securely by card',
+                title: 'Pay by card via secure processor',
                 desc: 'Our payment processor handles your payment securely.',
                 icon: CreditCard,
               },
@@ -508,7 +512,7 @@ export function LandingPage() {
             </h2>
           </div>
           <div className="space-y-3">
-            <FaqItem q="Is AfriSpine available in the US?" a="Yes. Any US cardholder can send money to Africa using AfriSpine. Cards are charged in USD." />
+            <FaqItem q="Is AfriSpine available in the US?" a="Yes. Any US cardholder can transfer money to Africa using AfriSpine. Cards are charged in USD." />
             <FaqItem q="How does AfriSpine compare to Western Union?" a="AfriSpine charges 1.5% with no hidden fees. Traditional providers often charge 3–8% plus FX spread." />
             <FaqItem q="Can I pay bills for family?" a="Yes! KPLC electricity, Nairobi Water, DStv/GOtv subscriptions, and airtime top-ups." />
             <FaqItem q="Does AfriSpine offer corporate FX?" a="Yes. AfriSpine Business offers FX from $5,000 at 0.5–1% margin. Visit our Business page for details." />
@@ -538,7 +542,7 @@ export function LandingPage() {
                 Download the AfriSpine app
               </h2>
               <p className="mt-3 text-muted-foreground leading-relaxed">
-                Send money on the go. Get instant rate alerts, track transfers in
+                Send money on the go. Get rate alerts, track transfers in
                 real time, and manage recipients — all from your pocket.
               </p>
               <ul className="mt-5 space-y-2.5">
@@ -578,7 +582,7 @@ export function LandingPage() {
                     <Globe className="h-6 w-6" />
                   </div>
                   <p className="text-sm font-bold text-gray-900">AfriSpine</p>
-                  <p className="mt-1 text-xs text-muted-foreground">Send money home</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Transfer money home</p>
                   <div className="mt-4 w-full space-y-2">
                     <div className="h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
                       <span className="text-xs font-medium text-emerald-700">$100 → KES</span>
@@ -598,7 +602,7 @@ export function LandingPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight text-white">
-              Ready to send money home?
+              Ready to transfer money home?
             </h2>
             <p className="mt-4 text-lg text-emerald-100">
               Join thousands of people who trust AfriSpine for fast, fair transfers.

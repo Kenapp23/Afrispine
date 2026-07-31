@@ -135,7 +135,7 @@ export function DangoteIpoPage() {
               Largest IPO in African History
             </Badge>
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl leading-tight">
-              Invest in the Dangote Refinery IPO
+              Access the Dangote Refinery IPO
               <span className="block text-yellow-300 mt-2">from anywhere in the world</span>
             </h1>
             <p className="mt-6 text-lg text-emerald-100 leading-relaxed max-w-2xl mx-auto">
@@ -197,7 +197,7 @@ export function DangoteIpoPage() {
               {
                 icon: DollarSign,
                 title: 'USD dividends',
-                desc: 'Dangote has confirmed that investors will buy shares in naira but receive dividends in US dollars, backed by an estimated $6.4 billion in annual export revenues. True dollar-denominated returns from Nigerian operations.',
+                desc: 'Dangote has confirmed that investors will access shares in naira but receive dividends in US dollars, backed by an estimated $6.4 billion in annual export revenues. True dollar-denominated returns from Nigerian operations.',
               },
               {
                 icon: Building2,
@@ -514,7 +514,7 @@ export function DangoteIpoPage() {
             <p className="text-sm text-yellow-800 leading-relaxed">
               <strong>Key insight:</strong> 1,000 investors at $10,000 average = $500,000/year in AUM fees from a single cohort,
               growing every quarter as users invest more. This is compounding, recurring, passive revenue that
-              neither remittances nor FX can match.
+              neither transfers nor FX can match.
             </p>
           </div>
         </div>
@@ -703,7 +703,7 @@ export function DangoteIpoPage() {
                 a: 'AfriSpine is a payments and FX platform, not a broker. We partner with CMA-licensed brokers who execute trades and hold shares. AfriSpine handles the FX conversion, payment rail, and user experience layer.',
               },
               {
-                q: 'Can I invest in other African stocks beyond Dangote?',
+                q: 'Can I explore other African stocks beyond Dangote?',
                 a: 'Yes — that is the broader AfriSpine Wealth vision. After the Dangote IPO launch, we plan to open access to NGX, JSE, NSE Kenya, GSE, and more. Register your interest to stay updated on all markets.',
               },
             ].map((faq) => (

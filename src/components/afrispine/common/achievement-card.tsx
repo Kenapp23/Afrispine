@@ -46,7 +46,7 @@ function getShareText(type: string, data: Record<string, string>): string {
     case 'first_send': {
       const sym = CURRENCY_SYM[data.currency || 'GBP'] || '';
       const countryName = COUNTRY_NAMES[data.country || ''] || data.country || 'home';
-      return `I just sent ${sym}${data.amount} to ${countryName} via @AfriSpine. Fast, affordable remittances to Africa!`;
+      return `I just sent ${sym}${data.amount} to ${countryName} via @AfriSpine. Fast, affordable transfers to Africa!`;
     }
     case 'ipo_registration':
     case 'ipo_registered': {
@@ -66,7 +66,7 @@ function getShareText(type: string, data: Record<string, string>): string {
       return `${company} just paid me a dividend of ${data.amount}! African stocks pay real returns via @AfriSpine.`;
     }
     default:
-      return 'Check out AfriSpine — the smartest way to send money and invest in Africa!';
+      return 'Check out AfriSpine — the smartest way to transfer money and explore African markets!';
   }
 }
 

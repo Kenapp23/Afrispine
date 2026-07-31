@@ -36,7 +36,7 @@ const steps = [
   },
   {
     icon: Zap,
-    title: 'Delivered instantly',
+    title: 'Delivered fast',
     description: 'Your loved one receives a gift voucher via WhatsApp or email.',
   },
 ];
@@ -214,7 +214,7 @@ export default function GiftsHubPage() {
           </h1>
 
           <p className="mt-5 text-base sm:text-lg text-emerald-100/80 max-w-xl mx-auto leading-relaxed">
-            Instant digital gift delivery to Kenya, Nigeria, Ghana and more.
+            Fast digital gift delivery to Kenya, Nigeria, Ghana and more.
             Airtime, mobile money &amp; vouchers — delivered in seconds.
           </p>
 
@@ -249,7 +249,7 @@ export default function GiftsHubPage() {
             {
               icon: Smartphone,
               title: 'Airtime Top-Up',
-              description: 'Instantly top up Safaricom, MTN, Airtel and other networks across Africa. From $5.',
+              description: 'Top up Safaricom, MTN, Airtel and other networks across Africa right away. From $5.',
               action: 'Send Airtime',
               gradient: 'from-emerald-500 to-teal-500',
             },

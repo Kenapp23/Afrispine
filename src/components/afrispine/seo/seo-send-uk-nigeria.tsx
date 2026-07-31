@@ -7,6 +7,7 @@ import {
   ArrowRight, ShieldCheck, Zap, Smartphone, Building2,
   Star, ChevronDown, Clock, Globe2, Users,
 } from 'lucide-react';
+import { PartnerDisclosure } from '@/components/afrispine/common/partner-disclosure';
 
 const faqs = [
   {
@@ -19,7 +20,7 @@ const faqs = [
   },
   {
     q: 'Can I send directly to OPay or PalmPay from the UK?',
-    a: 'Absolutely. OPay and PalmPay are two of our most popular delivery channels. Your recipient in Nigeria gets an instant notification when the money lands.',
+    a: 'Absolutely. OPay and PalmPay are two of our most popular delivery channels. Your recipient in Nigeria gets a notification right away when the money lands.',
   },
   {
     q: 'Is AfriSpine FCA-registered for UK to Nigeria transfers?',
@@ -44,7 +45,7 @@ export function SeoSendUkNigeria() {
   const [faqOpen, setFaqOpen] = useState<number | null>(null);
 
   useEffect(() => {
-    document.title = 'Send Money from UK to Nigeria | AfriSpine';
+    document.title = 'Transfer Money from UK to Nigeria | AfriSpine';
     const setMeta = (name: string, content: string) => {
       let el = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
       if (!el) {
@@ -65,7 +66,7 @@ export function SeoSendUkNigeria() {
     };
     const desc = "The UK's largest Nigerian community trusts AfriSpine for naira transfers. Direct to OPay, PalmPay, GTBank, Access, and all Nigerian banks. 1.5% flat.";
     setMeta('description', desc);
-    setOg('title', 'Send Money from UK to Nigeria | AfriSpine');
+    setOg('title', 'Transfer Money from UK to Nigeria | AfriSpine');
     setOg('description', desc);
     setOg('url', 'https://afri-spine.com/send/uk-nigeria');
     setOg('type', 'website');
@@ -79,7 +80,7 @@ export function SeoSendUkNigeria() {
           __html: JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'FinancialProduct',
-            name: 'Send Money from UK to Nigeria | AfriSpine',
+            name: 'Transfer Money from UK to Nigeria | AfriSpine',
             description: "The UK's largest Nigerian community trusts AfriSpine for naira transfers. Direct to OPay, PalmPay, GTBank, Access, and all Nigerian banks. 1.5% flat.",
             provider: {
               '@type': 'Organization',
@@ -106,7 +107,7 @@ export function SeoSendUkNigeria() {
             🇬🇧 → 🇳🇬 UK to Nigeria Corridor
           </div>
           <h1 className="text-3xl sm:text-5xl font-bold tracking-tight leading-tight">
-            Send Money from the UK to Nigeria
+            Transfer Money from the UK to Nigeria
             <br className="hidden sm:block" />
             <span className="text-amber-300"> Better Rates, Faster Delivery</span>
           </h1>
@@ -121,12 +122,13 @@ export function SeoSendUkNigeria() {
           </div>
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button size="lg" className="bg-amber-500 hover:bg-amber-400 text-emerald-950 font-bold text-lg px-8 h-12" onClick={() => navigate('signup')}>
-              Send Money to Nigeria Now <ArrowRight className="ml-2 h-5 w-5" />
+              Transfer Money to Nigeria Now <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
             <Button variant="outline" size="lg" className="border-white/30 text-white hover:bg-white/10 px-8 h-12" onClick={() => navigate('pricing')}>
               Compare GBP to NGN Rates
             </Button>
           </div>
+          <PartnerDisclosure variant="inline" className="mt-3 text-center text-white/60" />
         </div>
       </section>
 
@@ -141,8 +143,8 @@ export function SeoSendUkNigeria() {
         <div className="mt-12 grid gap-8 sm:grid-cols-3">
           {[
             { step: '1', icon: <Globe2 className="h-8 w-8 text-emerald-600" />, title: 'Enter amount in GBP', desc: 'Type how many pounds you want to send. We convert at the live market rate and show the exact naira your recipient will receive.' },
-            { step: '2', icon: <ShieldCheck className="h-8 w-8 text-emerald-600" />, title: 'Pay securely with Fincra', desc: 'Use your UK debit card, bank transfer, or Apple Pay. Our payment processor is PCI-DSS Level 1 certified — bank-grade security.' },
-            { step: '3', icon: <Zap className="h-8 w-8 text-emerald-600" />, title: 'Naira delivered fast', desc: 'OPay/PalmPay: 2–10 minutes. GTBank, Access, First Bank: 1–2 business days. Your recipient is notified instantly.' },
+            { step: '2', icon: <ShieldCheck className="h-8 w-8 text-emerald-600" />, title: 'Pay via Fincra (secure processor)', desc: 'Use your UK debit card, bank transfer, or Apple Pay. Our payment processor is PCI-DSS Level 1 certified — bank-grade security.' },
+            { step: '3', icon: <Zap className="h-8 w-8 text-emerald-600" />, title: 'Naira delivered fast', desc: 'OPay/PalmPay: 2–10 minutes. GTBank, Access, First Bank: 1–2 business days. Your recipient is notified right away.' },
           ].map((item) => (
             <div key={item.step} className="relative rounded-2xl bg-white border border-stone-200 p-6 text-center shadow-sm hover:shadow-md transition-shadow">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 mb-4">{item.icon}</div>
@@ -160,7 +162,7 @@ export function SeoSendUkNigeria() {
           <h2 className="text-2xl sm:text-3xl font-bold text-center text-stone-900">Delivery Options in Nigeria</h2>
           <div className="mt-10 grid gap-6 sm:grid-cols-3">
             {[
-              { icon: <Smartphone className="h-7 w-7 text-green-600" />, title: 'OPay', desc: 'Instant transfer to any OPay wallet. Most popular among Nigerians for daily transactions — food, transport, and bills.', tag: 'Most Popular' },
+              { icon: <Smartphone className="h-7 w-7 text-green-600" />, title: 'OPay', desc: 'Fast transfer to any OPay wallet. Most popular among Nigerians for daily transactions — food, transport, and bills.', tag: 'Most Popular' },
               { icon: <Smartphone className="h-7 w-7 text-purple-600" />, title: 'PalmPay', desc: 'Direct to PalmPay wallet. Your recipient can use it immediately for payments at any PalmPay merchant across Nigeria.' },
               { icon: <Building2 className="h-7 w-7 text-emerald-600" />, title: 'Bank Transfer', desc: 'GTBank, Access Bank, First Bank, UBA, Zenith, Fidelity, Stanbic IBTC, Wema, and Sterling. Full Nigerian banking coverage.' },
             ].map((m) => (
@@ -228,7 +230,7 @@ export function SeoSendUkNigeria() {
           {[
             { name: 'Chidi Okonkwo', location: 'London, UK', text: 'I used to go to the bureau de change on Peckham High Street every month. Now I send from my sofa in Lewisham. The rate is better, it\'s faster, and I don\'t have to carry cash. AfriSpine changed the game.', rating: 5 },
             { name: 'Blessing Ibrahim', location: 'Manchester, UK', text: 'My husband sends money to my OPay account from his office in Salford. By the time I finish work at the hospital in Manchester, the naira is already there. So reliable.', rating: 5 },
-            { name: 'Tunde Bakare', location: 'Leeds, UK', text: 'I invested in GTBank shares through AfriSpine and I also use it for remittance. The fact that I can do both in one app is brilliant. My portfolio is up 15% this year.', rating: 5 },
+            { name: 'Tunde Bakare', location: 'Leeds, UK', text: 'I invested in GTBank shares through AfriSpine and I also use it for transfers. The fact that I can do both in one app is brilliant. My portfolio is up 15% this year.', rating: 5 },
           ].map((t) => (
             <div key={t.name} className="rounded-2xl border border-stone-200 bg-white p-6">
               <div className="flex gap-0.5">
@@ -270,11 +272,12 @@ export function SeoSendUkNigeria() {
         <h2 className="text-2xl sm:text-3xl font-bold text-stone-900">Start Sending Naira from the UK</h2>
         <p className="mt-3 text-stone-500 max-w-lg mx-auto">
           Over 200,000 Nigerians call the UK home. Join the thousands who
-          use AfriSpine to send money home with better rates and faster delivery.
+          use AfriSpine to transfer money home with better rates and faster delivery.
         </p>
         <Button size="lg" className="mt-8 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-lg px-8 h-12" onClick={() => navigate('send')}>
-          Send Money to Nigeria Now <ArrowRight className="ml-2 h-5 w-5" />
+          Transfer Money to Nigeria Now <ArrowRight className="ml-2 h-5 w-5" />
         </Button>
+        <PartnerDisclosure variant="inline" className="mt-4 text-center" />
       </section>
     </div>
   );

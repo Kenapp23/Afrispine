@@ -491,7 +491,7 @@ function PaymentStep() {
   return (
     <motion.div key="payment" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.25 }}>
       <h2 className="text-xl font-bold mb-1">Pay {srcSymbol}{total}</h2>
-      <p className="text-muted-foreground text-sm mb-6">Complete your payment to send money to {recipientName}.</p>
+      <p className="text-muted-foreground text-sm mb-6">Complete your payment to transfer money to {recipientName}.</p>
 
       {/* Summary */}
       <Card className="mb-6 bg-muted/30">
@@ -583,7 +583,7 @@ function ConfirmationStep() {
         </motion.div>
 
         <h2 className="text-2xl font-bold mb-2">Transfer sent!</h2>
-        <p className="text-muted-foreground text-center mb-6">Your money is on its way to {recipientName}.</p>
+        <p className="text-muted-foreground text-center mb-6">Your transfer is on its way to {recipientName}.</p>
 
         <Card className="w-full mb-6">
           <CardContent className="p-5 space-y-3">

@@ -29,7 +29,7 @@ export function Landing() {
             <Shield className="w-4 h-4" /> Secure payments · CBK licensed
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight mb-6">
-            Send money to Africa.<br />
+            Transfer money to Africa.<br />
             <span className="text-emerald-600">More arrives. Less hassle.</span>
           </h1>
           <p className="text-lg text-gray-500 max-w-2xl mx-auto mb-8">
@@ -49,7 +49,7 @@ export function Landing() {
             <div className="grid sm:grid-cols-3 gap-8">
               {[
                 { step: '1', title: 'Enter amount', desc: 'Choose your corridor, enter how much to send. We lock the rate for 15 minutes.' },
-                { step: '2', title: 'Pay securely', desc: 'Enter your card details securely through our payment processor. Charged in USD, settles to Kenya.' },
+                { step: '2', title: 'Pay via secure processor', desc: 'Enter your card details securely through our payment processor. Charged in USD, settles to Kenya.' },
                 { step: '3', title: 'Money delivered', desc: 'We route to the best provider. Recipient gets money on M-Pesa or bank in minutes.' },
               ].map(s => (
                 <div key={s.step} className="text-center">
@@ -93,10 +93,10 @@ export function Landing() {
             <h2 className="text-3xl font-bold text-center text-gray-900 mb-10">Why AfriSpine?</h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {[
-                { icon: Zap, t: 'Best rates always', d: 'We score multiple rails in real-time so your money takes the fastest, cheapest path.' },
+                { icon: Zap, t: 'Best rates always', d: 'We score multiple rails in real-time so your transfer takes the fastest, cheapest path.' },
                 { icon: Globe, t: 'Non-custodial', d: 'We never hold your funds. Our payment processor collects, provider delivers. Zero balance sheet risk.' },
                 { icon: Clock, t: 'Minutes, not days', d: 'M-Pesa delivery in ~15 minutes. Bank transfers same day. Ripple in seconds.' },
-                { icon: Shield, t: 'Licensed & regulated', d: 'Our payment processor is licensed by the Central Bank of Kenya. Your money is in safe hands.' },
+                { icon: Shield, t: 'Licensed & regulated', d: 'Our payment processor is licensed by the Central Bank of Kenya. Your payments are in safe hands.' },
                 { icon: Smartphone, t: 'M-Pesa, banks & more', d: 'Mobile money, bank transfer, PAPSS, or Ripple — choose what works for your recipient.' },
                 { icon: ArrowRight, t: '1–3% transparent fees', d: 'Flat percentage fee. What you see is what you pay. No hidden markups.' },
               ].map((f, i) => (

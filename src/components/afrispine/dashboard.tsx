@@ -65,7 +65,7 @@ const matchTypeConfig: Record<string, { label: string; className: string }> = {
     className: 'border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400',
   },
   stablecoin_atomic: {
-    label: 'Instant Transfer',
+    label: 'Fast Transfer',
     className: 'border-gold/30 bg-gold/10 text-gold-foreground',
   },
   papss_settle: {

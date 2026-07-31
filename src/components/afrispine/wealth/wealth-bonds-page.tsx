@@ -697,7 +697,7 @@ export function WealthBondsPage() {
                     <div>
                       <h2 className="text-lg font-bold text-gray-900">Complete Payment</h2>
                       <p className="text-sm text-muted-foreground mt-0.5">
-                        Pay securely to subscribe.
+                        Complete payment via secure processor.
                       </p>
                     </div>
 

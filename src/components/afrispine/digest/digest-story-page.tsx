@@ -434,7 +434,7 @@ export function DigestStoryPage() {
               </span>
             </div>
             <p className="text-sm mb-4" style={{ color: '#5A4F3C' }}>
-              {t('digest.story.bottomCta') || 'Ready to invest in Africa?'}
+              {t('digest.story.bottomCta') || 'Ready to explore African markets?'}
             </p>
             <Button
               className="font-bold px-8"

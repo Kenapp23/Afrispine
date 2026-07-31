@@ -162,7 +162,7 @@ export function DigestAdvertisePage() {
             </div>
             <div className="mb-4">
               <Label className="mb-1.5">Ad headline * <span className="font-normal text-xs" style={{ color: '#6B5E4B' }}>({wordCount(form.headline)}/10 words)</span></Label>
-              <Input required value={form.headline} onChange={e => update('headline', e.target.value)} placeholder="Invest in Africa's future" style={{ borderColor: '#E5E0D8' }} />
+              <Input required value={form.headline} onChange={e => update('headline', e.target.value)} placeholder="Explore African markets" style={{ borderColor: '#E5E0D8' }} />
               {wordCount(form.headline) > 10 && <p className="text-xs mt-1" style={{ color: '#DC2626' }}>Max 10 words</p>}
             </div>
             <div className="mb-4">

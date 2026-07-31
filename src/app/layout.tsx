@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AfriSpine — Send Money to Africa Instantly",
+  title: "AfriSpine — Transfer Money to Africa",
   description:
-    "Send money from the UK, US, and Canada to Kenya, Nigeria, Ghana. Low 1.5% fees, instant delivery.",
+    "Transfer money from the UK, US, and Canada to Kenya, Nigeria, Ghana. Low 1.5% fees, fast delivery.",
   icons: {
     icon: [
       { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
@@ -25,8 +25,8 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
   openGraph: {
-    title: "AfriSpine — Send Money to Africa Instantly",
-    description: "Low 1.5% fees, instant delivery to Kenya, Nigeria, Ghana.",
+    title: "AfriSpine — Transfer Money to Africa",
+    description: "Low 1.5% fees, fast delivery to Kenya, Nigeria, Ghana.",
     siteName: "AfriSpine",
     type: "website",
     locale: "en_US",

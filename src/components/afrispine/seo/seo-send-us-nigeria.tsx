@@ -7,6 +7,7 @@ import {
   ArrowRight, ShieldCheck, Zap, Smartphone, Building2,
   Star, ChevronDown, Clock, Globe2, Users,
 } from 'lucide-react';
+import { PartnerDisclosure } from '@/components/afrispine/common/partner-disclosure';
 
 const faqs = [
   {
@@ -18,11 +19,11 @@ const faqs = [
     a: 'Our displayed rate updates every 60 seconds. For $100, your recipient receives approximately ₦155,000 (minus the flat 1.5% fee). The exact naira amount is always shown before you confirm.',
   },
   {
-    q: 'Can I send money to OPay or PalmPay from the US?',
+    q: 'Can I transfer money to OPay or PalmPay from the US?',
     a: 'Yes! AfriSpine supports direct transfers to OPay, PalmPay, Moniepoint, and all major Nigerian bank accounts. Your recipient gets a notification the moment the funds land.',
   },
   {
-    q: 'Is AfriSpine licensed to send money to Nigeria?',
+    q: 'Is AfriSpine licensed to transfer money to Nigeria?',
     a: 'AfriSpine operates under full regulatory compliance. All transactions are processed through licensed corridors and partners. We follow strict AML/KYC protocols as required by both US and Nigerian regulators.',
   },
   {
@@ -31,7 +32,7 @@ const faqs = [
   },
   {
     q: 'Can I pay school fees or medical bills in Nigeria from the US?',
-    a: 'Absolutely. Many of our Nigerian-American users send money directly for school fees (UNILAG, UI, ABU), hospital bills, and property payments. Bank transfers work best for these larger payments.',
+    a: 'Absolutely. Many of our Nigerian-American users transfer money directly for school fees (UNILAG, UI, ABU), hospital bills, and property payments. Bank transfers work best for these larger payments.',
   },
   {
     q: 'What is the maximum I can send to Nigeria per transfer?',
@@ -44,7 +45,7 @@ export function SeoSendUsNigeria() {
   const [faqOpen, setFaqOpen] = useState<number | null>(null);
 
   useEffect(() => {
-    document.title = 'Send Money from USA to Nigeria | AfriSpine';
+    document.title = 'Transfer Money from USA to Nigeria | AfriSpine';
     const setMeta = (name: string, content: string) => {
       let el = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
       if (!el) {
@@ -65,7 +66,7 @@ export function SeoSendUsNigeria() {
     };
     const desc = "The Nigerian diaspora's favourite way to send naira home. Direct to OPay, PalmPay, Moniepoint, GTBank, Access, or First Bank. 1.5% flat fee.";
     setMeta('description', desc);
-    setOg('title', 'Send Money from USA to Nigeria | AfriSpine');
+    setOg('title', 'Transfer Money from USA to Nigeria | AfriSpine');
     setOg('description', desc);
     setOg('url', 'https://afri-spine.com/send/us-nigeria');
     setOg('type', 'website');
@@ -79,7 +80,7 @@ export function SeoSendUsNigeria() {
           __html: JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'FinancialProduct',
-            name: 'Send Money from USA to Nigeria | AfriSpine',
+            name: 'Transfer Money from USA to Nigeria | AfriSpine',
             description: "The Nigerian diaspora's favourite way to send naira home. Direct to OPay, PalmPay, Moniepoint, GTBank, Access, or First Bank. 1.5% flat fee.",
             provider: {
               '@type': 'Organization',
@@ -106,7 +107,7 @@ export function SeoSendUsNigeria() {
             🇺🇸 → 🇳🇬 US to Nigeria Corridor
           </div>
           <h1 className="text-3xl sm:text-5xl font-bold tracking-tight leading-tight">
-            Send Money from the USA to Nigeria
+            Transfer Money from the USA to Nigeria
             <br className="hidden sm:block" />
             <span className="text-amber-300"> Fast, Affordable, Reliable</span>
           </h1>
@@ -125,7 +126,7 @@ export function SeoSendUsNigeria() {
               className="bg-amber-500 hover:bg-amber-400 text-emerald-950 font-bold text-lg px-8 h-12"
               onClick={() => navigate('signup')}
             >
-              Send Money to Nigeria Now <ArrowRight className="ml-2 h-5 w-5" />
+              Transfer Money to Nigeria Now <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
             <Button
               variant="outline"
@@ -136,6 +137,7 @@ export function SeoSendUsNigeria() {
               Compare Our Rates
             </Button>
           </div>
+          <PartnerDisclosure variant="inline" className="mt-3 text-center text-white/60" />
         </div>
       </section>
 
@@ -150,7 +152,7 @@ export function SeoSendUsNigeria() {
         <div className="mt-12 grid gap-8 sm:grid-cols-3">
           {[
             { step: '1', icon: <Globe2 className="h-8 w-8 text-emerald-600" />, title: 'Enter amount in USD', desc: 'Enter how many dollars you want to send. We show the exact naira your recipient gets upfront.' },
-            { step: '2', icon: <ShieldCheck className="h-8 w-8 text-emerald-600" />, title: 'Pay securely', desc: 'Pay with your US debit card, ACH transfer, or Apple Pay. All payments are encrypted and secure.' },
+            { step: '2', icon: <ShieldCheck className="h-8 w-8 text-emerald-600" />, title: 'Pay via secure processor', desc: 'Pay with your US debit card, ACH transfer, or Apple Pay. All payments are encrypted and secure.' },
             { step: '3', icon: <Zap className="h-8 w-8 text-emerald-600" />, title: 'Naira delivered fast', desc: 'OPay and PalmPay: 2–10 minutes. Bank transfers to GTBank, Access, First Bank: 1–2 business days.' },
           ].map((item) => (
             <div key={item.step} className="relative rounded-2xl bg-white border border-stone-200 p-6 text-center shadow-sm hover:shadow-md transition-shadow">
@@ -169,9 +171,9 @@ export function SeoSendUsNigeria() {
           <h2 className="text-2xl sm:text-3xl font-bold text-center text-stone-900">Delivery Options in Nigeria</h2>
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { icon: <Smartphone className="h-6 w-6 text-green-600" />, title: 'OPay', desc: 'Instant transfer to any OPay wallet. Fast and free for the recipient.', tag: 'Most Popular' },
+              { icon: <Smartphone className="h-6 w-6 text-green-600" />, title: 'OPay', desc: 'Fast transfer to any OPay wallet. Fast and free for the recipient.', tag: 'Most Popular' },
               { icon: <Smartphone className="h-6 w-6 text-purple-600" />, title: 'PalmPay', desc: 'Direct to PalmPay wallet. Your recipient can use it immediately for payments.' },
-              { icon: <Smartphone className="h-6 w-6 text-blue-600" />, title: 'Moniepoint', desc: 'Send to Moniepoint accounts for instant access to cash at any agent.' },
+              { icon: <Smartphone className="h-6 w-6 text-blue-600" />, title: 'Moniepoint', desc: 'Send to Moniepoint accounts for fast access to cash at any agent.' },
               { icon: <Building2 className="h-6 w-6 text-emerald-600" />, title: 'Bank Transfer', desc: 'GTBank, Access Bank, First Bank, UBA, Zenith, and all other Nigerian banks.' },
             ].map((m) => (
               <div key={m.title} className="rounded-2xl border border-stone-200 p-5 hover:border-emerald-300 transition-colors">
@@ -235,7 +237,7 @@ export function SeoSendUsNigeria() {
         <h2 className="text-2xl sm:text-3xl font-bold text-center text-stone-900">What Nigerians in the US Say</h2>
         <div className="mt-10 grid gap-6 sm:grid-cols-3">
           {[
-            { name: 'Chukwuma Eze', location: 'Houston, TX', text: 'I send money to my wife\'s OPay account every two weeks. It arrives before I finish my coffee. Western Union used to take 2 days and charge me $15. AfriSpine is a lifesaver.', rating: 5 },
+            { name: 'Chukwuma Eze', location: 'Houston, TX', text: 'I transfer money to my wife\'s OPay account every two weeks. It arrives before I finish my coffee. Western Union used to take 2 days and charge me $15. AfriSpine is a lifesaver.', rating: 5 },
             { name: 'Funke Adeyemi', location: 'New York, NY', text: 'Paying my parents\' medical bills at LUTH used to be so stressful. Now I just send to their Access Bank account and they pay the hospital directly. So convenient.', rating: 5 },
             { name: 'Emeka Nwosu', location: 'Atlanta, GA', text: 'The rates are genuinely better than what I was getting with my bank. And I love that my brother gets the full naira amount — nothing deducted on his end.', rating: 5 },
           ].map((t) => (
@@ -285,8 +287,9 @@ export function SeoSendUsNigeria() {
           for fast, affordable, and reliable money transfers.
         </p>
         <Button size="lg" className="mt-8 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-lg px-8 h-12" onClick={() => navigate('send')}>
-          Send Money to Nigeria Now <ArrowRight className="ml-2 h-5 w-5" />
+          Transfer Money to Nigeria Now <ArrowRight className="ml-2 h-5 w-5" />
         </Button>
+        <PartnerDisclosure variant="inline" className="mt-4 text-center" />
       </section>
     </div>
   );

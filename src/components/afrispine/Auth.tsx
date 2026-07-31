@@ -141,11 +141,11 @@ function Onboarding() {
         {step === 2 && (
           <div className="space-y-4">
             <h2 className="text-xl font-bold">Verify identity</h2>
-            <p className="text-sm text-gray-500">We use Smile ID for instant verification. In production, a document + liveness widget would appear here.</p>
+            <p className="text-sm text-gray-500">We use Smile ID for fast verification. In production, a document + liveness widget would appear here.</p>
             <div className="bg-gray-50 rounded-xl p-6 text-center">
               {kycStatus === '' && <><p className="text-sm text-gray-600 mb-4">Tap below to start verification</p><button onClick={submitKyc} className="px-6 py-2.5 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700">Start verification</button></>}
               {kycStatus === 'pending' && <div className="flex items-center justify-center gap-2"><div className="animate-spin h-5 w-5 border-2 border-emerald-500 border-t-transparent rounded-full" /><span className="text-gray-600">Verifying...</span></div>}
-              {kycStatus === 'approved' && <><p className="text-emerald-600 font-medium text-lg">Identity verified!</p><p className="text-sm text-gray-500 mt-1">You're all set to send money.</p></>}
+              {kycStatus === 'approved' && <><p className="text-emerald-600 font-medium text-lg">Identity verified!</p><p className="text-sm text-gray-500 mt-1">You're all set to transfer money.</p></>}
             </div>
             <button onClick={() => setStep(3)} className="w-full py-2.5 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-700">Continue</button>
           </div>

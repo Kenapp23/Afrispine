@@ -15,7 +15,7 @@ const faqs = [
   {
     question: 'Is AfriSpine available in the US?',
     answer:
-      'Yes. Any US cardholder can send money to Africa using AfriSpine. Cards are charged in USD.',
+      'Yes. Any US cardholder can transfer money to Africa using AfriSpine. Cards are charged in USD.',
   },
   {
     question: 'How does AfriSpine compare to Western Union?',

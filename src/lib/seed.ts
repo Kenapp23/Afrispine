@@ -87,7 +87,7 @@ export async function seed() {
     delivered: 'Hello {{senderName}}, your transfer of {{amountReceive}} {{currencyReceive}} (ref: {{reference}}) has been delivered to {{recipientName}}.',
     failed: 'Hello {{senderName}}, your transfer (ref: {{reference}}) could not be completed. Reason: {{reason}}. A refund has been initiated.',
     refunded: 'Hello {{senderName}}, your payment for transfer (ref: {{reference}}) has been refunded to your original payment method.',
-    kyc_approved: 'Hello {{senderName}}, your identity verification has been approved. You can now send money.',
+    kyc_approved: 'Hello {{senderName}}, your identity verification has been approved. You can now transfer money.',
     kyc_rejected: 'Hello {{senderName}}, your identity verification was not successful. Please re-submit your documents.',
   };
 

@@ -38,24 +38,24 @@ const resources = {
       'sidebar.kyc': 'KYC',
 
       // ── Landing Page ──
-      'landing.heroHeadline': 'Africa is calling. Answer with money that arrives instantly.',
-      'landing.heroSub': 'Send money, pay bills, and invest in African markets — all from one platform built for the diaspora.',
+      'landing.heroHeadline': 'Africa is calling. Answer with money that arrives fast.',
+      'landing.heroSub': 'Transfer money, pay bills, and explore African markets — all from one platform built for the diaspora.',
       'landing.ctaSend': 'Start sending',
       'landing.ctaExplore': 'Explore markets',
       'landing.ctaBusiness': 'For your business',
       'landing.trustedBy': 'Trusted by senders across',
       'landing.countries': 'countries',
-      'landing.featureFast': 'Instant transfers',
+      'landing.featureFast': 'Fast transfers',
       'landing.featureFastDesc': 'Money delivered in seconds, not days. Real-time tracking on every transaction.',
       'landing.featureRates': 'Best exchange rates',
-      'landing.featureRatesDesc': 'We compare rates across providers so you always get the most for your money.',
+      'landing.featureRatesDesc': 'We compare rates across providers so you always get the best value for your transfer.',
       'landing.featureSecure': 'Bank-level security',
-      'landing.featureSecureDesc': 'Licensed and regulated. Your money is protected with enterprise-grade encryption.',
+      'landing.featureSecureDesc': 'Licensed and regulated. Your payments are protected with enterprise-grade encryption.',
 
       // ── Product Pillars ──
-      'pillar.sendTitle': 'Send Money',
+      'pillar.sendTitle': 'Transfer Money',
       'pillar.sendDesc': 'Transfer funds to mobile money, bank accounts, and cash pickup locations across Africa. Fast, affordable, and reliable.',
-      'pillar.wealthTitle': 'Invest in Africa',
+      'pillar.wealthTitle': 'Explore Africa',
       'pillar.wealthDesc': 'Access African stock exchanges, government bonds, and IPOs. Build wealth from wherever you are.',
       'pillar.billsTitle': 'Pay Bills',
       'pillar.billsDesc': 'Settle electricity, airtime, DStv, water, and more — directly from your AfriSpine wallet.',
@@ -101,7 +101,7 @@ const resources = {
       'onboarding.skip': 'Skip for now',
 
       // ── Send Flow ──
-      'send.title': 'Send money',
+      'send.title': 'Transfer money',
       'send.youSend': 'You send',
       'send.theyReceive': 'They receive',
       'send.recipientName': 'Recipient name',
@@ -122,7 +122,7 @@ const resources = {
       'send.to': 'To',
       'send.confirm': 'Confirm transfer',
       'send.transferSuccessful': 'Transfer successful!',
-      'send.transferSent': 'Your money is on its way.',
+      'send.transferSent': 'Your transfer is on its way.',
       'send.sendAnother': 'Send another',
       'send.viewReceipt': 'View receipt',
       'send.savedRecipients': 'Saved recipients',
@@ -132,13 +132,13 @@ const resources = {
       'send.bankTransfer': 'Bank transfer',
       'send.cashPickup': 'Cash pickup',
       'send.estimatedDelivery': 'Estimated delivery',
-      'send.instant': 'Instant',
+      'send.instant': 'Fast',
       'send.withinMinutes': 'Within minutes',
       'send.within1Hour': 'Within 1 hour',
       'send.within24Hours': 'Within 24 hours',
 
       // ── Wealth / Invest ──
-      'wealth.title': 'Invest in Africa',
+      'wealth.title': 'Explore Africa',
       'wealth.biggestMovers': "Today's Biggest Movers",
       'wealth.buy': 'Buy',
       'wealth.sell': 'Sell',
@@ -458,7 +458,7 @@ const resources = {
 
       // ── Intra-Africa ──
       'intra.title': 'Intra-Africa Payments',
-      'intra.subtitle': 'Send money between African countries with PAPSS-powered instant settlement.',
+      'intra.subtitle': 'Transfer money between African countries with PAPSS-powered fast settlement.',
       'intra.register': 'Register interest',
       'intra.countries': 'Available countries',
 
@@ -675,14 +675,14 @@ const resources = {
       'sidebar.kyc': 'KYC',
 
       // ── Landing Page ──
-      'landing.heroHeadline': "L'Afrique vous appelle. Répondez avec de l'argent qui arrive instantanément.",
-      'landing.heroSub': 'Envoyez de l\'argent, payez vos factures et investissez sur les marchés africains — depuis une seule plateforme conçue pour la diaspora.',
+      'landing.heroHeadline': "L'Afrique vous appelle. Répondez avec de l'argent qui arrive rapidement.",
+      'landing.heroSub': 'Transférez de l\'argent, payez vos factures et explorez les marchés africains — depuis une seule plateforme conçue pour la diaspora.',
       'landing.ctaSend': 'Commencer à envoyer',
       'landing.ctaExplore': 'Explorer les marchés',
       'landing.ctaBusiness': 'Pour votre entreprise',
       'landing.trustedBy': 'La confiance des expéditeurs dans',
       'landing.countries': 'pays',
-      'landing.featureFast': 'Transferts instantanés',
+      'landing.featureFast': 'Transferts rapides',
       'landing.featureFastDesc': "De l'argent livré en quelques secondes, pas en jours. Suivi en temps réel de chaque transaction.",
       'landing.featureRates': 'Meilleurs taux de change',
       'landing.featureRatesDesc': 'Nous comparons les taux entre les fournisseurs pour que vous obteniez toujours le meilleur rapport.',
@@ -768,7 +768,7 @@ const resources = {
       'send.bankTransfer': 'Virement bancaire',
       'send.cashPickup': 'Retrait d\'espèces',
       'send.estimatedDelivery': 'Délai de livraison estimé',
-      'send.instant': 'Instantané',
+      'send.instant': 'Rapide',
       'send.withinMinutes': 'Dans quelques minutes',
       'send.within1Hour': 'Sous 1 heure',
       'send.within24Hours': 'Sous 24 heures',
@@ -1094,7 +1094,7 @@ const resources = {
 
       // ── Intra-Africa ──
       'intra.title': 'Paiements intra-africains',
-      'intra.subtitle': 'Envoyez de l\'argent entre pays africains avec un règlement instantané propulsé par PAPSS.',
+      'intra.subtitle': 'Transférez de l\'argent entre pays africains avec un règlement rapide propulsé par PAPSS.',
       'intra.register': "S'inscrire",
       'intra.countries': 'Pays disponibles',
 
@@ -1241,8 +1241,8 @@ const resources = {
       'nav.moreOptions': 'Mais opções',
 
       // ── Landing Page ──
-      'landing.heroHeadline': 'África está a chamar. Responda com dinheiro que chega instantaneamente.',
-      'landing.heroSub': 'Envie dinheiro, pague contas e invista nos mercados africanos — tudo numa só plataforma feita para a diáspora.',
+      'landing.heroHeadline': 'África está a chamar. Responda com dinheiro que chega rapidamente.',
+      'landing.heroSub': 'Envie dinheiro, pague contas e explore os mercados africanos — tudo numa só plataforma feita para a diáspora.',
       'landing.ctaSend': 'Começar a enviar',
       'landing.ctaExplore': 'Explorar mercados',
 

@@ -56,7 +56,7 @@ export default function IntraAfricaBlock() {
       <div className="max-w-3xl mx-auto text-center">
         {/* Heading */}
         <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-amber-300 mb-4">
-          Send Money Within Africa
+          Transfer Money Within Africa
         </h2>
         <p className="text-lg sm:text-xl text-amber-200/80 font-medium mb-2">
           Intra-Africa Payments — Coming Soon via PAPSS
@@ -71,7 +71,7 @@ export default function IntraAfricaBlock() {
             <span className="text-amber-400 font-semibold">No USD conversion</span> — local to local
           </div>
           <div className="text-sm sm:text-base text-amber-100/70">
-            <span className="text-amber-400 font-semibold">Near-instant</span> settlement
+            <span className="text-amber-400 font-semibold">Fast</span> settlement
           </div>
         </div>
 

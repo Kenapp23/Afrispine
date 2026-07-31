@@ -31,7 +31,7 @@ export function AboutPage() {
             AfriSpine Ltd is a non-custodial payment routing and matching platform registered in Kenya. We connect diaspora Africans in the UK, USA, Canada, and EU to family in Africa via the fastest, most cost-effective route.
           </p>
           <p className="mt-3">
-            We are not a bank or money transmitter. Your payment is collected securely by Fincra and your money is delivered by our licensed provider partners including regulated mobile money operators and banks. AfriSpine earns a transparent service fee of 1–3% per transfer. Your principal is never in our hands.
+            We are not a bank or money transmitter. Your payment is collected securely by Fincra and delivered by our licensed provider partners including regulated mobile money operators and banks. AfriSpine earns a transparent service fee of 1–3% per transfer. Your principal is never in our hands.
           </p>
         </section>
 
@@ -81,7 +81,7 @@ export function AboutPage() {
             </li>
           </ul>
           <p className="mt-4">
-            At no point does AfriSpine hold, custody, or intermediate your funds. Your money goes directly from our payment processor to the delivery provider.
+            At no point does AfriSpine hold, custody, or intermediate your funds. Your payment goes directly from our payment processor to the delivery provider.
           </p>
         </section>
 

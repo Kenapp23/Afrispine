@@ -276,7 +276,7 @@ export function PricingPage() {
             How AfriSpine compares
           </h2>
           <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">
-            We put our pricing head-to-head with the biggest names in remittances.
+            We put our pricing head-to-head with the biggest names in transfers.
             See why 10,000+ senders switched to AfriSpine.
           </p>
         </div>

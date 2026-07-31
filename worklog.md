@@ -110,3 +110,53 @@ Stage Summary:
 - Commit: 44ce1f7 pushed to main
 - 45 files changed, 1682 insertions(+), 439 deletions(-)
 - 4 new API route files created
+
+---
+Task ID: 2+3+4
+Agent: main
+Task: Regulator-safe language replacements + PartnerDisclosure near CTAs
+
+Work Log:
+PART 1 — 'send money' → 'transfer money':
+- Auth.tsx: 'You're all set to send money' → 'You're all set to transfer money'
+- seo-send-us-nigeria.tsx: 7 instances replaced (FAQ questions/answers, document.title, og:title, schema name, testimonial)
+- seo-send-uk-kenya.tsx: 5 instances replaced (document.title, og:title, schema name, section heading, testimonial)
+- seo-send-uk-nigeria.tsx: 3 instances replaced (document.title, og:title, schema name)
+- seo-send-canada-ghana.tsx: 1 instance replaced (FAQ question)
+- send-flow.tsx: 1 instance replaced ('to send money to' → 'to transfer money to')
+- landing-page.tsx: no 'send money' instances found (already clean)
+
+PART 2 — 'Pay securely' replacement:
+- wealth-bonds-page.tsx: 'Pay securely to subscribe' → 'Complete payment via secure processor'
+
+PART 3 — 'invest in' replacements:
+- seo-send-dangote-ipo.tsx: 'Can I invest in other Nigerian stocks' → 'Can I access other Nigerian stocks'
+- wealth-activation-page.tsx: 'Invest in African stocks' → 'Explore African stocks'
+
+PART 4 — 'Buy shares' / 'buy shares':
+- Checked wealth-landing-page.tsx and seo-send-uk-nigeria.tsx — no instances found
+
+PART 5 — 'your money' replacement:
+- i18n.ts: 'get the most for your money' → 'get the best value for your transfer'
+
+PART 6 — PartnerDisclosure component:
+- Already existed at src/components/afrispine/common/partner-disclosure.tsx with equivalent functionality
+
+PART 7 — Disclosure placement adjustments:
+- landing-page.tsx: Consolidated two per-button disclosures into one below both CTAs (mt-4 text-center), updated banner class to mt-4
+- send/send-flow.tsx: Updated card disclosure className from 'col-span-full' to 'mt-4'
+- wealth-landing-page.tsx: Updated inline disclosure className from 'mt-3' to 'mt-4'
+- seo-send-us-nigeria.tsx: Added PartnerDisclosure below bottom CTA button
+- seo-send-uk-kenya.tsx: Added PartnerDisclosure below bottom CTA buttons
+- seo-send-uk-nigeria.tsx: Added PartnerDisclosure below bottom CTA button
+- seo-send-canada-ghana.tsx: Added PartnerDisclosure below bottom CTA button
+
+Bonus fix:
+- gifts-hub-page.tsx: Fixed pre-existing missing comma (parsing error) on line 252
+
+Stage Summary:
+- 12 files modified across 7 parts
+- All 'send money' instances replaced with 'transfer money' in specified scope
+- 'Pay securely', 'invest in', 'your money' replaced with regulator-safe alternatives
+- PartnerDisclosure added/adjusted near all major CTAs
+- Lint passes clean

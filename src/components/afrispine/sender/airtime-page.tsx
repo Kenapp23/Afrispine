@@ -178,7 +178,7 @@ export function AirtimePage() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Airtime Top-Up</h1>
         <p className="text-muted-foreground">
-          Instantly top up mobile airtime across Africa
+          Top up mobile airtime across Africa right away
         </p>
       </div>
 

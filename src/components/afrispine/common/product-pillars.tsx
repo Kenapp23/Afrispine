@@ -6,7 +6,7 @@ import { useAppStore } from '@/stores/app';
 const PILLARS = [
   {
     icon: Send,
-    headline: 'Send money home',
+    headline: 'Transfer money home',
     sub: 'From $10 to $10,000. Arrives in minutes. M-Pesa, MTN MoMo, bank — your choice.',
     cta: 'Send now →',
     navigateTo: 'signup' as const,
@@ -28,7 +28,7 @@ const PILLARS = [
     sub: 'KPLC electricity, DStv, water, airtime. Pay directly from abroad. $1.50 flat fee.',
     cta: 'Pay a bill →',
     navigateTo: 'signup' as const,
-    highlight: '$1.50 flat · Instant',
+    highlight: '$1.50 flat · Fast',
     badge: null,
   },
 ];

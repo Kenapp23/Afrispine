@@ -849,7 +849,7 @@ export function AdminWealthPage() {
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-1">No bond orders yet</h3>
               <p className="text-sm text-muted-foreground max-w-md">
-                Bond orders will appear here once users invest in bonds.
+                Bond orders will appear here once users place bond orders.
               </p>
             </div>
           </CardContent>

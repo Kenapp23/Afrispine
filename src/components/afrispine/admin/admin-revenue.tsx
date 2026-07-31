@@ -326,7 +326,7 @@ export function AdminRevenuePage() {
 
         {/* ─── 3 P&L TRACK CARDS ──────────────────────────────────────────── */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          {/* Track 1: Consumer Remittances */}
+          {/* Track 1: Consumer Transfers */}
           <Card className={expandedTrack === 'remit' ? 'ring-2 ring-emerald-500' : ''}>
             <CardHeader className="pb-3 cursor-pointer select-none" onClick={() => toggleTrack('remit')}>
               <div className="flex items-center justify-between">
@@ -335,7 +335,7 @@ export function AdminRevenuePage() {
                     <SendHorizonal className="h-4 w-4" />
                   </div>
                   <div>
-                    <CardTitle className="text-sm font-semibold">Consumer Remittances</CardTitle>
+                    <CardTitle className="text-sm font-semibold">Consumer Transfers</CardTitle>
                     <p className="text-xs text-muted-foreground">Person-to-person transfers</p>
                   </div>
                 </div>
@@ -540,7 +540,7 @@ export function AdminRevenuePage() {
             <div className="flex items-center gap-4">
               <CardTitle className="text-base">Daily Revenue by Stream</CardTitle>
               <div className="flex items-center gap-3 text-xs">
-                <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-sm bg-emerald-500" /> Remittances</span>
+                <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-sm bg-emerald-500" /> Transfers</span>
                 <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-sm bg-amber-500" /> Bills</span>
                 <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-sm bg-violet-500" /> Business FX</span>
               </div>
@@ -677,7 +677,7 @@ export function AdminRevenuePage() {
         {/* P&L by Corridor table */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">P&L by Corridor (Remittances)</CardTitle>
+            <CardTitle className="text-base">P&L by Corridor (Transfers)</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto max-h-96 overflow-y-auto">

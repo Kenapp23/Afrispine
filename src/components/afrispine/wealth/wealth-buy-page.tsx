@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '@/stores/app';
 import { AchievementCard } from '@/components/afrispine/common/achievement-card';
 import { Button } from '@/components/ui/button';
+import { PartnerDisclosure } from '@/components/afrispine/common/partner-disclosure';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -640,6 +641,7 @@ export function WealthBuyPage() {
               </>
             )}
           </Button>
+          <PartnerDisclosure variant="card" />
         </div>
       </div>
     );
@@ -715,7 +717,7 @@ export function WealthBuyPage() {
               setSearchQuery('');
             }}
           >
-            Invest in more stocks
+            Explore more stocks
             <TrendingUp className="h-4 w-4" />
           </Button>
         </div>
@@ -740,7 +742,7 @@ export function WealthBuyPage() {
     <div className="max-w-2xl mx-auto px-4 py-8 sm:py-12">
       <div className="mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-          Invest in African Stocks
+          Explore African Stocks
         </h1>
         <p className="text-muted-foreground mt-1">
           Build wealth from the fastest-growing markets on earth.

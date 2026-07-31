@@ -117,7 +117,7 @@ export function WealthActivationPage() {
               Open your AfriSpine Investment Account
             </h1>
             <p className="mt-4 max-w-lg text-base text-muted-foreground leading-relaxed sm:text-lg">
-              Invest in African stocks, bonds, and IPOs from $10. Your account
+              Explore African stocks, bonds, and IPOs from $10. Your account
               activates in seconds.
             </p>
           </div>
@@ -223,12 +223,12 @@ export function WealthActivationPage() {
         </div>
       </div>
 
-      {/* Why invest in African markets? */}
+      {/* Why explore African markets? */}
       <section className="bg-gray-50 border-t border-gray-200 py-12 sm:py-16">
         <div className="mx-auto max-w-2xl px-4 sm:px-6">
           <div className="mx-auto max-w-xl text-center mb-8">
             <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
-              Why invest in African markets?
+              Why explore African markets?
             </h2>
             <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
               Africa is home to some of the world&apos;s fastest-growing

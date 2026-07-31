@@ -3,6 +3,7 @@
 import React from 'react';
 import { useAppStore } from '@/stores/app';
 import { Button } from '@/components/ui/button';
+import { PartnerDisclosure } from '@/components/afrispine/common/partner-disclosure';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -294,7 +295,7 @@ export function WealthStockPage() {
                 className="bg-emerald-600 text-white hover:bg-emerald-700"
                 onClick={() => navigate('wealth-buy', { ticker: stock.ticker })}
               >
-                Buy shares
+                Place order
               </Button>
             </div>
           </div>
@@ -360,8 +361,9 @@ export function WealthStockPage() {
               onClick={() => navigate('wealth-buy', { ticker: stock.ticker })}
             >
               <DollarSign className="mr-2 h-4 w-4" />
-              Buy shares
+              Place order
             </Button>
+            <PartnerDisclosure variant="card" className="col-span-full" />
           </div>
 
           {/* Risk disclaimer */}

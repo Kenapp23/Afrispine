@@ -102,7 +102,7 @@ export function IntraAfricaPage() {
           </h2>
           <p className="mt-4 text-lg text-muted-foreground leading-relaxed">
             We&apos;ll notify you as soon as Intra-Africa corridors go live via PAPSS.
-            You&apos;ll be among the first to send money across African currencies
+            You&apos;ll be among the first to transfer money across African currencies
             without USD conversion — local currency in, local currency out.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
@@ -142,13 +142,13 @@ export function IntraAfricaPage() {
               Coming Soon — Pan-African Payment Infrastructure
             </Badge>
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl leading-tight">
-              Send Money Within Africa
+              Transfer Money Within Africa
               <span className="block text-amber-300 mt-2">No USD conversion needed</span>
             </h1>
             <p className="mt-6 text-lg text-amber-100 leading-relaxed max-w-2xl mx-auto">
               AfriSpine is integrating with <strong className="text-white">PAPSS</strong> — the
               Pan-African Payment and Settlement System backed by the African Union and Afreximbank.
-              Move money between 18 African countries in local currencies, instantly.
+              Move money between 18 African countries in local currencies, fast.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
               <a href="#register" className="inline-flex items-center justify-center rounded-lg bg-amber-400 px-6 py-3 text-sm font-semibold text-amber-950 hover:bg-amber-300 transition-colors">
@@ -170,7 +170,7 @@ export function IntraAfricaPage() {
               </span>
               <span className="flex items-center gap-1.5">
                 <Zap className="h-4 w-4" />
-                Near-instant settlement
+                Fast settlement
               </span>
               <span className="flex items-center gap-1.5">
                 <Users className="h-4 w-4" />
@@ -202,7 +202,7 @@ export function IntraAfricaPage() {
               },
               {
                 icon: Zap,
-                title: 'Near-instant settlement',
+                title: 'Fast settlement',
                 desc: 'PAPSS provides T+0 to T+1 settlement between participating central banks. Money that used to take 3–5 business days via correspondent banks arrives in minutes.',
               },
               {
@@ -321,7 +321,7 @@ export function IntraAfricaPage() {
                 },
                 {
                   step: '04',
-                  title: 'Recipient gets paid instantly',
+                  title: 'Recipient gets paid fast',
                   desc: 'Money arrives in the recipient\'s local currency via bank transfer or mobile money. M-Pesa, MTN MoMo, bank accounts — whatever they already use.',
                   cta: 'Coming soon',
                 },
@@ -454,7 +454,7 @@ export function IntraAfricaPage() {
               </button>
               <p className="text-xs text-center text-muted-foreground">
                 No spam. We&apos;ll only email you when Intra-Africa corridors launch.
-                You can also create a full AfriSpine account to send money internationally today.
+                You can also create a full AfriSpine account to transfer money internationally today.
               </p>
             </form>
           </div>
@@ -505,7 +505,7 @@ export function IntraAfricaPage() {
             Africa&apos;s payment infrastructure is changing.
           </h2>
           <p className="mt-4 text-lg text-amber-200">
-            Be among the first to send money within Africa without USD conversion.
+            Be among the first to transfer money within Africa without USD conversion.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
             <Button

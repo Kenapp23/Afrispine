@@ -18,7 +18,7 @@ const companyLinks: FooterLink[] = [
 ];
 
 const productLinks: FooterLink[] = [
-  { label: 'Send Money', view: 'send' },
+  { label: 'Transfer Money', view: 'send' },
   { label: 'Business FX', view: 'business' },
   { label: 'Wealth', view: 'wealth-landing' },
   { label: 'Gifts & Occasions', view: 'gifts' },
@@ -92,7 +92,7 @@ export function Footer() {
               AfriSpine
             </button>
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-              The modern way for the African diaspora to send money home. Fast,
+              The modern way for the African diaspora to transfer money home. Fast,
               fair, and built for Africans, by Africans.
             </p>
             {/* Social Icons */}

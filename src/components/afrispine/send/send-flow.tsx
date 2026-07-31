@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { AchievementCard } from '@/components/afrispine/common/achievement-card';
 import { useAppStore } from '@/stores/app';
+import { PartnerDisclosure } from '@/components/afrispine/common/partner-disclosure';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -70,7 +71,7 @@ const rails = [
     id: 'mobile_money',
     label: 'Mobile money',
     icon: Smartphone,
-    speed: 'Instant',
+    speed: 'Fast',
     desc: 'Direct to mobile wallet (M-Pesa, MTN, Airtel)',
     needs: 'Phone number',
   },
@@ -87,7 +88,7 @@ const rails = [
     label: 'Ripple net',
     icon: Zap,
     speed: 'Coming soon',
-    desc: 'Via MFS Africa — instant settlement across 35 African countries',
+    desc: 'Via MFS Africa — fast settlement across 35 African countries',
     needs: 'Bank account or wallet',
     badge: 'COMING SOON',
   },
@@ -679,7 +680,7 @@ function StepRail() {
                   <Badge
                     variant="secondary"
                     className={`text-xs ${
-                      rail.speed === 'Instant' || rail.speed === '5 min'
+                      rail.speed === 'Fast' || rail.speed === '5 min'
                         ? 'bg-emerald-100 text-emerald-700'
                         : ''
                     }`}
@@ -1015,7 +1016,7 @@ function StepRecipient() {
               <FieldError message={errors.rippleAddress} />
               <p className="text-xs text-muted-foreground flex items-start gap-1">
                 <Info className="h-3 w-3 mt-0.5 shrink-0" />
-                Enter the recipient&apos;s Ripple wallet address for instant settlement.
+                Enter the recipient&apos;s Ripple wallet address for fast settlement.
               </p>
             </div>
           )}
@@ -1218,6 +1219,7 @@ function StepReviewPay() {
               </>
             )}
           </Button>
+          <PartnerDisclosure variant="card" className="mt-4" />
         </div>
       </CardContent>
     </Card>
@@ -1428,7 +1430,7 @@ export function SendFlow() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Send money</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Transfer money</h1>
         {step < 5 && (
           <p className="text-muted-foreground">Step {step} of 4 — {stepLabels[step - 1]}</p>
         )}

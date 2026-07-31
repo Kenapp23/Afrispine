@@ -96,7 +96,7 @@ export function AdminRevenuePage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Revenue by Corridor</CardTitle>
-          <CardDescription>Fee income and net revenue per remittance corridor (last 30 days)</CardDescription>
+          <CardDescription>Fee income and net revenue per transfer corridor (last 30 days)</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
