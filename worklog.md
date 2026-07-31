@@ -250,3 +250,46 @@ Stage Summary:
 - Replaced with Fincra for payment processing references in user-facing text
 - Code logic preserved: SDK imports, API endpoints, env vars, interface names, database field names untouched
 - No build-breaking changes made — only text string/content replacements
+
+---
+Task ID: 3
+Agent: Lead Engineer
+Task: Favicon update, partner logos, PEPChecker AML integration
+
+Work Log:
+- Regenerated all favicon sizes from uploaded Afrispine Favicon.jpg using sharp
+- Scraped actual partner logos from official websites:
+  - Fincra: https://fincra.com/wp-content/uploads/2022/10/fincra-website-logo-colored.png
+  - Smile ID: https://cdn.prod.website-files.com/69cecfcd51ce55fce000c092/69ea5dbe0f76e9a4ec1cd3bb_Smile-Logo-RGB.svg
+  - PEPChecker: https://pepchecker.com/assets/images/opengraph/pepchecker_og.png
+- Updated landing page Trusted By section with actual partner logo images
+- Updated footer regulatory badges section with Fincra, Smile ID, PEPChecker logos
+- Updated landing page Trust Signals: "KYC by Smile ID", "AML by PEPChecker"
+- Researched PEPChecker API from https://pepchecker.com/for-developers
+- Created PEPChecker API integration:
+  - POST /api/kyc/pep-check — screens sender name against global PEP/sanctions databases
+  - GET /api/kyc/pep-check — retrieves sender's PEP check history
+  - POST /api/admin/pep-checks — admin endpoint to view all PEP checks
+  - Uses PEPChecker test API key (free tier) by default
+  - Saves results to new PepCheck Prisma model
+  - Updates sender KYC status based on results (clear/pep_review/sanctioned)
+- Added PepCheck model to Prisma schema with proper indexes
+- Integrated PEP/AML screening UI into sender KYC page with:
+  - Real-time screening button
+  - Result display (clear/flagged/sanctioned)
+  - PEP match summary with country and role info
+  - Screening history list
+  - PEPChecker branding
+- Updated AML policy page to reference PEPChecker and Smile ID as partners
+- Updated AML policy sanctions screening section to mention PEPChecker
+- Lint: clean
+- Build: successful — all routes including new /api/kyc/pep-check and /api/admin/pep-checks compile
+- Git: committed and pushed to GitHub (Kenapp23/Afrispine, commit 6932e42)
+- Vercel: auto-deployment triggered from push
+
+Stage Summary:
+- Favicon: regenerated from uploaded image at all sizes
+- Partners: Fincra, Smile ID, PEPChecker with actual logos in Trusted By section and footer
+- Flutterwave/Paystack: all user-facing references removed across 24 files
+- PEPChecker: fully integrated — API backend, Prisma model, sender KYC UI, admin endpoint
+- Remaining Paystack code-level references (SDK imports, env vars, DB fields) preserved for existing payment flow
