@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import '@/lib/ensure-db';
 
 export async function GET() {
   try {

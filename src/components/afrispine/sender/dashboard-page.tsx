@@ -138,7 +138,7 @@ export function DashboardPage() {
         <CardContent className="pt-5 pb-5">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-medium text-gray-900">Monthly send goal</p>
-            <p className="text-sm font-semibold text-emerald-700">£{monthSent} / £{monthGoal}</p>
+            <p className="text-sm font-semibold text-emerald-700">{`£${monthSent.toLocaleString()} / £${monthGoal.toLocaleString()}`}</p>
           </div>
           <Progress value={goalPct} className="h-2.5 [&>div]:bg-emerald-500" />
           <p className="mt-1.5 text-xs text-muted-foreground">

@@ -97,6 +97,16 @@ const PARTNERS: PartnerConfig[] = [
     ],
   },
   {
+    id: 'smile_id',
+    name: 'Smile ID',
+    description: 'Digital identity verification and KYC provider. Powers user identity verification across Africa.',
+    color: 'orange',
+    keyFields: [
+      { name: 'smile_id_partner_id', label: 'Partner ID', placeholder: 'Your Smile ID partner ID', secret: false },
+      { name: 'smile_id_api_key', label: 'API Key', placeholder: 'Your Smile ID API key', secret: true },
+    ],
+  },
+  {
     id: 'africas_talking',
     name: "Africa's Talking",
     description: 'SMS and USSD provider for transaction notifications and alerts.',
@@ -123,6 +133,7 @@ const PARTNER_COLORS: Record<string, { bg: string; border: string; text: string;
   amber: { bg: 'bg-amber-50/20', border: 'border-amber-200', text: 'text-amber-600', badge: 'bg-amber-100', badgeText: 'text-amber-700' },
   green: { bg: 'bg-green-50/20', border: 'border-green-200', text: 'text-green-600', badge: 'bg-green-100', badgeText: 'text-green-700' },
   violet: { bg: 'bg-violet-50/20', border: 'border-violet-200', text: 'text-violet-600', badge: 'bg-violet-100', badgeText: 'text-violet-700' },
+  orange: { bg: 'bg-orange-50/20', border: 'border-orange-200', text: 'text-orange-600', badge: 'bg-orange-100', badgeText: 'text-orange-700' },
 };
 
 const CURRENCIES = ['GBP', 'USD', 'EUR', 'KES', 'NGN', 'GHS'];

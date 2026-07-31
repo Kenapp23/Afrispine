@@ -133,6 +133,11 @@ export function AdminSettlementPage() {
     setConfigLoading(true);
     try {
       const res = await fetch('/api/admin/settlement', { headers: authHeaders() });
+      if (!res.ok) {
+        console.error('[settlement] Config fetch failed:', res.status);
+        setConfig({ id: '', companyName: '', registeredAddress: '', companyRegNumber: '', sweepNotifyEmail: '' });
+        return;
+      }
       const json = await res.json();
       const c = json.config as SettlementConfig;
       setConfig(c);
@@ -140,8 +145,9 @@ export function AdminSettlementPage() {
       setRegisteredAddress(c.registeredAddress || '');
       setCompanyRegNumber(c.companyRegNumber || '');
       setInvoiceEmail(c.sweepNotifyEmail || '');
-    } catch {
-      toast.error('Failed to load settlement config');
+    } catch (e) {
+      console.error('[settlement] Config error:', e);
+      setConfig({ id: '', companyName: '', registeredAddress: '', companyRegNumber: '', sweepNotifyEmail: '' });
     } finally {
       setConfigLoading(false);
     }
@@ -151,10 +157,16 @@ export function AdminSettlementPage() {
     setPaystackKeysLoading(true);
     try {
       const res = await fetch('/api/admin/paystack-keys', { headers: authHeaders() });
+      if (!res.ok) {
+        console.error('[settlement] Keys fetch failed:', res.status);
+        setPaystackKeys({ keys: {} });
+        return;
+      }
       const json = await res.json();
       setPaystackKeys(json);
-    } catch {
-      toast.error('Failed to load payment keys status');
+    } catch (e) {
+      console.error('[settlement] Keys error:', e);
+      setPaystackKeys({ keys: {} });
     } finally {
       setPaystackKeysLoading(false);
     }
@@ -196,10 +208,16 @@ export function AdminSettlementPage() {
     setRevenueLoading(true);
     try {
       const res = await fetch('/api/admin/revenue-summary', { headers: authHeaders() });
+      if (!res.ok) {
+        console.error('[settlement] Revenue fetch failed:', res.status);
+        setRevenue({ totalFees: 0, totalVolume: 0, transactionCount: 0, totalCharged: 0, settledFees: 0, settledCount: 0 });
+        return;
+      }
       const json = await res.json();
       setRevenue(json);
-    } catch {
-      toast.error('Failed to load revenue summary');
+    } catch (e) {
+      console.error('[settlement] Revenue error:', e);
+      setRevenue({ totalFees: 0, totalVolume: 0, transactionCount: 0, totalCharged: 0, settledFees: 0, settledCount: 0 });
     } finally {
       setRevenueLoading(false);
     }
