@@ -215,16 +215,16 @@ export function LandingPage() {
             </div>
             {/* M-Pesa */}
             <div className="flex flex-col items-center gap-1">
-              <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-xl border border-border bg-white transition-colors hover:border-emerald-200">
-                <span className="text-sm font-bold text-green-700">M</span>
+              <div className="flex h-12 w-auto sm:h-14 items-center justify-center rounded-xl border border-border bg-white p-2 transition-colors hover:border-emerald-200">
+                <img src="/partner-mpesa.png" alt="M-Pesa" className="h-full w-auto max-w-[120px] object-contain" />
               </div>
               <span className="text-xs font-medium text-gray-600">M-Pesa</span>
               <span className="text-[10px] text-muted-foreground">Safaricom</span>
             </div>
             {/* MTN MoMo */}
             <div className="flex flex-col items-center gap-1">
-              <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-xl border border-border bg-white transition-colors hover:border-emerald-200">
-                <span className="text-sm font-bold text-amber-600">MTN</span>
+              <div className="flex h-12 w-auto sm:h-14 items-center justify-center rounded-xl border border-border bg-white p-2 transition-colors hover:border-emerald-200">
+                <img src="/partner-mtn-momo.png" alt="MTN MoMo" className="h-full w-auto max-w-[120px] object-contain" />
               </div>
               <span className="text-xs font-medium text-gray-600">MTN MoMo</span>
               <span className="text-[10px] text-muted-foreground">Mobile money</span>
@@ -238,8 +238,8 @@ export function LandingPage() {
             </div>
             {/* Mastercard */}
             <div className="flex flex-col items-center gap-1">
-              <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-xl border border-border bg-white transition-colors hover:border-emerald-200">
-                <span className="text-sm font-bold text-red-600">MC</span>
+              <div className="flex h-12 w-auto sm:h-14 items-center justify-center rounded-xl border border-border bg-white p-2 transition-colors hover:border-emerald-200">
+                <img src="/partner-mastercard.png" alt="Mastercard" className="h-full w-auto max-w-[120px] object-contain" />
               </div>
               <span className="text-xs font-medium text-gray-600">Mastercard</span>
             </div>
