@@ -330,3 +330,27 @@ Stage Summary:
 - Health endpoint: /api/health returns DB status, env vars, sender/admin counts
 - All auth flows verified working (curl + browser)
 - Ready for Vercel deployment
+---
+Task ID: 10
+Agent: Lead Engineer
+Task: Replace 3 placeholder logos with actual images, regenerate favicon, push all changes
+
+Work Log:
+- Analyzed uploaded images via VLM: MTN MoMo (yellow/navy), Mastercard (red/orange circles, transparent BG)
+- Converted M-Pesa PDF to PNG using pdftoppm + sharp (transparent BG, 240x240)
+- Processed MTN MoMo and Mastercard PNGs to 240x240 with transparent backgrounds
+- Updated landing-page.tsx: replaced 3 text placeholders (M, MTN, MC) with actual <img> tags
+  - M-Pesa → /partner-mpesa.png
+  - MTN MoMo → /partner-mtn-momo.png
+  - Mastercard → /partner-mastercard.png
+- Regenerated all favicon sizes from source image (16x16, 32x32, 192x192, 512x512, apple-touch-icon, .ico)
+- Verified build passes (lint clean, all routes compile)
+- Committed and pushed 4 commits to GitHub (6932e42..ef68f70)
+- Vercel auto-deployment triggered from push
+
+Stage Summary:
+- 3 partner logos replaced with actual images in Trusted By section
+- Favicon confirmed present in repo (was already committed)
+- All auth fixes + logos + favicon pushed to GitHub
+- Vercel deploying: https://www.afri-spine.com
+- Admin credentials: admin@afrispine.com / Admin@2024
