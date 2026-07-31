@@ -94,7 +94,12 @@ const formatDate = (iso: string) => {
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export function AdminSettlementPage() {
-  const { navigate } = useAppStore();
+  const { navigate, adminSessionToken } = useAppStore();
+
+  const authHeaders = useCallback(() => ({
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + (adminSessionToken || ''),
+  }), [adminSessionToken]);
 
   // ── Section 1: Company Details state ──
   const [config, setConfig] = useState<SettlementConfig | null>(null);
@@ -127,7 +132,7 @@ export function AdminSettlementPage() {
   const fetchConfig = useCallback(async () => {
     setConfigLoading(true);
     try {
-      const res = await fetch('/api/admin/settlement');
+      const res = await fetch('/api/admin/settlement', { headers: authHeaders() });
       const json = await res.json();
       const c = json.config as SettlementConfig;
       setConfig(c);
@@ -145,7 +150,7 @@ export function AdminSettlementPage() {
   const fetchPaystackKeys = useCallback(async () => {
     setPaystackKeysLoading(true);
     try {
-      const res = await fetch('/api/admin/paystack-keys');
+      const res = await fetch('/api/admin/paystack-keys', { headers: authHeaders() });
       const json = await res.json();
       setPaystackKeys(json);
     } catch {
@@ -158,7 +163,7 @@ export function AdminSettlementPage() {
   const fetchIntegration = useCallback(async () => {
     setIntegrationLoading(true);
     try {
-      const res = await fetch('/api/admin/paystack-integration');
+      const res = await fetch('/api/admin/paystack-integration', { headers: authHeaders() });
       if (res.ok) {
         const json = await res.json();
         setIntegration(json.integration);
@@ -175,7 +180,7 @@ export function AdminSettlementPage() {
   const fetchSettlements = useCallback(async () => {
     setSettlementsLoading(true);
     try {
-      const res = await fetch('/api/admin/paystack-settlements?perPage=50');
+      const res = await fetch('/api/admin/paystack-settlements?perPage=50', { headers: authHeaders() });
       const json = await res.json();
       if (json.settlements) {
         setSettlements(json.settlements);
@@ -190,7 +195,7 @@ export function AdminSettlementPage() {
   const fetchRevenue = useCallback(async () => {
     setRevenueLoading(true);
     try {
-      const res = await fetch('/api/admin/revenue-summary');
+      const res = await fetch('/api/admin/revenue-summary', { headers: authHeaders() });
       const json = await res.json();
       setRevenue(json);
     } catch {
@@ -221,7 +226,7 @@ export function AdminSettlementPage() {
     try {
       const res = await fetch('/api/admin/settlement', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders(),
         body: JSON.stringify({ companyName, registeredAddress, companyRegNumber, invoiceEmail }),
       });
       if (res.ok) {

@@ -506,6 +506,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
       }
 
       // Save partner keys
+      if (body.mystocks_api_key) {
+        await setSetting('mystocks_api_key', body.mystocks_api_key);
+      }
+      if (body.mystocks_partner_id) {
+        await setSetting('mystocks_partner_id', body.mystocks_partner_id);
+      }
       if (body.smile_id_api_key) {
         await setSetting('smile_id_api_key', body.smile_id_api_key);
       }

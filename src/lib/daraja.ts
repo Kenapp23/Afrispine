@@ -22,7 +22,22 @@ export type PayoutMethodType =
   | 'mpesa_paybill'
   | 'bank_ke'
   | 'bank_ng'
-  | 'momo_mtn';
+  | 'momo_mtn'
+  | 'opay'
+  | 'palm_pay'
+  | 'bank_gh'
+  | 'paystack'
+  | 'eft_za'
+  | 'payfast'
+  | 'ozow'
+  | 'airtel_money'
+  | 'bank_ug'
+  | 'mpesa_tz'
+  | 'tigo_pesa'
+  | 'crdb_bank'
+  | 'orange_money'
+  | 'wave'
+  | 'bank_sn';
 
 /** A payout method attached to a merchant */
 export interface PayoutMethod {
@@ -54,6 +69,67 @@ export interface PayoutMethod {
   // MTN MoMo
   momoNumber?: string;
   momoCountry?: string;
+
+  // OPay (Nigeria)
+  opayMerchantNumber?: string;
+
+  // PalmPay (Nigeria)
+  palmPayMerchantId?: string;
+
+  // Ghana Bank
+  bankNameGh?: string;
+  accountNumberGh?: string;
+  accountNameGh?: string;
+
+  // Paystack Direct
+  paystackEmail?: string;
+
+  // South Africa EFT
+  bankNameZa?: string;
+  accountNumberZa?: string;
+  accountNameZa?: string;
+  branchCodeZa?: string;
+
+  // PayFast
+  payfastMerchantId?: string;
+  payfastEmail?: string;
+
+  // Ozow
+  ozowBankId?: string;
+  ozowAccountNumber?: string;
+  ozowAccountName?: string;
+
+  // Airtel Money
+  airtelNumber?: string;
+
+  // Uganda Bank
+  bankNameUg?: string;
+  accountNumberUg?: string;
+  accountNameUg?: string;
+
+  // M-Pesa Tanzania
+  mpesaTzNumber?: string;
+  mpesaTzBusinessName?: string;
+
+  // Tigo Pesa
+  tigoPesaNumber?: string;
+
+  // CRDB Bank
+  crdbAccountNumber?: string;
+  crdbAccountName?: string;
+  crdbBranchCode?: string;
+
+  // Orange Money
+  orangeMoneyNumber?: string;
+
+  // Wave
+  waveNumber?: string;
+  waveBusinessName?: string;
+
+  // Senegal Bank
+  bankNameSn?: string;
+  accountNumberSn?: string;
+  accountNameSn?: string;
 }
 
 /** Daraja B2B transfer type enum */
@@ -279,11 +355,12 @@ export function getRecipientShortcode(method: PayoutMethod): string | null {
 
 export const COUNTRY_PAYOUT_METHODS: Record<string, PayoutMethodType[]> = {
   KE: ['mpesa_till', 'mpesa_paybill', 'bank_ke'],
-  NG: ['bank_ng'],
-  GH: ['momo_mtn'],
-  UG: ['momo_mtn'],
-  TZ: [],
-  ZA: [],
+  NG: ['bank_ng', 'opay', 'palm_pay'],
+  GH: ['momo_mtn', 'bank_gh', 'paystack'],
+  ZA: ['eft_za', 'payfast', 'ozow'],
+  UG: ['momo_mtn', 'airtel_money', 'bank_ug'],
+  TZ: ['mpesa_tz', 'tigo_pesa', 'crdb_bank'],
+  SN: ['orange_money', 'wave', 'bank_sn'],
 };
 
 /**
@@ -298,11 +375,26 @@ export function getAvailablePayoutMethods(country: string): PayoutMethodType[] {
  */
 export function getPayoutMethodLabel(type: PayoutMethodType): string {
   const labels: Record<PayoutMethodType, string> = {
-    mpesa_till: 'M-Pesa Till Number (Buy Goods)',
-    mpesa_paybill: 'M-Pesa Paybill',
-    bank_ke: 'Kenyan Bank Account',
-    bank_ng: 'Nigerian Bank Account',
-    momo_mtn: 'MTN MoMo Business',
+    mpesa_till: 'M-Pesa Till Payment',
+    mpesa_paybill: 'M-Pesa Paybill (Buy Goods)',
+    bank_ke: 'Kenyan Bank Transfer',
+    bank_ng: 'Bank Transfer (NGN)',
+    momo_mtn: 'Mobile Money (MTN/Vodafone Cash)',
+    opay: 'OPay',
+    palm_pay: 'PalmPay',
+    bank_gh: 'Bank Transfer (GHS)',
+    paystack: 'Paystack Direct',
+    eft_za: 'EFT / Bank Transfer (ZAR)',
+    payfast: 'PayFast',
+    ozow: 'Ozow',
+    airtel_money: 'Airtel Money',
+    bank_ug: 'Bank Transfer (UGX)',
+    mpesa_tz: 'M-Pesa Tanzania',
+    tigo_pesa: 'Tigo Pesa',
+    crdb_bank: 'CRDB Bank Transfer',
+    orange_money: 'Orange Money',
+    wave: 'Wave',
+    bank_sn: 'Bank Transfer (XOF)',
   };
   return labels[type];
 }

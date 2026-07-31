@@ -40,7 +40,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getSavingsCircleName } from '@/lib/savings-circle-names';
+import { getSavingsCircleName, ALL_CIRCLE_COUNTRIES } from '@/lib/savings-circle-names';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 interface CircleMember {
@@ -165,6 +165,7 @@ export function ChamaPage() {
   // Cultural naming based on sender's country
   const countryCode = deriveCountryCode(sender, detectedCountry);
   const circleName = getSavingsCircleName(countryCode);
+  const circleCountries = ALL_CIRCLE_COUNTRIES;
   const countryFlag = countryFlagEmoji(countryCode || '');
 
   // View state
@@ -174,11 +175,13 @@ export function ChamaPage() {
   const [detailLoading, setDetailLoading] = useState(false);
 
   // Create circle dialog
-  const [createOpen, setCreateOpen] = useState(false);
+  const [manualCountry, setManualCountry] = useState<string | null>(null);
   const [createForm, setCreateForm] = useState({
     name: '',
     type: circleName.types?.[0]?.value || 'general',
+    country: countryCode || '',
     contributionAmount: '',
+    contributionCurrency: 'GBP',
     contributionCurrency: 'GBP',
     frequency: 'monthly',
   });
@@ -745,9 +748,32 @@ export function ChamaPage() {
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>Create a {circleName.name}</DialogTitle>
+                <DialogTitle>Create a {manualCountry ? getSavingsCircleName(manualCountry).name : circleName.name}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 pt-2">
+                <div>
+                  <Label>Country *</Label>
+                  <Select
+                    value={createForm.country || countryCode || ''}
+                    onValueChange={(v) => {
+                      const code = v;
+                      setCreateForm({ ...createForm, country: code });
+                      // Update circle name based on selected country
+                      setManualCountry(code);
+                    }}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select country" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {circleCountries.map((c) => (
+                        <SelectItem key={c.code} value={c.code}>
+                          {c.flag} {c.name} ({c.code})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div>
                   <Label>Circle Name *</Label>
                   <Input
@@ -845,7 +871,7 @@ export function ChamaPage() {
             <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center mb-6">
               <PiggyBank className="h-10 w-10 text-emerald-600" />
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Start Saving Together</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Start Saving Together {countryFlag}</h2>
             <p className="text-muted-foreground max-w-md mb-2">
               Start or join a savings circle with friends and family back home.
             </p>

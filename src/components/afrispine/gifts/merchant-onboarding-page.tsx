@@ -42,6 +42,7 @@ import {
   Smartphone,
   CheckCircle2,
   Info,
+  Globe,
 } from 'lucide-react';
 import {
   type PayoutMethod,
@@ -60,6 +61,7 @@ const COUNTRIES = [
   { code: 'ZA', name: 'South Africa', flag: '\u{1F1FF}\u{1F1E6}' },
   { code: 'UG', name: 'Uganda', flag: '\u{1F1FA}\u{1F1EC}' },
   { code: 'TZ', name: 'Tanzania', flag: '\u{1F1F9}\u{1F1FF}' },
+  { code: 'SN', name: 'Senegal', flag: '\u{1F1F8}\u{1F1F3}' },
 ] as const;
 
 const BUSINESS_CATEGORIES = [
@@ -130,19 +132,86 @@ const MOMO_COUNTRIES = [
 
 const MAX_PAYOUT_METHODS = 3;
 
+// ─── Payout Option Config ──────────────────────────────────────────
+
+interface PayoutOption {
+  type: PayoutMethodType;
+  label: string;
+  description: string;
+  color: string;
+  bgColor: string;
+  icon: 'store' | 'building' | 'landmark' | 'smartphone';
+}
+
+const PAYOUT_OPTIONS: Record<PayoutMethodType, PayoutOption> = {
+  mpesa_till:    { type: 'mpesa_till',    label: 'M-Pesa Till Payment',          description: 'Receive payouts directly to your M-Pesa Till',            color: 'text-green-600',  bgColor: 'bg-green-50',  icon: 'store' },
+  mpesa_paybill: { type: 'mpesa_paybill', label: 'M-Pesa Paybill (Buy Goods)',   description: 'Receive payouts via Paybill number',                     color: 'text-green-600',  bgColor: 'bg-green-50',  icon: 'building' },
+  bank_ke:       { type: 'bank_ke',       label: 'Kenyan Bank Transfer',         description: 'Settle to a Kenyan bank account',                       color: 'text-emerald-600', bgColor: 'bg-emerald-50', icon: 'landmark' },
+  bank_ng:       { type: 'bank_ng',       label: 'Bank Transfer (NGN)',          description: 'Settle to a Nigerian bank account (NUBAN)',             color: 'text-emerald-600', bgColor: 'bg-emerald-50', icon: 'landmark' },
+  opay:          { type: 'opay',          label: 'OPay',                         description: 'Receive payouts to your OPay merchant wallet',          color: 'text-green-600',  bgColor: 'bg-green-50',  icon: 'smartphone' },
+  palm_pay:      { type: 'palm_pay',      label: 'PalmPay',                      description: 'Receive payouts to your PalmPay merchant account',       color: 'text-teal-600',   bgColor: 'bg-teal-50',   icon: 'smartphone' },
+  momo_mtn:      { type: 'momo_mtn',      label: 'Mobile Money (MTN/Vodafone Cash)', description: 'Receive payouts via MTN or Vodafone Cash',            color: 'text-yellow-600', bgColor: 'bg-yellow-50', icon: 'smartphone' },
+  bank_gh:       { type: 'bank_gh',       label: 'Bank Transfer (GHS)',          description: 'Settle to a Ghanaian bank account',                      color: 'text-amber-600',  bgColor: 'bg-amber-50',  icon: 'landmark' },
+  paystack:      { type: 'paystack',      label: 'Paystack Direct',              description: 'Receive payouts via Paystack to your bank',             color: 'text-emerald-600', bgColor: 'bg-emerald-50', icon: 'building' },
+  eft_za:        { type: 'eft_za',        label: 'EFT / Bank Transfer (ZAR)',    description: 'Settle to a South African bank via EFT',                color: 'text-green-600',  bgColor: 'bg-green-50',  icon: 'landmark' },
+  payfast:       { type: 'payfast',       label: 'PayFast',                      description: 'Receive payouts via PayFast gateway',                   color: 'text-red-600',    bgColor: 'bg-red-50',    icon: 'building' },
+  ozow:          { type: 'ozow',          label: 'Ozow',                         description: 'Receive payouts via Ozow instant EFT',                   color: 'text-cyan-600',   bgColor: 'bg-cyan-50',   icon: 'smartphone' },
+  airtel_money:  { type: 'airtel_money',  label: 'Airtel Money',                 description: 'Receive payouts via Airtel Money',                      color: 'text-red-600',    bgColor: 'bg-red-50',    icon: 'smartphone' },
+  bank_ug:       { type: 'bank_ug',       label: 'Bank Transfer (UGX)',          description: 'Settle to a Ugandan bank account',                      color: 'text-yellow-600', bgColor: 'bg-yellow-50', icon: 'landmark' },
+  mpesa_tz:      { type: 'mpesa_tz',      label: 'M-Pesa Tanzania',              description: 'Receive payouts via M-Pesa Tanzania',                  color: 'text-green-600',  bgColor: 'bg-green-50',  icon: 'smartphone' },
+  tigo_pesa:     { type: 'tigo_pesa',     label: 'Tigo Pesa',                    description: 'Receive payouts via Tigo Pesa wallet',                 color: 'text-teal-600',   bgColor: 'bg-teal-50',   icon: 'smartphone' },
+  crdb_bank:     { type: 'crdb_bank',     label: 'CRDB Bank Transfer',           description: 'Settle to a CRDB bank account',                         color: 'text-green-600',  bgColor: 'bg-green-50',  icon: 'landmark' },
+  orange_money:  { type: 'orange_money',  label: 'Orange Money',                 description: 'Receive payouts via Orange Money',                     color: 'text-orange-600', bgColor: 'bg-orange-50', icon: 'smartphone' },
+  wave:          { type: 'wave',          label: 'Wave',                         description: 'Receive payouts via Wave wallet',                       color: 'text-cyan-600',   bgColor: 'bg-cyan-50',   icon: 'smartphone' },
+  bank_sn:       { type: 'bank_sn',       label: 'Bank Transfer (XOF)',          description: 'Settle to a Senegalese bank account',                   color: 'text-orange-600', bgColor: 'bg-orange-50', icon: 'landmark' },
+};
+
+function getCountryPayoutOptions(country: string): PayoutOption[] {
+  const types = getAvailablePayoutMethods(country);
+  return types.map((t) => PAYOUT_OPTIONS[t]);
+}
+
 // ─── Payout Method Icons ─────────────────────────────────────────
 
-function PayoutMethodIcon({ type }: { type: PayoutMethodType }) {
-  switch (type) {
-    case 'mpesa_till':
-      return <Store className="h-5 w-5 text-green-600" />;
-    case 'mpesa_paybill':
-      return <Building2 className="h-5 w-5 text-green-600" />;
-    case 'bank_ke':
-    case 'bank_ng':
-      return <Landmark className="h-5 w-5 text-emerald-600" />;
-    case 'momo_mtn':
-      return <Smartphone className="h-5 w-5 text-yellow-600" />;
+function PayoutMethodIcon({ type, className }: { type: PayoutMethodType; className?: string }) {
+  const cls = className ?? 'h-5 w-5';
+  const opt = PAYOUT_OPTIONS[type];
+  switch (opt.icon) {
+    case 'store':
+      return <Store className={`${cls} ${opt.color}`} />;
+    case 'building':
+      return <Building2 className={`${cls} ${opt.color}`} />;
+    case 'landmark':
+      return <Landmark className={`${cls} ${opt.color}`} />;
+    case 'smartphone':
+      return <Smartphone className={`${cls} ${opt.color}`} />;
+  }
+}
+
+// ─── Payout Method Summary ───────────────────────────────────────
+
+function getMethodSummary(method: PayoutMethod): string {
+  switch (method.type) {
+    case 'mpesa_till':     return method.tillNumber ? `Till: ${method.tillNumber}` : '';
+    case 'mpesa_paybill':  return method.paybillNumber ? `Paybill: ${method.paybillNumber}` : '';
+    case 'bank_ke':        return method.bankNameKe ?? '';
+    case 'bank_ng':        return method.bankNameNg ?? '';
+    case 'momo_mtn':       return method.momoNumber ? `MoMo: ${method.momoNumber}` : '';
+    case 'opay':           return method.opayMerchantNumber ? `OPay: ${method.opayMerchantNumber}` : '';
+    case 'palm_pay':       return method.palmPayMerchantId ? `PalmPay: ${method.palmPayMerchantId}` : '';
+    case 'bank_gh':        return method.bankNameGh ?? '';
+    case 'paystack':       return method.paystackEmail ?? '';
+    case 'eft_za':         return method.bankNameZa ?? '';
+    case 'payfast':        return method.payfastMerchantId ? `PayFast: ${method.payfastMerchantId}` : '';
+    case 'ozow':           return method.ozowBankId ? `Ozow: ${method.ozowBankId}` : '';
+    case 'airtel_money':   return method.airtelNumber ? `Airtel: ${method.airtelNumber}` : '';
+    case 'bank_ug':        return method.bankNameUg ?? '';
+    case 'mpesa_tz':       return method.mpesaTzNumber ? `M-Pesa: ${method.mpesaTzNumber}` : '';
+    case 'tigo_pesa':      return method.tigoPesaNumber ? `Tigo: ${method.tigoPesaNumber}` : '';
+    case 'crdb_bank':      return method.crdbAccountNumber ? `CRDB: ${method.crdbAccountNumber}` : '';
+    case 'orange_money':   return method.orangeMoneyNumber ? `Orange: ${method.orangeMoneyNumber}` : '';
+    case 'wave':           return method.waveNumber ? `Wave: ${method.waveNumber}` : '';
+    case 'bank_sn':        return method.bankNameSn ?? '';
   }
 }
 
@@ -164,6 +233,7 @@ function PayoutMethodCard({
   onSetPrimary,
 }: PayoutMethodCardProps) {
   const [open, setOpen] = useState(false);
+  const opt = PAYOUT_OPTIONS[method.type];
 
   const update = useCallback(
     (updates: Partial<PayoutMethod>) => {
@@ -172,12 +242,14 @@ function PayoutMethodCard({
     [method.id, onUpdate],
   );
 
+  const summary = getMethodSummary(method);
+
   return (
     <Card className="border-l-4 border-l-emerald-500">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50">
+            <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${opt.bgColor}`}>
               <PayoutMethodIcon type={method.type} />
             </div>
             <div>
@@ -185,17 +257,7 @@ function PayoutMethodCard({
                 {getPayoutMethodLabel(method.type)}
               </CardTitle>
               <CardDescription className="text-xs">
-                {method.type === 'mpesa_till' && method.tillNumber
-                  ? `Till: ${method.tillNumber}`
-                  : method.type === 'mpesa_paybill' && method.paybillNumber
-                    ? `Paybill: ${method.paybillNumber}`
-                    : method.type === 'bank_ke' && method.bankNameKe
-                      ? `${method.bankNameKe}`
-                      : method.type === 'bank_ng' && method.bankNameNg
-                        ? `${method.bankNameNg}`
-                        : method.type === 'momo_mtn' && method.momoNumber
-                          ? `MoMo: ${method.momoNumber}`
-                          : 'Not configured'}
+                {summary || 'Not configured'}
               </CardDescription>
             </div>
           </div>
@@ -240,7 +302,7 @@ function PayoutMethodCard({
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        {/* M-Pesa Till */}
+        {/* ── M-Pesa Till ── */}
         {method.type === 'mpesa_till' && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
@@ -273,7 +335,7 @@ function PayoutMethodCard({
           </div>
         )}
 
-        {/* M-Pesa Paybill */}
+        {/* ── M-Pesa Paybill ── */}
         {method.type === 'mpesa_paybill' && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
@@ -306,7 +368,7 @@ function PayoutMethodCard({
           </div>
         )}
 
-        {/* Kenyan Bank */}
+        {/* ── Kenyan Bank ── */}
         {method.type === 'bank_ke' && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-1.5">
@@ -361,7 +423,7 @@ function PayoutMethodCard({
           </div>
         )}
 
-        {/* Nigerian Bank */}
+        {/* ── Nigerian Bank ── */}
         {method.type === 'bank_ng' && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-1.5">
@@ -418,7 +480,7 @@ function PayoutMethodCard({
           </div>
         )}
 
-        {/* MTN MoMo */}
+        {/* ── MTN MoMo ── */}
         {method.type === 'momo_mtn' && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
@@ -447,6 +509,377 @@ function PayoutMethodCard({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+        )}
+
+        {/* ── OPay ── */}
+        {method.type === 'opay' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs">OPay Merchant Number <span className="text-red-500">*</span></Label>
+              <Input
+                placeholder="e.g. OPay merchant number"
+                value={method.opayMerchantNumber ?? ''}
+                onChange={(e) => update({ opayMerchantNumber: e.target.value })}
+                className="h-9 text-sm"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ── PalmPay ── */}
+        {method.type === 'palm_pay' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs">PalmPay Merchant ID <span className="text-red-500">*</span></Label>
+              <Input
+                placeholder="e.g. PalmPay merchant ID"
+                value={method.palmPayMerchantId ?? ''}
+                onChange={(e) => update({ palmPayMerchantId: e.target.value })}
+                className="h-9 text-sm"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ── Ghana Bank ── */}
+        {method.type === 'bank_gh' && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Bank Name <span className="text-red-500">*</span></Label>
+              <Input
+                placeholder="e.g. GCB Bank, Ecobank Ghana"
+                value={method.bankNameGh ?? ''}
+                onChange={(e) => update({ bankNameGh: e.target.value })}
+                className="h-9 text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Account Number <span className="text-red-500">*</span></Label>
+              <Input
+                placeholder="e.g. 1234567890"
+                value={method.accountNumberGh ?? ''}
+                onChange={(e) => update({ accountNumberGh: e.target.value.replace(/\D/g, '') })}
+                className="h-9 text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Account Name <span className="text-red-500">*</span></Label>
+              <Input
+                placeholder="Account holder name"
+                value={method.accountNameGh ?? ''}
+                onChange={(e) => update({ accountNameGh: e.target.value })}
+                className="h-9 text-sm"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ── Paystack Direct ── */}
+        {method.type === 'paystack' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Paystack Email <span className="text-red-500">*</span></Label>
+              <Input
+                type="email"
+                placeholder="finance@business.com"
+                value={method.paystackEmail ?? ''}
+                onChange={(e) => update({ paystackEmail: e.target.value })}
+                className="h-9 text-sm"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ── SA EFT ── */}
+        {method.type === 'eft_za' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Bank Name <span className="text-red-500">*</span></Label>
+              <Input
+                placeholder="e.g. FNB, Standard Bank"
+                value={method.bankNameZa ?? ''}
+                onChange={(e) => update({ bankNameZa: e.target.value })}
+                className="h-9 text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Account Number <span className="text-red-500">*</span></Label>
+              <Input
+                placeholder="e.g. 1234567890"
+                value={method.accountNumberZa ?? ''}
+                onChange={(e) => update({ accountNumberZa: e.target.value.replace(/\D/g, '') })}
+                className="h-9 text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Account Name <span className="text-red-500">*</span></Label>
+              <Input
+                placeholder="Account holder name"
+                value={method.accountNameZa ?? ''}
+                onChange={(e) => update({ accountNameZa: e.target.value })}
+                className="h-9 text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Branch Code</Label>
+              <Input
+                placeholder="e.g. 250655"
+                value={method.branchCodeZa ?? ''}
+                onChange={(e) => update({ branchCodeZa: e.target.value.replace(/\D/g, '') })}
+                className="h-9 text-sm"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ── PayFast ── */}
+        {method.type === 'payfast' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs">PayFast Merchant ID <span className="text-red-500">*</span></Label>
+              <Input
+                placeholder="e.g. 10000100"
+                value={method.payfastMerchantId ?? ''}
+                onChange={(e) => update({ payfastMerchantId: e.target.value })}
+                className="h-9 text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">PayFast Email</Label>
+              <Input
+                type="email"
+                placeholder="payfast@business.com"
+                value={method.payfastEmail ?? ''}
+                onChange={(e) => update({ payfastEmail: e.target.value })}
+                className="h-9 text-sm"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ── Ozow ── */}
+        {method.type === 'ozow' && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Ozow Bank ID <span className="text-red-500">*</span></Label>
+              <Input
+                placeholder="e.g. ABSA001"
+                value={method.ozowBankId ?? ''}
+                onChange={(e) => update({ ozowBankId: e.target.value })}
+                className="h-9 text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Account Number <span className="text-red-500">*</span></Label>
+              <Input
+                placeholder="e.g. 4012345678"
+                value={method.ozowAccountNumber ?? ''}
+                onChange={(e) => update({ ozowAccountNumber: e.target.value.replace(/\D/g, '') })}
+                className="h-9 text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Account Name <span className="text-red-500">*</span></Label>
+              <Input
+                placeholder="Account holder name"
+                value={method.ozowAccountName ?? ''}
+                onChange={(e) => update({ ozowAccountName: e.target.value })}
+                className="h-9 text-sm"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ── Airtel Money ── */}
+        {method.type === 'airtel_money' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Airtel Money Number <span className="text-red-500">*</span></Label>
+              <Input
+                placeholder="e.g. 256701234567"
+                value={method.airtelNumber ?? ''}
+                onChange={(e) => update({ airtelNumber: e.target.value })}
+                className="h-9 text-sm"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ── Uganda Bank ── */}
+        {method.type === 'bank_ug' && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Bank Name <span className="text-red-500">*</span></Label>
+              <Input
+                placeholder="e.g. Stanbic Bank Uganda"
+                value={method.bankNameUg ?? ''}
+                onChange={(e) => update({ bankNameUg: e.target.value })}
+                className="h-9 text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Account Number <span className="text-red-500">*</span></Label>
+              <Input
+                placeholder="e.g. 1234567890"
+                value={method.accountNumberUg ?? ''}
+                onChange={(e) => update({ accountNumberUg: e.target.value.replace(/\D/g, '') })}
+                className="h-9 text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Account Name <span className="text-red-500">*</span></Label>
+              <Input
+                placeholder="Account holder name"
+                value={method.accountNameUg ?? ''}
+                onChange={(e) => update({ accountNameUg: e.target.value })}
+                className="h-9 text-sm"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ── M-Pesa Tanzania ── */}
+        {method.type === 'mpesa_tz' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs">M-Pesa Phone Number <span className="text-red-500">*</span></Label>
+              <Input
+                placeholder="e.g. 255712345678"
+                value={method.mpesaTzNumber ?? ''}
+                onChange={(e) => update({ mpesaTzNumber: e.target.value })}
+                className="h-9 text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Business Name</Label>
+              <Input
+                placeholder="Registered business name"
+                value={method.mpesaTzBusinessName ?? ''}
+                onChange={(e) => update({ mpesaTzBusinessName: e.target.value })}
+                className="h-9 text-sm"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ── Tigo Pesa ── */}
+        {method.type === 'tigo_pesa' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Tigo Pesa Number <span className="text-red-500">*</span></Label>
+              <Input
+                placeholder="e.g. 255713456789"
+                value={method.tigoPesaNumber ?? ''}
+                onChange={(e) => update({ tigoPesaNumber: e.target.value })}
+                className="h-9 text-sm"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ── CRDB Bank ── */}
+        {method.type === 'crdb_bank' && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Account Number <span className="text-red-500">*</span></Label>
+              <Input
+                placeholder="e.g. 01J0012345678"
+                value={method.crdbAccountNumber ?? ''}
+                onChange={(e) => update({ crdbAccountNumber: e.target.value })}
+                className="h-9 text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Account Name <span className="text-red-500">*</span></Label>
+              <Input
+                placeholder="Account holder name"
+                value={method.crdbAccountName ?? ''}
+                onChange={(e) => update({ crdbAccountName: e.target.value })}
+                className="h-9 text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Branch Code</Label>
+              <Input
+                placeholder="e.g. KCM001"
+                value={method.crdbBranchCode ?? ''}
+                onChange={(e) => update({ crdbBranchCode: e.target.value })}
+                className="h-9 text-sm"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ── Orange Money ── */}
+        {method.type === 'orange_money' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Orange Money Number <span className="text-red-500">*</span></Label>
+              <Input
+                placeholder="e.g. 221771234567"
+                value={method.orangeMoneyNumber ?? ''}
+                onChange={(e) => update({ orangeMoneyNumber: e.target.value })}
+                className="h-9 text-sm"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ── Wave ── */}
+        {method.type === 'wave' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Wave Phone Number <span className="text-red-500">*</span></Label>
+              <Input
+                placeholder="e.g. 221781234567"
+                value={method.waveNumber ?? ''}
+                onChange={(e) => update({ waveNumber: e.target.value })}
+                className="h-9 text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Business Name</Label>
+              <Input
+                placeholder="Registered business name"
+                value={method.waveBusinessName ?? ''}
+                onChange={(e) => update({ waveBusinessName: e.target.value })}
+                className="h-9 text-sm"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ── Senegal Bank ── */}
+        {method.type === 'bank_sn' && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Bank Name <span className="text-red-500">*</span></Label>
+              <Input
+                placeholder="e.g. BICIS, BOA Senegal"
+                value={method.bankNameSn ?? ''}
+                onChange={(e) => update({ bankNameSn: e.target.value })}
+                className="h-9 text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Account Number <span className="text-red-500">*</span></Label>
+              <Input
+                placeholder="e.g. 00123456789"
+                value={method.accountNumberSn ?? ''}
+                onChange={(e) => update({ accountNumberSn: e.target.value.replace(/\D/g, '') })}
+                className="h-9 text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Account Name <span className="text-red-500">*</span></Label>
+              <Input
+                placeholder="Account holder name"
+                value={method.accountNameSn ?? ''}
+                onChange={(e) => update({ accountNameSn: e.target.value })}
+                className="h-9 text-sm"
+              />
             </div>
           </div>
         )}
@@ -496,28 +929,28 @@ function PayoutMethodCard({
 
 interface AddPayoutDialogProps {
   country: string;
-  availableTypes: PayoutMethodType[];
+  availableOptions: PayoutOption[];
   onAdd: (type: PayoutMethodType) => void;
   disabled: boolean;
 }
 
 function AddPayoutDialog({
   country,
-  availableTypes,
+  availableOptions,
   onAdd,
   disabled,
 }: AddPayoutDialogProps) {
   const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState<PayoutMethodType | null>(null);
+  const [selected, setSelected] = useState<PayoutOption | null>(null);
 
   const handleAdd = () => {
     if (!selected) return;
-    onAdd(selected);
+    onAdd(selected.type);
     setSelected(null);
     setOpen(false);
   };
 
-  if (availableTypes.length === 0) {
+  if (availableOptions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
         <Info className="h-8 w-8 mb-2" />
@@ -525,7 +958,7 @@ function AddPayoutDialog({
           No payout methods available for {COUNTRIES.find((c) => c.code === country)?.name ?? country}.
         </p>
         <p className="text-xs mt-1">
-          Select Kenya, Nigeria, Ghana, or Uganda to see available options.
+          Select a supported country to see available payout options.
         </p>
       </div>
     );
@@ -552,32 +985,28 @@ function AddPayoutDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-3 mt-2">
-          {availableTypes.map((type) => (
+          {availableOptions.map((option) => (
             <button
-              key={type}
+              key={option.type}
               type="button"
-              onClick={() => setSelected(type)}
+              onClick={() => setSelected(option)}
               className={`flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-colors ${
-                selected === type
+                selected?.type === option.type
                   ? 'border-emerald-500 bg-emerald-50'
                   : 'border-gray-200 hover:border-emerald-300 hover:bg-gray-50'
               }`}
             >
               <div
                 className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
-                  selected === type ? 'bg-emerald-100' : 'bg-gray-100'
+                  selected?.type === option.type ? option.bgColor : 'bg-gray-100'
                 }`}
               >
-                <PayoutMethodIcon type={type} />
+                <PayoutMethodIcon type={option.type} />
               </div>
               <div>
-                <p className="text-sm font-medium">{getPayoutMethodLabel(type)}</p>
+                <p className="text-sm font-medium">{option.label}</p>
                 <p className="text-xs text-muted-foreground">
-                  {type === 'mpesa_till' && 'Receive payouts directly to your M-Pesa Till'}
-                  {type === 'mpesa_paybill' && 'Receive payouts via Paybill number'}
-                  {type === 'bank_ke' && 'Settle to a Kenyan bank account'}
-                  {type === 'bank_ng' && 'Settle to a Nigerian bank account (NUBAN)'}
-                  {type === 'momo_mtn' && 'Receive payouts via MTN Mobile Money'}
+                  {option.description}
                 </p>
               </div>
             </button>
@@ -627,8 +1056,8 @@ export function MerchantOnboardingPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // ── Computed ──
-  const availableTypes = useMemo(
-    () => getAvailablePayoutMethods(country),
+  const availableOptions = useMemo(
+    () => getCountryPayoutOptions(country),
     [country],
   );
 
@@ -677,19 +1106,10 @@ export function MerchantOnboardingPage() {
     );
   }, []);
 
-  // Reset payout methods when country changes
+  // Reset ALL payout methods when country changes
   const handleCountryChange = useCallback((newCountry: string) => {
     setCountry(newCountry);
-    // Only clear methods that are no longer available
-    const newAvailable = getAvailablePayoutMethods(newCountry);
-    setPayoutMethods((prev) => {
-      const kept = prev.filter((m) => newAvailable.includes(m.type));
-      // Promote primary if needed
-      if (!kept.some((m) => m.isPrimary) && kept.length > 0) {
-        kept[0].isPrimary = true;
-      }
-      return kept;
-    });
+    setPayoutMethods([]);
   }, []);
 
   // ── Validation ──
@@ -734,6 +1154,62 @@ export function MerchantOnboardingPage() {
           break;
         case 'momo_mtn':
           if (!m.momoNumber) e[`${prefix}_momo`] = 'MoMo number is required';
+          break;
+        case 'opay':
+          if (!m.opayMerchantNumber) e[`${prefix}_opay`] = 'OPay merchant number is required';
+          break;
+        case 'palm_pay':
+          if (!m.palmPayMerchantId) e[`${prefix}_palm`] = 'PalmPay merchant ID is required';
+          break;
+        case 'bank_gh':
+          if (!m.bankNameGh) e[`${prefix}_bank`] = 'Bank name is required';
+          if (!m.accountNumberGh) e[`${prefix}_acct`] = 'Account number is required';
+          if (!m.accountNameGh) e[`${prefix}_name`] = 'Account name is required';
+          break;
+        case 'paystack':
+          if (!m.paystackEmail) e[`${prefix}_paystack`] = 'Paystack email is required';
+          break;
+        case 'eft_za':
+          if (!m.bankNameZa) e[`${prefix}_bank`] = 'Bank name is required';
+          if (!m.accountNumberZa) e[`${prefix}_acct`] = 'Account number is required';
+          if (!m.accountNameZa) e[`${prefix}_name`] = 'Account name is required';
+          break;
+        case 'payfast':
+          if (!m.payfastMerchantId) e[`${prefix}_payfast`] = 'PayFast merchant ID is required';
+          break;
+        case 'ozow':
+          if (!m.ozowBankId) e[`${prefix}_ozow`] = 'Ozow bank ID is required';
+          if (!m.ozowAccountNumber) e[`${prefix}_acct`] = 'Account number is required';
+          if (!m.ozowAccountName) e[`${prefix}_name`] = 'Account name is required';
+          break;
+        case 'airtel_money':
+          if (!m.airtelNumber) e[`${prefix}_airtel`] = 'Airtel Money number is required';
+          break;
+        case 'bank_ug':
+          if (!m.bankNameUg) e[`${prefix}_bank`] = 'Bank name is required';
+          if (!m.accountNumberUg) e[`${prefix}_acct`] = 'Account number is required';
+          if (!m.accountNameUg) e[`${prefix}_name`] = 'Account name is required';
+          break;
+        case 'mpesa_tz':
+          if (!m.mpesaTzNumber) e[`${prefix}_mpesa_tz`] = 'M-Pesa number is required';
+          break;
+        case 'tigo_pesa':
+          if (!m.tigoPesaNumber) e[`${prefix}_tigo`] = 'Tigo Pesa number is required';
+          break;
+        case 'crdb_bank':
+          if (!m.crdbAccountNumber) e[`${prefix}_acct`] = 'Account number is required';
+          if (!m.crdbAccountName) e[`${prefix}_name`] = 'Account name is required';
+          break;
+        case 'orange_money':
+          if (!m.orangeMoneyNumber) e[`${prefix}_orange`] = 'Orange Money number is required';
+          break;
+        case 'wave':
+          if (!m.waveNumber) e[`${prefix}_wave`] = 'Wave number is required';
+          break;
+        case 'bank_sn':
+          if (!m.bankNameSn) e[`${prefix}_bank`] = 'Bank name is required';
+          if (!m.accountNumberSn) e[`${prefix}_acct`] = 'Account number is required';
+          if (!m.accountNameSn) e[`${prefix}_name`] = 'Account name is required';
           break;
       }
     });
@@ -780,6 +1256,37 @@ export function MerchantOnboardingPage() {
             accountNameNg: m.accountNameNg,
             momoNumber: m.momoNumber,
             momoCountry: m.momoCountry,
+            opayMerchantNumber: m.opayMerchantNumber,
+            palmPayMerchantId: m.palmPayMerchantId,
+            bankNameGh: m.bankNameGh,
+            accountNumberGh: m.accountNumberGh,
+            accountNameGh: m.accountNameGh,
+            paystackEmail: m.paystackEmail,
+            bankNameZa: m.bankNameZa,
+            accountNumberZa: m.accountNumberZa,
+            accountNameZa: m.accountNameZa,
+            branchCodeZa: m.branchCodeZa,
+            payfastMerchantId: m.payfastMerchantId,
+            payfastEmail: m.payfastEmail,
+            ozowBankId: m.ozowBankId,
+            ozowAccountNumber: m.ozowAccountNumber,
+            ozowAccountName: m.ozowAccountName,
+            airtelNumber: m.airtelNumber,
+            bankNameUg: m.bankNameUg,
+            accountNumberUg: m.accountNumberUg,
+            accountNameUg: m.accountNameUg,
+            mpesaTzNumber: m.mpesaTzNumber,
+            mpesaTzBusinessName: m.mpesaTzBusinessName,
+            tigoPesaNumber: m.tigoPesaNumber,
+            crdbAccountNumber: m.crdbAccountNumber,
+            crdbAccountName: m.crdbAccountName,
+            crdbBranchCode: m.crdbBranchCode,
+            orangeMoneyNumber: m.orangeMoneyNumber,
+            waveNumber: m.waveNumber,
+            waveBusinessName: m.waveBusinessName,
+            bankNameSn: m.bankNameSn,
+            accountNumberSn: m.accountNumberSn,
+            accountNameSn: m.accountNameSn,
           })),
           commissionPct,
         }),
@@ -882,6 +1389,48 @@ export function MerchantOnboardingPage() {
         </p>
       </div>
 
+      {/* ─── Country Selector ─── */}
+      <section className="mb-8">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-600 text-white text-xs font-bold">
+            <Globe className="h-3.5 w-3.5" />
+          </div>
+          <h2 className="text-lg font-semibold">Operating Country</h2>
+        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-1 sm:grid-cols-7 gap-2">
+              {COUNTRIES.map((c) => (
+                <button
+                  key={c.code}
+                  type="button"
+                  onClick={() => {
+                    if (country !== c.code) {
+                      handleCountryChange(c.code);
+                    }
+                  }}
+                  className={`flex items-center justify-center gap-1.5 p-3 rounded-lg border-2 text-sm text-center transition-colors ${
+                    country === c.code
+                      ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                      : 'border-gray-200 hover:border-emerald-300 text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <span className="text-lg">{c.flag}</span>
+                  <span className="font-medium text-xs leading-tight">{c.name}</span>
+                </button>
+              ))}
+            </div>
+            <div className="mt-3 flex items-start gap-2 text-xs text-muted-foreground">
+              <Info className="h-3.5 w-3.5 shrink-0 mt-0.5 text-emerald-500" />
+              <p>
+                Select your operating country to see available payout methods.
+                Changing the country will reset your selected payout methods.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
       {/* ─── Section 1: Business Information ─── */}
       <section className="mb-8">
         <div className="flex items-center gap-2 mb-4">
@@ -934,21 +1483,14 @@ export function MerchantOnboardingPage() {
                 )}
               </div>
 
-              {/* Country */}
+              {/* Country (read-only indicator in form) */}
               <div className="space-y-1.5">
-                <Label>Country <span className="text-red-500">*</span></Label>
-                <Select value={country} onValueChange={handleCountryChange}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {COUNTRIES.map((c) => (
-                      <SelectItem key={c.code} value={c.code}>
-                        {c.flag} {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>Country</Label>
+                <div className="flex items-center gap-2 h-9 px-3 rounded-md border bg-muted/50 text-sm">
+                  <span>{COUNTRIES.find((c) => c.code === country)?.flag}</span>
+                  <span className="text-muted-foreground">{COUNTRIES.find((c) => c.code === country)?.name}</span>
+                  <span className="ml-auto text-xs text-muted-foreground">({country})</span>
+                </div>
               </div>
 
               {/* Category */}
@@ -1054,6 +1596,9 @@ export function MerchantOnboardingPage() {
             2
           </div>
           <h2 className="text-lg font-semibold">Payout Methods</h2>
+          <Badge variant="secondary" className="text-xs bg-emerald-50 text-emerald-700">
+            {COUNTRIES.find((c) => c.code === country)?.flag} {COUNTRIES.find((c) => c.code === country)?.name}
+          </Badge>
         </div>
         <Card>
           <CardHeader className="pb-3">
@@ -1088,8 +1633,8 @@ export function MerchantOnboardingPage() {
             {canAddMore && (
               <AddPayoutDialog
                 country={country}
-                availableTypes={availableTypes.filter(
-                  (t) => !payoutMethods.some((m) => m.type === t),
+                availableOptions={availableOptions.filter(
+                  (opt) => !payoutMethods.some((m) => m.type === opt.type),
                 )}
                 onAdd={addPayoutMethod}
                 disabled={!canAddMore}

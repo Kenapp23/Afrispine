@@ -13,7 +13,7 @@ export function AdminLoginPage() {
   const navigate = useAppStore((s) => s.navigate);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [form, setForm] = useState({ email: 'admin@afrispine.com', password: '' });
+  const [form, setForm] = useState({ email: '', password: '' });
 
   const update = (key: string, value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -136,11 +136,6 @@ export function AdminLoginPage() {
                   </button>
                 </div>
               </div>
-
-              {/* Inline hint */}
-              <p className="text-[11px] text-gray-500 text-center">
-                Credentials: <span className="text-gray-400 font-mono">admin@afrispine.com</span> / <span className="text-gray-400 font-mono">Admin@2024</span>
-              </p>
 
               <Button
                 type="submit"

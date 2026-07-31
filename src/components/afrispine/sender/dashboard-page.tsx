@@ -71,7 +71,7 @@ export function DashboardPage() {
         const val = data.totalValue ?? '4,820';
         const change = data.totalChange ?? '+14.8%';
         const count = data.holdingsCount ?? 0;
-        if (!cancelled) setPortfolioSummary(`\u00a3${val} \u00b7 ${change} \u00b7 ${count} holdings`);
+        if (!cancelled) setPortfolioSummary(`£${val} \u00b7 ${change} \u00b7 ${count} holdings`);
       } catch { /* silent */ } finally {
         if (!cancelled) setPortfolioLoading(false);
       }
@@ -86,17 +86,17 @@ export function DashboardPage() {
   const goalPct = Math.min(Math.round((monthSent / monthGoal) * 100), 100);
 
   const stats = [
-    { label: 'Total sent', value: '\u00a32,450.00', icon: ArrowUpRight, change: '+12%', sub: 'lifetime' },
-    { label: 'This month', value: '\u00a3320.00', icon: TrendingUp, change: '+8%', sub: 'vs \u00a3296 last month' },
+    { label: 'Total sent', value: '£2,450.00', icon: ArrowUpRight, change: '+12%', sub: 'lifetime' },
+    { label: 'This month', value: '£320.00', icon: TrendingUp, change: '+8%', sub: 'vs £296 last month' },
     { label: 'Recipients', value: '4', icon: Users, change: '+1', sub: 'new this month' },
   ];
 
   const recentTransfers = [
-    { id: 'TXN-001', recipient: 'Jane Wanjiku', amount: '\u00a3100.00', receiveAmount: 'KES 19,342', status: 'delivered', date: '28 Jun 2025', corridor: 'GB \u2192 KE' },
-    { id: 'TXN-002', recipient: 'Emeka Okafor', amount: '\u00a3250.00', receiveAmount: 'NGN 496,875', status: 'processing', date: '29 Jun 2025', corridor: 'GB \u2192 NG' },
-    { id: 'TXN-003', recipient: 'Kwame Asante', amount: '\u00a375.00', receiveAmount: 'GHS 1,149', status: 'delivered', date: '25 Jun 2025', corridor: 'GB \u2192 GH' },
-    { id: 'TXN-004', recipient: 'Amina Hassan', amount: '\u00a350.00', receiveAmount: 'KES 9,671', status: 'pending', date: '30 Jun 2025', corridor: 'GB \u2192 KE' },
-    { id: 'TXN-005', recipient: 'Fatou Diallo', amount: '\u00a3200.00', receiveAmount: 'GHS 3,064', status: 'delivered', date: '24 Jun 2025', corridor: 'GB \u2192 GH' },
+    { id: 'TXN-001', recipient: 'Jane Wanjiku', amount: '£100.00', receiveAmount: 'KES 19,342', status: 'delivered', date: '28 Jun 2025', corridor: 'GB \u2192 KE' },
+    { id: 'TXN-002', recipient: 'Emeka Okafor', amount: '£250.00', receiveAmount: 'NGN 496,875', status: 'processing', date: '29 Jun 2025', corridor: 'GB \u2192 NG' },
+    { id: 'TXN-003', recipient: 'Kwame Asante', amount: '£75.00', receiveAmount: 'GHS 1,149', status: 'delivered', date: '25 Jun 2025', corridor: 'GB \u2192 GH' },
+    { id: 'TXN-004', recipient: 'Amina Hassan', amount: '£50.00', receiveAmount: 'KES 9,671', status: 'pending', date: '30 Jun 2025', corridor: 'GB \u2192 KE' },
+    { id: 'TXN-005', recipient: 'Fatou Diallo', amount: '£200.00', receiveAmount: 'GHS 3,064', status: 'delivered', date: '24 Jun 2025', corridor: 'GB \u2192 GH' },
   ];
 
   const quickActions: { label: string; icon: React.ElementType; view: ViewName; color?: string }[] = [
@@ -138,13 +138,13 @@ export function DashboardPage() {
         <CardContent className="pt-5 pb-5">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-medium text-gray-900">Monthly send goal</p>
-            <p className="text-sm font-semibold text-emerald-700">\u00a3{monthSent} / \u00a3{monthGoal}</p>
+            <p className="text-sm font-semibold text-emerald-700">£{monthSent} / £{monthGoal}</p>
           </div>
           <Progress value={goalPct} className="h-2.5 [&>div]:bg-emerald-500" />
           <p className="mt-1.5 text-xs text-muted-foreground">
             {goalPct >= 100
-              ? 'Target reached! You saved an estimated \u00a3{(monthSent * 0.055).toFixed(0)} vs traditional providers.'
-              : `\u00a3${monthGoal - monthSent} more to reach your target. Save up to ${((monthGoal - monthSent) * 0.055).toFixed(0)} in fees with AfriSpine.`}
+              ? 'Target reached! You saved an estimated £{(monthSent * 0.055).toFixed(0)} vs traditional providers.'
+              : `£${monthGoal - monthSent} more to reach your target. Save up to ${((monthGoal - monthSent) * 0.055).toFixed(0)} in fees with AfriSpine.`}
           </p>
         </CardContent>
       </Card>
@@ -212,7 +212,7 @@ export function DashboardPage() {
                 <p className="text-sm text-muted-foreground truncate">
                   {hasWealthAccount
                     ? portfolioLoading ? 'Loading portfolio...' : portfolioSummary || 'View your holdings'
-                    : 'From \u00a310. NSE, NGX, JSE and more.'}
+                    : 'From £10. NSE, NGX, JSE and more.'}
                 </p>
               </div>
             </div>

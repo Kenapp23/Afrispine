@@ -91,6 +91,7 @@ import { AdminSettingsPage } from '@/components/afrispine/admin/admin-settings-p
 import { AdminBusinessPage } from '@/components/afrispine/admin/admin-business-page';
 import { AdminWealthPage } from '@/components/afrispine/admin/admin-wealth-page';
 import { AdminDigestPage } from '@/components/afrispine/admin/admin-digest-page';
+import { AdminGiftProvidersPage } from '@/components/afrispine/admin/admin-gift-providers-page';
 
 // ─── URL-to-View mapping ─────────────────────────────────────
 const URL_VIEW_MAP: Record<string, ViewName> = {
@@ -163,12 +164,13 @@ const URL_VIEW_MAP: Record<string, ViewName> = {
   '/admin/business': 'admin-business',
   '/admin/wealth': 'admin-wealth',
   '/admin/digest': 'admin-digest',
+  '/admin/gift-providers': 'admin-gift-providers',
 };
 
 const ADMIN_VIEWS: ViewName[] = [
   'admin-dashboard', 'admin-transactions', 'admin-senders', 'admin-providers',
   'admin-revenue', 'admin-billing', 'admin-settlement', 'admin-compliance',
-  'admin-settings', 'admin-business', 'admin-wealth', 'admin-digest',
+  'admin-settings', 'admin-business', 'admin-wealth', 'admin-digest', 'admin-gift-providers',
 ];
 
 const SENDER_VIEWS: ViewName[] = [
@@ -261,6 +263,7 @@ function renderAdminPage(view: ViewName): React.ReactNode {
     case 'admin-business': return <AdminBusinessPage />;
     case 'admin-wealth': return <AdminWealthPage />;
     case 'admin-digest': return <AdminDigestPage />;
+    case 'admin-gift-providers': return <AdminGiftProvidersPage />;
     default: return null;
   }
 }

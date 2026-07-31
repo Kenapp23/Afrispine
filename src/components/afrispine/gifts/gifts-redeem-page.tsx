@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useAppStore } from '@/stores/app';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,83 @@ import {
   User,
   AlertTriangle,
 } from 'lucide-react';
+
+/* ------------------------------------------------------------------ */
+/*  Brand logo map — maps keyword → local logo file in /public        */
+/* ------------------------------------------------------------------ */
+const BRAND_LOGO_MAP: Record<string, string> = {
+  dstv:        '/gift-dstv.png',
+  gotv:        '/gift-gotv.png',
+  netflix:     '/gift-netflix.png',
+  spotify:     '/gift-spotify.png',
+  amazon:      '/gift-amazon.png',
+  'app store': '/gift-apple.png',
+  apple:       '/gift-apple.png',
+  'apple music': '/gift-apple.png',
+  'google play': '/gift-google-play.png',
+  uber:        '/gift-uber.png',
+  airbnb:      '/gift-airbnb.png',
+  showmax:     '/gift-showmax.png',
+  jumia:       '/gift-jumia.png',
+  takealot:    '/gift-takealot.png',
+  'pick n pay': '/gift-picknpay.png',
+  picknpay:    '/gift-picknpay.png',
+  multichoice: '/gift-dstv.png',
+};
+
+/**
+ * Resolve a merchant name (e.g. "DStv Kenya") to a local logo path.
+ * Returns `null` when no match is found so the caller can fall back.
+ */
+function resolveBrandLogo(merchantName: string): string | null {
+  const lower = merchantName.toLowerCase().trim();
+
+  // 1. Exact keyword match
+  if (BRAND_LOGO_MAP[lower]) return BRAND_LOGO_MAP[lower];
+
+  // 2. Check if any keyword is contained in the name (longer keys first)
+  const sortedKeys = Object.keys(BRAND_LOGO_MAP).sort(
+    (a, b) => b.length - a.length,
+  );
+  for (const key of sortedKeys) {
+    if (lower.includes(key)) return BRAND_LOGO_MAP[key];
+  }
+
+  return null;
+}
+
+/* ------------------------------------------------------------------ */
+/*  MerchantLogo — shows brand img with Store-icon fallback            */
+/* ------------------------------------------------------------------ */
+function MerchantLogo({ merchantName }: { merchantName: string }) {
+  const [imgError, setImgError] = useState(false);
+  const logoSrc = resolveBrandLogo(merchantName);
+
+  const handleError = useCallback(() => {
+    setImgError(true);
+  }, []);
+
+  // No logo matched at all → show Store icon immediately
+  if (!logoSrc || imgError) {
+    return (
+      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100">
+        <Store className="h-4 w-4 text-amber-700" />
+      </div>
+    );
+  }
+
+  // We have a logo — show it, fall back on error
+  return (
+    <div className="flex h-8 w-8 items-center justify-center rounded-lg overflow-hidden bg-white border border-border/40">
+      <img
+        src={logoSrc}
+        alt={merchantName}
+        className="h-6 w-6 object-contain"
+        onError={handleError}
+      />
+    </div>
+  );
+}
 
 /* ------------------------------------------------------------------ */
 /*  Status badge                                                      */
@@ -217,9 +294,7 @@ export default function GiftsRedeemPage() {
               {/* Details grid */}
               <div className="space-y-3 text-sm">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100">
-                    <Store className="h-4 w-4 text-amber-700" />
-                  </div>
+                  <MerchantLogo merchantName={voucher.merchantName || ''} />
                   <div>
                     <p className="text-xs text-muted-foreground">Merchant</p>
                     <p className="font-semibold text-gray-900">{voucher.merchantName || 'Not specified'}</p>

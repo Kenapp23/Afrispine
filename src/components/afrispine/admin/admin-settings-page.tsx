@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   CreditCard,
   Save,
@@ -28,6 +29,8 @@ import {
   Mail,
   Globe,
   AlertTriangle,
+  TrendingUp,
+  Plus,
 } from 'lucide-react';
 import { useAppStore } from '@/stores/app';
 import { toast } from 'sonner';
@@ -45,6 +48,12 @@ interface KeysResponse {
   keys: Record<string, KeyStatus>;
   connected: boolean;
   provider: string | null;
+}
+
+interface CorridorMargin {
+  id: number;
+  corridor: string;
+  marginPct: number;
 }
 
 // ─── Partner Config ────────────────────────────────────────────────────────
@@ -69,13 +78,13 @@ const PARTNERS: PartnerConfig[] = [
     ],
   },
   {
-    id: 'smile_id',
-    name: 'Smile ID',
-    description: 'Identity verification and KYC provider for sender onboarding.',
+    id: 'mystocks_africa',
+    name: 'MyStocks Africa',
+    description: 'African investment and wealth management platform. Enables bond trading, treasury bills, and fractional shares for users.',
     color: 'blue',
     keyFields: [
-      { name: 'smile_id_partner_id', label: 'Partner ID', placeholder: 'Your Smile ID partner ID', secret: false },
-      { name: 'smile_id_api_key', label: 'API Key', placeholder: 'Your Smile ID API key', secret: true },
+      { name: 'mystocks_api_key', label: 'API Key', placeholder: 'Your MyStocks Africa API key', secret: true },
+      { name: 'mystocks_partner_id', label: 'Partner ID', placeholder: 'Your MyStocks partner ID', secret: false },
     ],
   },
   {
@@ -116,6 +125,8 @@ const PARTNER_COLORS: Record<string, { bg: string; border: string; text: string;
   violet: { bg: 'bg-violet-50/20', border: 'border-violet-200', text: 'text-violet-600', badge: 'bg-violet-100', badgeText: 'text-violet-700' },
 };
 
+const CURRENCIES = ['GBP', 'USD', 'EUR', 'KES', 'NGN', 'GHS'];
+
 // ─── Partner Card Component ────────────────────────────────────────────────
 
 function PartnerCard({ partner }: { partner: PartnerConfig }) {
@@ -127,15 +138,18 @@ function PartnerCard({ partner }: { partner: PartnerConfig }) {
   const [formValues, setFormValues] = useState<Record<string, string>>({});
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
+  const { adminSessionToken } = useAppStore();
+  const authH = useCallback(() => ({ 'Authorization': 'Bearer ' + (adminSessionToken || '') }), [adminSessionToken]);
+
   const fetchKeys = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/paystack-keys');
+      const res = await fetch('/api/admin/paystack-keys', { headers: authH() });
       const data = await res.json();
       setKeysData(data);
     } catch {}
     finally { setLoading(false); }
-  }, []);
+  }, [authH]);
 
   useEffect(() => { fetchKeys(); }, [fetchKeys]);
 
@@ -159,7 +173,7 @@ function PartnerCard({ partner }: { partner: PartnerConfig }) {
     try {
       const res = await fetch('/api/admin/paystack-keys', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authH() },
         body: JSON.stringify(formValues),
       });
       const data = await res.json();
@@ -179,7 +193,7 @@ function PartnerCard({ partner }: { partner: PartnerConfig }) {
     try {
       const res = await fetch('/api/admin/paystack-keys', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authH() },
         body: JSON.stringify({ key: keyName }),
       });
       if (res.ok) {
@@ -334,6 +348,342 @@ function PartnerCard({ partner }: { partner: PartnerConfig }) {
   );
 }
 
+// ─── Fee Structure Card Component ──────────────────────────────────────────
+
+function FeeStructureCard() {
+  const { adminSessionToken } = useAppStore();
+  const authH = useCallback(() => ({
+    'Authorization': 'Bearer ' + (adminSessionToken || ''),
+    'Content-Type': 'application/json',
+  }), [adminSessionToken]);
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  const [globalFeePct, setGlobalFeePct] = useState('1.5');
+  const [baseChargeCurrency, setBaseChargeCurrency] = useState('GBP');
+  const [margins, setMargins] = useState<CorridorMargin[]>([]);
+
+  const [newCorridor, setNewCorridor] = useState('');
+  const [newCorridorFee, setNewCorridorFee] = useState('');
+
+  const fetchSettings = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/settings', { headers: authH() });
+      const data = await res.json();
+      if (res.ok) {
+        const s = data.settings || {};
+        setGlobalFeePct(s.default_fee_pct ?? '1.5');
+        setBaseChargeCurrency(s.base_charge_currency ?? 'GBP');
+        setMargins(data.margins || []);
+      }
+    } catch {
+      toast.error('Failed to load fee structure settings');
+    } finally {
+      setLoading(false);
+    }
+  }, [authH]);
+
+  useEffect(() => { fetchSettings(); }, [fetchSettings]);
+
+  const handleSaveFeeStructure = async () => {
+    setSaving(true);
+    try {
+      const feePct = parseFloat(globalFeePct);
+      if (isNaN(feePct) || feePct < 0) {
+        toast.error('Please enter a valid fee percentage');
+        setSaving(false);
+        return;
+      }
+
+      const res = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: authH(),
+        body: JSON.stringify({
+          settings: {
+            default_fee_pct: String(feePct),
+            base_charge_currency: baseChargeCurrency,
+          },
+        }),
+      });
+
+      if (res.ok) {
+        toast.success('Fee structure saved successfully');
+        await fetchSettings();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Failed to save fee structure');
+      }
+    } catch {
+      toast.error('Network error while saving fee structure');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAddCorridorOverride = async () => {
+    const corridor = newCorridor.trim().toUpperCase();
+    const pct = parseFloat(newCorridorFee);
+
+    if (!corridor) {
+      toast.error('Please enter a corridor code (e.g. GB-KE)');
+      return;
+    }
+    if (isNaN(pct) || pct < 0) {
+      toast.error('Please enter a valid fee percentage for the corridor');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: authH(),
+        body: JSON.stringify({
+          margins: [{ corridor, marginPct: pct }],
+        }),
+      });
+
+      if (res.ok) {
+        toast.success(`Corridor override ${corridor} added successfully`);
+        setNewCorridor('');
+        setNewCorridorFee('');
+        await fetchSettings();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Failed to add corridor override');
+      }
+    } catch {
+      toast.error('Network error while adding corridor override');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteOverride = async (id: number, corridor: string) => {
+    setDeletingId(id);
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: authH(),
+        body: JSON.stringify({
+          margins: [{ id, corridor, marginPct: 0, _delete: true }],
+        }),
+      });
+
+      if (res.ok) {
+        toast.success(`Corridor override ${corridor} removed`);
+        await fetchSettings();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Failed to remove corridor override');
+      }
+    } catch {
+      toast.error('Network error while removing corridor override');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  return (
+    <Card className="border-emerald-200 bg-emerald-50/20 transition-colors">
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+            <TrendingUp className="h-5 w-5" />
+          </div>
+          <div>
+            <CardTitle className="text-base">Fee Structure</CardTitle>
+            <CardDescription>Configure the global transfer fee and per-corridor overrides that apply to all money transfers.</CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {loading ? (
+          <div className="space-y-4">
+            <div className="h-24 rounded-lg border bg-white/50 animate-pulse" />
+            <div className="h-24 rounded-lg border bg-white/50 animate-pulse" />
+          </div>
+        ) : (
+          <>
+            {/* Global Fee & Currency Settings */}
+            <div className="rounded-lg border bg-white p-4 space-y-4">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Global Settings</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="global-fee-pct" className="text-sm font-medium text-gray-900 flex items-center gap-1.5">
+                    <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
+                    Global Fee %
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="global-fee-pct"
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="100"
+                      value={globalFeePct}
+                      onChange={(e) => setGlobalFeePct(e.target.value)}
+                      placeholder="1.5"
+                      className="pr-8 text-sm"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">%</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Base fee percentage applied to all transfers</p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="base-charge-currency" className="text-sm font-medium text-gray-900 flex items-center gap-1.5">
+                    <Globe className="h-3.5 w-3.5 text-emerald-500" />
+                    Base Charge Currency
+                  </Label>
+                  <Select value={baseChargeCurrency} onValueChange={setBaseChargeCurrency}>
+                    <SelectTrigger className="w-full text-sm" id="base-charge-currency">
+                      <SelectValue placeholder="Select currency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CURRENCIES.map((curr) => (
+                        <SelectItem key={curr} value={curr}>{curr}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">Currency used for fixed charge components</p>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Per-Corridor Fee Overrides */}
+            <div className="rounded-lg border bg-white p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Per-Corridor Fee Overrides</p>
+                <Badge className={`${margins.length > 0 ? 'bg-emerald-100 text-emerald-700 border-transparent' : 'bg-gray-100 text-gray-500 border-gray-200'} text-xs`}>
+                  {margins.length} {margins.length === 1 ? 'override' : 'overrides'}
+                </Badge>
+              </div>
+
+              {margins.length > 0 ? (
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {margins.map((m) => (
+                    <div
+                      key={m.id}
+                      className="flex items-center justify-between p-3 rounded-lg border hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 shrink-0">
+                          <MapPin className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium font-mono">{m.corridor}</p>
+                          <p className="text-xs text-muted-foreground">Overrides global fee</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <Badge className="bg-emerald-100 text-emerald-700 border-transparent font-mono">
+                          {m.marginPct}%
+                        </Badge>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50 h-7 w-7 p-0"
+                          onClick={() => handleDeleteOverride(m.id, m.corridor)}
+                          disabled={deletingId === m.id}
+                        >
+                          {deletingId === m.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-3.5 w-3.5" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-dashed p-6 text-center">
+                  <MapPin className="h-8 w-8 mx-auto text-muted-foreground/50 mb-2" />
+                  <p className="text-sm text-muted-foreground">No corridor overrides configured</p>
+                  <p className="text-xs text-muted-foreground mt-1">All transfers will use the global fee of {globalFeePct}%</p>
+                </div>
+              )}
+
+              <Separator />
+
+              {/* Add Corridor Override Form */}
+              <div className="space-y-3">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Add Corridor Override</p>
+                <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 items-end">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="new-corridor" className="text-sm font-medium text-gray-900">
+                      Corridor Code
+                    </Label>
+                    <Input
+                      id="new-corridor"
+                      value={newCorridor}
+                      onChange={(e) => setNewCorridor(e.target.value)}
+                      placeholder="e.g. GB-KE"
+                      className="font-mono text-sm uppercase"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="new-corridor-fee" className="text-sm font-medium text-gray-900">
+                      Fee %
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="new-corridor-fee"
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="100"
+                        value={newCorridorFee}
+                        onChange={(e) => setNewCorridorFee(e.target.value)}
+                        placeholder="1.2"
+                        className="pr-8 text-sm"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">%</span>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={handleAddCorridorOverride}
+                    disabled={saving || !newCorridor.trim() || !newCorridorFee.trim()}
+                    className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50"
+                  >
+                    {saving ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Plus className="h-4 w-4" />
+                    )}
+                    <span className="sr-only">Add Override</span>
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Save Fee Structure Button */}
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={handleSaveFeeStructure}
+                disabled={saving}
+                className="bg-emerald-600 hover:bg-emerald-700"
+              >
+                {saving ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</>
+                ) : (
+                  <><Save className="mr-2 h-4 w-4" /> Save Fee Structure</>
+                )}
+              </Button>
+              <p className="text-xs text-muted-foreground">Changes to global fee and currency will apply to all transfers immediately</p>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 // ─── Main Settings Page ──────────────────────────────────────────────────────
 
 export function AdminSettingsPage() {
@@ -356,6 +706,18 @@ export function AdminSettingsPage() {
         {PARTNERS.map((partner) => (
           <PartnerCard key={partner.id} partner={partner} />
         ))}
+      </div>
+
+      {/* Fee Structure Management */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 mb-2">
+          <TrendingUp className="h-5 w-5 text-muted-foreground" />
+          <h2 className="text-lg font-semibold text-gray-900">Fee Structure Management</h2>
+        </div>
+        <p className="text-sm text-muted-foreground mb-4">
+          Configure global transfer fees, base charge currency, and per-corridor overrides for the platform.
+        </p>
+        <FeeStructureCard />
       </div>
     </div>
   );
