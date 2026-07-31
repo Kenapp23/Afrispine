@@ -18,6 +18,9 @@ import {
   Wallet,
   ArrowDownToLine,
   ChevronDown,
+  Calculator,
+  Send,
+  Download,
 } from 'lucide-react';
 import MarketTicker from './market-ticker';
 import ProductPillars from './product-pillars';
@@ -111,8 +114,105 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* ── NEW: 3-Step How It Works (after hero) ── */}
+      <section className="bg-white py-16 sm:py-20">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6">
+          <div className="mx-auto max-w-2xl text-center mb-12">
+            <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+              Send money in 3 simple steps
+            </h2>
+            <p className="mt-2 text-muted-foreground">
+              No complicated forms, no hidden steps. Just fast, fair transfers.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
+            {[
+              {
+                step: 1,
+                title: 'Enter the amount',
+                desc: 'Tell us how much you want to send. We instantly show you the exchange rate and exactly what your recipient gets.',
+                Icon: Calculator,
+              },
+              {
+                step: 2,
+                title: 'Pay securely',
+                desc: 'Pay by debit or credit card. Your payment is processed by Paystack (Stripe) with bank-level encryption.',
+                Icon: CreditCard,
+              },
+              {
+                step: 3,
+                title: 'Delivered instantly',
+                desc: 'Money arrives on M-Pesa, MTN MoMo, or bank account — usually within 30 minutes. Real-time tracking included.',
+                Icon: Send,
+              },
+            ].map((item) => {
+              const Icon = item.Icon;
+              return (
+                <div key={item.step} className="relative flex flex-col items-center text-center">
+                  <div className="relative">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-600 text-white shadow-lg shadow-emerald-200">
+                      <Icon className="h-7 w-7" />
+                    </div>
+                    <span className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">
+                      {item.step}
+                    </span>
+                  </div>
+                  <h3 className="mt-5 text-lg font-semibold text-gray-900">
+                    {item.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground max-w-xs">
+                    {item.desc}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+          <div className="mt-10 text-center">
+            <Button
+              onClick={() => navigate('signup')}
+              className="bg-emerald-600 text-white hover:bg-emerald-700"
+            >
+              Get started — it&apos;s free
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </section>
+
       {/* Live Market Ticker */}
       <MarketTicker />
+
+      {/* ── NEW: Trusted By (partner logos) ── */}
+      <section className="border-y border-border/40 bg-gray-50/50 py-10 sm:py-12">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <p className="mb-8 text-center text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            Trusted By &amp; Powered By
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-6">
+            {[
+              { name: 'Paystack', sub: 'a Stripe company' },
+              { name: 'Flutterwave', sub: 'Payment partner' },
+              { name: 'M-Pesa', sub: 'Safaricom' },
+              { name: 'MTN MoMo', sub: 'Mobile money' },
+              { name: 'Visa', sub: '' },
+              { name: 'Mastercard', sub: '' },
+            ].map((partner) => (
+              <div
+                key={partner.name}
+                className="flex flex-col items-center gap-1"
+              >
+                <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-xl border border-border bg-white text-sm font-bold text-gray-400 transition-colors hover:border-emerald-200 hover:text-emerald-600">
+                  {partner.name.charAt(0)}
+                </div>
+                <span className="text-xs font-medium text-gray-600">{partner.name}</span>
+                {partner.sub && (
+                  <span className="text-[10px] text-muted-foreground">{partner.sub}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Product Pillars */}
       <ProductPillars />
@@ -123,7 +223,7 @@ export function LandingPage() {
       {/* China Corridor Teaser */}
       <ChinaCorridorTeaser />
 
-      {/* How it works */}
+      {/* How it works (existing 5-step version) */}
       <section className="bg-white py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="mx-auto max-w-2xl text-center mb-16">
@@ -151,7 +251,7 @@ export function LandingPage() {
               {
                 step: '3',
                 title: 'Add recipient details',
-                desc: 'Enter your recipient’s mobile money or bank details.',
+                desc: 'Enter your recipient\'s mobile money or bank details.',
                 icon: Smartphone,
               },
               {
@@ -379,6 +479,75 @@ export function LandingPage() {
             >
               View all FAQs
             </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ── NEW: Download the App CTA ── */}
+      <section className="bg-gray-50 py-16 sm:py-20">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6">
+          <div className="flex flex-col items-center gap-10 lg:flex-row lg:items-center lg:justify-between">
+            {/* Text content */}
+            <div className="max-w-md text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700 mb-4">
+                <Download className="h-3.5 w-3.5" />
+                Coming Soon
+              </div>
+              <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+                Download the AfriSpine app
+              </h2>
+              <p className="mt-3 text-muted-foreground leading-relaxed">
+                Send money on the go. Get instant rate alerts, track transfers in
+                real time, and manage recipients — all from your pocket.
+              </p>
+              <ul className="mt-5 space-y-2.5">
+                {[
+                  'Biometric login for speed & security',
+                  'Push notifications for delivery status',
+                  'Save favourite recipients for one-tap sends',
+                ].map((item) => (
+                  <li key={item} className="flex items-center gap-2 text-sm text-gray-700">
+                    <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center lg:justify-start">
+                <Button
+                  onClick={() => navigate('signup')}
+                  className="bg-emerald-600 text-white hover:bg-emerald-700"
+                >
+                  Join the waitlist
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+                <Button variant="outline" className="border-gray-300 text-gray-700">
+                  Learn more
+                </Button>
+              </div>
+            </div>
+
+            {/* Phone mockup placeholder */}
+            <div className="relative flex items-center justify-center">
+              <div className="relative h-72 w-[280px] rounded-[2.5rem] border-4 border-gray-800 bg-gradient-to-b from-emerald-50 to-white p-3 shadow-2xl shadow-gray-900/10">
+                {/* Phone notch */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 h-6 w-28 rounded-b-2xl bg-gray-800" />
+                {/* Screen content */}
+                <div className="mt-8 flex h-full flex-col items-center justify-center rounded-2xl bg-white border border-gray-100 p-4 text-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600 text-white mb-3">
+                    <Globe className="h-6 w-6" />
+                  </div>
+                  <p className="text-sm font-bold text-gray-900">AfriSpine</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Send money home</p>
+                  <div className="mt-4 w-full space-y-2">
+                    <div className="h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                      <span className="text-xs font-medium text-emerald-700">£100 → KES</span>
+                    </div>
+                    <div className="h-6 rounded-md bg-gray-100" />
+                    <div className="h-6 rounded-md bg-emerald-600 w-3/4 mx-auto" />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
