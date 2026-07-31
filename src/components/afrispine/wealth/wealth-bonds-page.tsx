@@ -179,7 +179,7 @@ export function WealthBondsPage() {
     setSubscribe((prev) => ({ ...prev, step: Math.max(prev.step - 1, 1) }));
   }, []);
 
-  // ── Handle Paystack payment (Step 2) ──
+  // ── Handle payment (Step 2) ──
   const handlePay = useCallback(async () => {
     if (!subscribe.bond) return;
     const numericAmount = parseFloat(subscribe.amount);
@@ -204,7 +204,7 @@ export function WealthBondsPage() {
       }
 
       const data = await res.json();
-      // Store accessCode from Paystack response
+      // Store accessCode from payment response
       setSubscribe((prev) => ({
         ...prev,
         processing: false,
@@ -599,13 +599,13 @@ export function WealthBondsPage() {
                   </div>
                 )}
 
-                {/* ── STEP 2: Payment via Paystack ── */}
+                {/* ── STEP 2: Payment ── */}
                 {subscribe.step === 2 && (
                   <div className="space-y-5">
                     <div>
                       <h2 className="text-lg font-bold text-gray-900">Complete Payment</h2>
                       <p className="text-sm text-muted-foreground mt-0.5">
-                        Pay securely via Paystack to subscribe.
+                        Pay securely to subscribe.
                       </p>
                     </div>
 
@@ -651,11 +651,11 @@ export function WealthBondsPage() {
                       </CardContent>
                     </Card>
 
-                    {/* Paystack notice */}
+                    {/* Payment notice */}
                     <div className="flex items-start gap-3 rounded-lg bg-muted p-3">
                       <Shield className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
                       <p className="text-xs text-muted-foreground leading-relaxed">
-                        You will be redirected to Paystack to complete payment securely.
+                        You will be redirected to our payment processor to complete payment securely.
                         AfriSpine does not store your card details.
                       </p>
                     </div>
@@ -679,7 +679,7 @@ export function WealthBondsPage() {
                         ) : (
                           <>
                             <DollarSign className="h-4 w-4" />
-                            Pay ${formatNumber(numericAmount, 2)} via Paystack
+                            Pay ${formatNumber(numericAmount, 2)} securely
                           </>
                         )}
                       </Button>
@@ -732,7 +732,7 @@ export function WealthBondsPage() {
                         </div>
                         {subscribe.accessCode && (
                           <div className="pt-2 border-t border-border">
-                            <span className="text-[11px] text-muted-foreground">Paystack Ref</span>
+                            <span className="text-[11px] text-muted-foreground">Payment Ref</span>
                             <p className="font-mono text-xs text-gray-500 mt-0.5 truncate">
                               {subscribe.accessCode}
                             </p>

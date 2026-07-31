@@ -26,7 +26,7 @@ export function Landing() {
       <main className="flex-1">
         <section className="max-w-6xl mx-auto px-4 pt-16 sm:pt-24 pb-12 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-sm font-medium mb-6">
-            <Shield className="w-4 h-4" /> Paystack-powered · CBK licensed
+            <Shield className="w-4 h-4" /> Secure payments · CBK licensed
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight mb-6">
             Send money to Africa.<br />
@@ -49,7 +49,7 @@ export function Landing() {
             <div className="grid sm:grid-cols-3 gap-8">
               {[
                 { step: '1', title: 'Enter amount', desc: 'Choose your corridor, enter how much to send. We lock the rate for 15 minutes.' },
-                { step: '2', title: 'Pay via Paystack', desc: 'Enter your card details securely through Paystack. Charged in USD, settles to Kenya.' },
+                { step: '2', title: 'Pay securely', desc: 'Enter your card details securely through our payment processor. Charged in USD, settles to Kenya.' },
                 { step: '3', title: 'Money delivered', desc: 'We route to the best provider. Recipient gets money on M-Pesa or bank in minutes.' },
               ].map(s => (
                 <div key={s.step} className="text-center">
@@ -94,9 +94,9 @@ export function Landing() {
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {[
                 { icon: Zap, t: 'Best rates always', d: 'We score multiple rails in real-time so your money takes the fastest, cheapest path.' },
-                { icon: Globe, t: 'Non-custodial', d: 'We never hold your funds. Paystack collects, provider delivers. Zero balance sheet risk.' },
+                { icon: Globe, t: 'Non-custodial', d: 'We never hold your funds. Our payment processor collects, provider delivers. Zero balance sheet risk.' },
                 { icon: Clock, t: 'Minutes, not days', d: 'M-Pesa delivery in ~15 minutes. Bank transfers same day. Ripple in seconds.' },
-                { icon: Shield, t: 'CBK licensed via Paystack', d: 'Paystack is licensed by the Central Bank of Kenya. Your money is in safe hands.' },
+                { icon: Shield, t: 'Licensed & regulated', d: 'Our payment processor is licensed by the Central Bank of Kenya. Your money is in safe hands.' },
                 { icon: Smartphone, t: 'M-Pesa, banks & more', d: 'Mobile money, bank transfer, PAPSS, or Ripple — choose what works for your recipient.' },
                 { icon: ArrowRight, t: '1–3% transparent fees', d: 'Flat percentage fee. What you see is what you pay. No hidden markups.' },
               ].map((f, i) => (

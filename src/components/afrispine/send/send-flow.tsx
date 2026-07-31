@@ -1019,7 +1019,7 @@ function StepRecipient() {
   );
 }
 
-// ─── Step 4: Review & Pay (Paystack inline popup) ───────────────────────
+// ─── Step 4: Review & Pay (payment popup) ───────────────────────
 function StepReviewPay() {
   const store = useAppStore();
   const [paying, setPaying] = useState(false);
@@ -1054,7 +1054,7 @@ function StepReviewPay() {
         throw new Error('No transaction ID returned from quote');
       }
 
-      // 2. Initialize Paystack payment
+      // 2. Initialize payment
       const initRes = await fetch('/api/payments/initialize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${store.sessionToken}` },
@@ -1080,10 +1080,10 @@ function StepReviewPay() {
       const initData = await initRes.json();
 
       if (!initData.access_code) {
-        throw new Error('No access_code returned from Paystack');
+        throw new Error('No access_code returned from payment processor');
       }
 
-      // 3. Open Paystack inline popup
+      // 3. Open payment popup
       const PaystackPop = (await import('@paystack/inline-js')).default;
       const paystack = new PaystackPop();
 
@@ -1212,15 +1212,15 @@ function StepReviewPay() {
           </Label>
         </div>
 
-        {/* Paystack badge */}
+        {/* Security badge */}
         <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
           <Shield className="h-3.5 w-3.5" />
-          <span>Secured by Paystack — Card &amp; Bank Transfer accepted</span>
+          <span>Secured by Fincra — Card &amp; Bank Transfer accepted</span>
         </div>
 
         {/* Compliance disclosure */}
         <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800 leading-relaxed">
-          <p>AfriSpine is a payment routing platform. Your card is charged by Paystack (a Stripe company). Funds are delivered to your recipient by the selected licensed provider. AfriSpine does not hold your funds at any time. By clicking Pay you agree to our <button onClick={() => store.navigate('terms')} className="underline font-medium">Terms of Service</button> and <button onClick={() => store.navigate('privacy')} className="underline font-medium">Privacy Policy</button>.</p>
+          <p>AfriSpine is a payment routing platform. Your card is charged securely by Fincra. Funds are delivered to your recipient by the selected licensed provider. AfriSpine does not hold your funds at any time. By clicking Pay you agree to our <button onClick={() => store.navigate('terms')} className="underline font-medium">Terms of Service</button> and <button onClick={() => store.navigate('privacy')} className="underline font-medium">Privacy Policy</button>.</p>
         </div>
 
         {store.sendCurrency === 'USD' && store.sendAmount > 3000 && (
@@ -1231,7 +1231,7 @@ function StepReviewPay() {
 
         {store.sendCurrency === 'CAD' && (
           <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs text-blue-800">
-            <p><strong>Canadian cards are charged in USD.</strong> Your card network will convert CAD to USD at their rate. The USD amount shown is what Paystack charges.</p>
+            <p><strong>Canadian cards are charged in USD.</strong> Your card network will convert CAD to USD at their rate. The USD amount shown is what our payment processor charges.</p>
           </div>
         )}
 

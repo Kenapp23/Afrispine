@@ -141,7 +141,7 @@ export function SeoSendUkNigeria() {
         <div className="mt-12 grid gap-8 sm:grid-cols-3">
           {[
             { step: '1', icon: <Globe2 className="h-8 w-8 text-emerald-600" />, title: 'Enter amount in GBP', desc: 'Type how many pounds you want to send. We convert at the live market rate and show the exact naira your recipient will receive.' },
-            { step: '2', icon: <ShieldCheck className="h-8 w-8 text-emerald-600" />, title: 'Pay with Paystack', desc: 'Use your UK debit card, bank transfer, or Apple Pay. Paystack is PCI-DSS Level 1 certified — bank-grade security.' },
+            { step: '2', icon: <ShieldCheck className="h-8 w-8 text-emerald-600" />, title: 'Pay securely with Fincra', desc: 'Use your UK debit card, bank transfer, or Apple Pay. Our payment processor is PCI-DSS Level 1 certified — bank-grade security.' },
             { step: '3', icon: <Zap className="h-8 w-8 text-emerald-600" />, title: 'Naira delivered fast', desc: 'OPay/PalmPay: 2–10 minutes. GTBank, Access, First Bank: 1–2 business days. Your recipient is notified instantly.' },
           ].map((item) => (
             <div key={item.step} className="relative rounded-2xl bg-white border border-stone-200 p-6 text-center shadow-sm hover:shadow-md transition-shadow">

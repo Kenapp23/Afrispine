@@ -55,7 +55,7 @@ export function AmlPolicyPage() {
           <ul className="mt-3 list-disc pl-5 space-y-2">
             <li><strong className="text-gray-700">Legal Name:</strong> The user&apos;s full legal name as it appears on their government-issued identification.</li>
             <li><strong className="text-gray-700">Date of Birth:</strong> To confirm the user is at least 18 years of age.</li>
-            <li><strong className="text-gray-700">Government-Issued ID:</strong> A valid passport, national identity card, or driver&apos;s licence, verified through our identity verification partner, Smile Identity. The document is checked for authenticity, validity, and a biometric match against the user&apos;s submitted photograph.</li>
+            <li><strong className="text-gray-700">Government-Issued ID:</strong> A valid passport, national identity card, or driver&apos;s licence, verified through our identity verification partner, Smile ID. The document is checked for authenticity, validity, and a biometric match against the user&apos;s submitted photograph.</li>
             <li><strong className="text-gray-700">Biometric Liveness Check:</strong> A real-time selfie is captured and analysed to confirm the user is a live person and matches the photograph on their submitted identification document.</li>
           </ul>
           <p className="mt-3">
@@ -70,7 +70,7 @@ export function AmlPolicyPage() {
             AfriSpine monitors all transactions for indicators of money laundering, terrorist financing, sanctions evasion, and other financial crime. Our monitoring programme includes:
           </p>
           <ul className="mt-3 list-disc pl-5 space-y-2">
-            <li><strong className="text-gray-700">Sanctions Screening:</strong> All users, recipients, and transactions are screened in real time against the OFAC Specially Designated Nationals (SDN) List, United Nations Security Council consolidated sanctions lists, European Union sanctions lists, and HM Treasury consolidated lists.</li>
+            <li><strong className="text-gray-700">PEP &amp; Sanctions Screening:</strong> All users are screened against global Politically Exposed Person (PEP) databases and international sanctions lists using our AML compliance partner, PEPChecker. This real-time screening checks names against OFAC Specially Designated Nationals (SDN) List, United Nations Security Council consolidated sanctions lists, European Union sanctions lists, and HM Treasury consolidated lists. PEP matches are escalated for enhanced due diligence review.</li>
             <li><strong className="text-gray-700">Sanctioned Country Blocking:</strong> Transactions involving senders or recipients in comprehensively sanctioned countries and regions are blocked. This includes, but is not limited to, Iran, the Democratic People&apos;s Republic of Korea (North Korea), Syria, Cuba, Russia, Belarus, Myanmar (Burma), Sudan, Libya, and Somalia.</li>
             <li><strong className="text-gray-700">Pattern Detection:</strong> We monitor for unusual transaction patterns that may indicate structuring, layering, or other money laundering techniques, including rapid successive transfers, round-dollar amounts, transfers to multiple unrelated recipients, and transfers inconsistent with the user&apos;s stated purpose or profile.</li>
           </ul>

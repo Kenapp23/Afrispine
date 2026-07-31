@@ -197,7 +197,7 @@ export function AdminSettlementPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {/* Paystack Connection card */}
+        {/* Payment Connection card */}
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
@@ -234,12 +234,12 @@ export function AdminSettlementPage() {
                   </div>
                 </div>
                 <a
-                  href="https://dashboard.paystack.com"
+                  href="#"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
                   <Button variant="outline" size="sm" className="w-full">
-                    Open Paystack Dashboard
+                    Open Payment Dashboard
                     <ExternalLink className="h-3.5 w-3.5 ml-1.5" />
                   </Button>
                 </a>
@@ -259,7 +259,7 @@ export function AdminSettlementPage() {
                   >
                     Settings &rarr; Integrations
                   </button>{' '}
-                  to add your Paystack keys.
+                  to add your payment processor keys.
                 </p>
               </>
             )}
@@ -276,7 +276,7 @@ export function AdminSettlementPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Your bank account is configured in your Paystack dashboard. Paystack auto-settles on T+1.
+              Your bank account is configured in your payment processor dashboard. Auto-settles on T+1.
             </p>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
@@ -293,12 +293,12 @@ export function AdminSettlementPage() {
               </div>
             </div>
             <a
-              href="https://dashboard.paystack.com/settlements"
+              href="#"
               target="_blank"
               rel="noopener noreferrer"
             >
               <Button variant="outline" size="sm" className="w-full">
-                View Settlements on Paystack
+                View Settlements
                 <ExternalLink className="h-3.5 w-3.5 ml-1.5" />
               </Button>
             </a>
@@ -391,7 +391,7 @@ export function AdminSettlementPage() {
                   <p className="text-xs text-muted-foreground">Period: {recon.period}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Settled by Paystack</p>
+                  <p className="text-xs text-muted-foreground">Settled by Payment Processor</p>
                   <p className="text-xl font-bold text-gray-900">{paystack?.connected ? fmtMoney(recon.feesCollected) : '—'}</p>
                 </div>
                 <div>
@@ -406,7 +406,7 @@ export function AdminSettlementPage() {
                 {!paystack?.connected && (
                   <span className="text-xs text-muted-foreground flex items-center gap-1">
                     <Info className="h-3 w-3" />
-                    Connect Paystack for automatic reconciliation
+                    Connect payment processor for automatic reconciliation
                   </span>
                 )}
               </div>

@@ -117,7 +117,7 @@ function PaystackKeysSection() {
             </div>
             <div>
               <CardTitle className="text-base flex items-center gap-2">
-                Paystack API Keys
+                Payment Processor API Keys
                 {allSet ? (
                   <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-xs">
                     <CheckCircle2 className="h-3 w-3 mr-1" /> Live
@@ -129,7 +129,7 @@ function PaystackKeysSection() {
                 )}
               </CardTitle>
               <CardDescription>
-                Securely store your Paystack test or live API keys. Keys are encrypted at rest and validated before saving.
+                Securely store your payment processor test or live API keys. Keys are encrypted at rest and validated before saving.
               </CardDescription>
             </div>
           </div>
@@ -250,7 +250,7 @@ function PaystackKeysSection() {
               className="font-mono text-sm"
             />
             <p className="text-xs text-muted-foreground">
-              Your client-side key for Paystack checkout embed. Safe to expose in frontend code.
+              Your client-side key for the payment checkout embed. Safe to expose in frontend code.
             </p>
           </div>
         </div>
@@ -259,7 +259,7 @@ function PaystackKeysSection() {
         <div className="rounded-lg border border-dashed bg-blue-50/30 p-4 space-y-2">
           <p className="text-xs font-semibold text-blue-700 uppercase tracking-wider">Webhook Configuration</p>
           <p className="text-xs text-muted-foreground">
-            In your Paystack Dashboard, add this webhook URL to receive payment events:
+            In your payment processor dashboard, add this webhook URL to receive payment events:
           </p>
           <div className="flex items-center gap-2">
             <code className="flex-1 bg-white border rounded-md px-3 py-1.5 text-xs font-mono text-blue-700 select-all">
@@ -309,7 +309,7 @@ function PaystackKeysSection() {
             )}
           </Button>
           <p className="text-xs text-muted-foreground">
-            Keys are validated against the Paystack API before saving
+            Keys are validated against the payment processor API before saving
           </p>
         </div>
       </CardContent>
@@ -331,7 +331,7 @@ const settlementConfig: SettingField[] = [
   { label: 'Company Name', value: 'AfriSpine Ltd', icon: Building2, description: 'Legal entity name for settlement reports' },
   { label: 'Registration Number', value: 'ZA-2024-01892', icon: Hash, description: 'Company registration / incorporation number' },
   { label: 'Registered Address', value: '14 Broadwick Street, London W1F 0HW, United Kingdom', icon: MapPin, placeholder: 'Full registered business address' },
-  { label: 'Paystack Business ID', value: '', icon: CreditCard, description: 'Your Paystack integration business identifier' },
+  { label: 'Payment Processor Business ID', value: '', icon: CreditCard, description: 'Your payment processor integration business identifier' },
   { label: 'Settlement Notify Email', value: 'finance@afrispine.io', icon: Mail, description: 'Email address for settlement batch notifications' },
 ];
 
@@ -384,7 +384,7 @@ export function AdminSettingsPage() {
         <p className="text-muted-foreground">Platform configuration, API keys, settlement, and compliance settings</p>
       </div>
 
-      {/* Paystack API Keys - TOP PRIORITY */}
+      {/* Payment Processor API Keys - TOP PRIORITY */}
       <PaystackKeysSection />
 
       {/* Settlement Configuration */}
@@ -440,7 +440,7 @@ export function AdminSettingsPage() {
               <div className="space-y-1">
                 <p className="text-sm font-medium text-red-800">Configuration changes require careful review</p>
                 <p className="text-xs text-red-600">
-                  Changes to Paystack API keys, settlement configuration, or compliance settings
+                  Changes to payment processor API keys, settlement configuration, or compliance settings
                   will take effect immediately and may impact live transactions. Always test in
                   staging before applying to production.
                 </p>

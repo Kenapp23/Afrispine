@@ -130,7 +130,7 @@ export function AirtimePage() {
       });
       if (res.ok) {
         const data = await res.json();
-        // If Paystack access_code returned, open popup
+        // If access_code returned, open payment popup
         if (data.access_code) {
           const win = (window as unknown as { PaystackPop: { setup: (c: Record<string, unknown>) => { openIframe: () => void } } }).PaystackPop;
           if (win) {

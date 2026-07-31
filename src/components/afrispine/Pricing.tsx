@@ -17,7 +17,7 @@ export function Pricing() {
       </nav>
       <main className="max-w-5xl mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Corridor Rates</h1>
-        <p className="text-gray-500 mb-8">1.5% fee on most corridors. Charged in USD via Paystack.</p>
+        <p className="text-gray-500 mb-8">1.5% fee on most corridors. Charged in USD via our secure payment processor.</p>
         <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
           <table className="w-full text-sm">
             <thead><tr className="border-b border-gray-100 bg-gray-50">

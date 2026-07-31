@@ -25,7 +25,7 @@ const faqs = [
   {
     question: 'Is my money safe?',
     answer:
-      'Your payment is processed by Paystack (owned by Stripe, valued at $95B). AfriSpine never holds your money.',
+      'Your payment is processed by Fincra, a licensed payment service provider. AfriSpine never holds your money.',
   },
   {
     question: 'What countries can I send to?',

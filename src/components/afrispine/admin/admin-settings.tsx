@@ -311,7 +311,7 @@ export function AdminSettingsPage() {
       .replace(/\{recipient_name\}/g, 'Jane Wanjiku')
       .replace(/\{eta\}/g, '5 minutes')
       .replace(/\{rate\}/g, '189.50')
-      .replace(/\{provider\}/g, 'Flutterwave')
+      .replace(/\{provider\}/g, 'Provider')
       .replace(/\{fee\}/g, '1.50')
       .replace(/\{failure_reason\}/g, 'Insufficient balance');
     return text;
@@ -501,7 +501,7 @@ export function AdminSettingsPage() {
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Paystack Configuration</CardTitle>
+                  <CardTitle className="text-base">Payment Processor Configuration</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -513,7 +513,7 @@ export function AdminSettingsPage() {
                         onChange={(e) => setSettings(prev => ({ ...prev, paystack_public_key: e.target.value }))}
                         placeholder="pk_test_... or pk_live_..."
                       />
-                      <p className="text-xs text-muted-foreground">Used on the frontend for Paystack popup</p>
+                      <p className="text-xs text-muted-foreground">Used on the frontend for payment popup</p>
                     </div>
                     <div className="space-y-1.5">
                       <Label>Secret Key</Label>
@@ -533,7 +533,7 @@ export function AdminSettingsPage() {
                         type="password"
                         value={settings.paystack_webhook_secret || ''}
                         onChange={(e) => setSettings(prev => ({ ...prev, paystack_webhook_secret: e.target.value }))}
-                        placeholder="Paystack webhook signing secret"
+                        placeholder="Webhook signing secret"
                       />
                       <p className="text-xs text-muted-foreground">HMAC-SHA512 signature verification for webhooks</p>
                     </div>

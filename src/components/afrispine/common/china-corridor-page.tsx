@@ -258,9 +258,9 @@ export default function ChinaCorridorPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Payment initialization failed');
 
-      // Open Paystack popup
+      // Open payment popup
       if (data.access_code && typeof window !== 'undefined') {
-        // Dynamically load Paystack inline if available
+        // Dynamically load payment inline if available
         try {
           const popSetup = (window as unknown as { PaystackPop?: { setup: (c: Record<string, string>) => { openIframe?: () => void } } }).PaystackPop;
           const handler = popSetup?.setup({
@@ -860,7 +860,7 @@ export default function ChinaCorridorPage() {
                     ) : (
                       <>
                         <Banknote className="size-4 mr-2" />
-                        Pay now with Paystack
+                        Pay now securely
                         {totalCharged > 0 && (
                           <span className="ml-2 opacity-70">
                             ({formatNumber(totalCharged)} {payCurrency})

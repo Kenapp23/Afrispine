@@ -136,7 +136,7 @@ export function LandingPage() {
               {
                 step: 2,
                 title: 'Pay securely',
-                desc: 'Pay by debit or credit card. Your payment is processed by Paystack (Stripe) with bank-level encryption.',
+                desc: 'Pay by debit or credit card. Your payment is processed by Fincra with bank-level encryption.',
                 Icon: CreditCard,
               },
               {
@@ -189,27 +189,60 @@ export function LandingPage() {
             Trusted By &amp; Powered By
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-6">
-            {[
-              { name: 'Paystack', sub: 'a Stripe company' },
-              { name: 'Flutterwave', sub: 'Payment partner' },
-              { name: 'M-Pesa', sub: 'Safaricom' },
-              { name: 'MTN MoMo', sub: 'Mobile money' },
-              { name: 'Visa', sub: '' },
-              { name: 'Mastercard', sub: '' },
-            ].map((partner) => (
-              <div
-                key={partner.name}
-                className="flex flex-col items-center gap-1"
-              >
-                <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-xl border border-border bg-white text-sm font-bold text-gray-400 transition-colors hover:border-emerald-200 hover:text-emerald-600">
-                  {partner.name.charAt(0)}
-                </div>
-                <span className="text-xs font-medium text-gray-600">{partner.name}</span>
-                {partner.sub && (
-                  <span className="text-[10px] text-muted-foreground">{partner.sub}</span>
-                )}
+            {/* Fincra — actual logo */}
+            <div className="flex flex-col items-center gap-1">
+              <div className="flex h-12 w-auto sm:h-14 items-center justify-center rounded-xl border border-border bg-white p-2 transition-colors hover:border-emerald-200">
+                <img src="/partner-fincra.png" alt="Fincra" className="h-full w-auto max-w-[120px] object-contain" />
               </div>
-            ))}
+              <span className="text-xs font-medium text-gray-600">Fincra</span>
+              <span className="text-[10px] text-muted-foreground">Payment processing</span>
+            </div>
+            {/* Smile ID — actual logo */}
+            <div className="flex flex-col items-center gap-1">
+              <div className="flex h-12 w-auto sm:h-14 items-center justify-center rounded-xl border border-border bg-white p-2 transition-colors hover:border-emerald-200">
+                <img src="/partner-smileid.svg" alt="Smile ID" className="h-full w-auto max-w-[120px] object-contain" />
+              </div>
+              <span className="text-xs font-medium text-gray-600">Smile ID</span>
+              <span className="text-[10px] text-muted-foreground">KYC verification</span>
+            </div>
+            {/* PEPChecker — actual logo */}
+            <div className="flex flex-col items-center gap-1">
+              <div className="flex h-12 w-auto sm:h-14 items-center justify-center rounded-xl border border-border bg-white p-2 transition-colors hover:border-emerald-200">
+                <img src="/partner-pepchecker.png" alt="PEPChecker" className="h-full w-auto max-w-[120px] object-contain rounded" />
+              </div>
+              <span className="text-xs font-medium text-gray-600">PEPChecker</span>
+              <span className="text-[10px] text-muted-foreground">AML &amp; sanctions screening</span>
+            </div>
+            {/* M-Pesa */}
+            <div className="flex flex-col items-center gap-1">
+              <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-xl border border-border bg-white transition-colors hover:border-emerald-200">
+                <span className="text-sm font-bold text-green-700">M</span>
+              </div>
+              <span className="text-xs font-medium text-gray-600">M-Pesa</span>
+              <span className="text-[10px] text-muted-foreground">Safaricom</span>
+            </div>
+            {/* MTN MoMo */}
+            <div className="flex flex-col items-center gap-1">
+              <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-xl border border-border bg-white transition-colors hover:border-emerald-200">
+                <span className="text-sm font-bold text-amber-600">MTN</span>
+              </div>
+              <span className="text-xs font-medium text-gray-600">MTN MoMo</span>
+              <span className="text-[10px] text-muted-foreground">Mobile money</span>
+            </div>
+            {/* Visa */}
+            <div className="flex flex-col items-center gap-1">
+              <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-xl border border-border bg-white transition-colors hover:border-emerald-200">
+                <span className="text-xs font-bold text-blue-700 italic">VISA</span>
+              </div>
+              <span className="text-xs font-medium text-gray-600">Visa</span>
+            </div>
+            {/* Mastercard */}
+            <div className="flex flex-col items-center gap-1">
+              <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-xl border border-border bg-white transition-colors hover:border-emerald-200">
+                <span className="text-sm font-bold text-red-600">MC</span>
+              </div>
+              <span className="text-xs font-medium text-gray-600">Mastercard</span>
+            </div>
           </div>
         </div>
       </section>
@@ -257,7 +290,7 @@ export function LandingPage() {
               {
                 step: '4',
                 title: 'Pay securely by card',
-                desc: 'Paystack processes your payment securely.',
+                desc: 'Our payment processor handles your payment securely.',
                 icon: CreditCard,
               },
               {
@@ -407,15 +440,15 @@ export function LandingPage() {
           <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Lock className="h-5 w-5 text-emerald-600" />
-              <span>Secured by Paystack</span>
+              <span>Secured by Fincra</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <CheckCircle className="h-5 w-5 text-emerald-600" />
-              <span>Identity verified</span>
+              <span>KYC by Smile ID</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Shield className="h-5 w-5 text-emerald-600" />
-              <span>AML screened</span>
+              <span>AML by PEPChecker</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Smartphone className="h-5 w-5 text-emerald-600" />
@@ -434,7 +467,7 @@ export function LandingPage() {
         <section className="bg-white py-6 border-b border-border/40">
           <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <p className="text-center text-sm text-muted-foreground">
-              🇺🇸 US senders: Your card is charged securely by Paystack, a Stripe company. AfriSpine does not store card details. Money delivered to Africa by licensed local partners.
+              🇺🇸 US senders: Your card is charged securely by Fincra. AfriSpine does not store card details. Money delivered to Africa by licensed local partners.
             </p>
           </div>
         </section>
@@ -444,7 +477,7 @@ export function LandingPage() {
       <section className="border-t border-border/40 bg-gray-50 py-10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <p className="mx-auto max-w-3xl text-center text-sm text-muted-foreground leading-relaxed">
-            AfriSpine Ltd is registered in Kenya. Payment processing by Paystack. Funds delivered by regulated mobile money and banking partners. AfriSpine is not a bank.
+            AfriSpine Ltd is registered in Kenya. Payment processing by Fincra. Funds delivered by regulated mobile money and banking partners. AfriSpine is not a bank.
           </p>
         </div>
       </section>

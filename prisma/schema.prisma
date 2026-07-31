@@ -402,6 +402,27 @@ model SenderPaystackAuth {
   createdAt  DateTime @default(now())
 }
 
+model PepCheck {
+  id              String   @id @default(cuid())
+  senderId        String?
+  firstName       String
+  lastName        String
+  dobStart        String?
+  dobEnd          String?
+  isPep           Boolean  @default(false)
+  isSanctioned    Boolean  @default(false)
+  pepCount        Int      @default(0)
+  sanctionCount   Int      @default(0)
+  rawResponse     String?
+  status          String   @default("pending")
+  checkedAt       DateTime @default(now())
+  createdAt       DateTime @default(now())
+
+  @@index([senderId])
+  @@index([status])
+  @@index([createdAt])
+}
+
 model BusinessAccount {
   id              String   @id @default(cuid())
   companyName     String?

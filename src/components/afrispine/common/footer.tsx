@@ -115,16 +115,36 @@ export function Footer() {
 
         <Separator className="my-8" />
 
-        {/* Regulatory Badges */}
+        {/* Regulatory & Partner Badges */}
         <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10 mb-8">
           <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50">
-              <Shield className="h-4 w-4 text-emerald-600" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 overflow-hidden">
+              <img src="/partner-fincra.png" alt="Fincra" className="h-5 w-auto object-contain" />
             </div>
             <div>
-              <span className="font-medium text-gray-700">Licensed by</span>
+              <span className="font-medium text-gray-700">Payment processing</span>
               <br />
-              Paystack (a Stripe company)
+              Fincra
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 overflow-hidden">
+              <img src="/partner-smileid.svg" alt="Smile ID" className="h-5 w-auto object-contain" />
+            </div>
+            <div>
+              <span className="font-medium text-gray-700">KYC verification</span>
+              <br />
+              Smile ID
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 overflow-hidden">
+              <img src="/partner-pepchecker.png" alt="PEPChecker" className="h-5 w-auto object-contain rounded" />
+            </div>
+            <div>
+              <span className="font-medium text-gray-700">AML screening</span>
+              <br />
+              PEPChecker
             </div>
           </div>
           <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
@@ -159,7 +179,7 @@ export function Footer() {
           <p className="text-center text-xs leading-relaxed text-muted-foreground/80">
             &copy; {new Date().getFullYear()} AfriSpine Ltd. Registered in Kenya. AfriSpine is a
             payment routing platform, not a bank or money transmitter. Transactions are
-            processed by Paystack (a Stripe company). Funds are delivered by licensed
+            processed by Fincra. Funds are delivered by licensed
             partner providers in each recipient country. AfriSpine does not hold customer
             funds at any time.
           </p>

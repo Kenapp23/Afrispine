@@ -530,11 +530,11 @@ export function AdminProvidersPage() {
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label>Name</Label>
-                  <Input placeholder="flutterwave" value={formName} onChange={(e) => setFormName(e.target.value)} />
+                  <Input placeholder="provider-name" value={formName} onChange={(e) => setFormName(e.target.value)} />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Display Name *</Label>
-                  <Input placeholder="Flutterwave" value={formDisplayName} onChange={(e) => setFormDisplayName(e.target.value)} />
+                  <Input placeholder="Provider Name" value={formDisplayName} onChange={(e) => setFormDisplayName(e.target.value)} />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Slug</Label>

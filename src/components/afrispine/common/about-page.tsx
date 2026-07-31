@@ -31,7 +31,7 @@ export function AboutPage() {
             AfriSpine Ltd is a non-custodial payment routing and matching platform registered in Kenya. We connect diaspora Africans in the UK, USA, Canada, and EU to family in Africa via the fastest, most cost-effective route.
           </p>
           <p className="mt-3">
-            We are not a bank or money transmitter. Your payment is collected securely by Paystack (a Stripe company) and your money is delivered by our licensed provider partners including regulated mobile money operators and banks. AfriSpine earns a transparent service fee of 1–3% per transfer. Your principal is never in our hands.
+            We are not a bank or money transmitter. Your payment is collected securely by Fincra and your money is delivered by our licensed provider partners including regulated mobile money operators and banks. AfriSpine earns a transparent service fee of 1–3% per transfer. Your principal is never in our hands.
           </p>
         </section>
 
@@ -69,7 +69,7 @@ export function AboutPage() {
             </li>
             <li className="flex gap-3">
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-semibold text-emerald-700">2</span>
-              <span>Paystack (a Stripe company, PCI-DSS certified) processes your card payment. We never see or store your full card details.</span>
+              <span>Fincra (PCI-DSS certified) processes your card payment. We never see or store your full card details.</span>
             </li>
             <li className="flex gap-3">
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-semibold text-emerald-700">3</span>
@@ -81,7 +81,7 @@ export function AboutPage() {
             </li>
           </ul>
           <p className="mt-4">
-            At no point does AfriSpine hold, custody, or intermediate your funds. Your money goes directly from Paystack to the delivery provider.
+            At no point does AfriSpine hold, custody, or intermediate your funds. Your money goes directly from our payment processor to the delivery provider.
           </p>
         </section>
 

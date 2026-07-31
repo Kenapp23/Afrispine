@@ -24,6 +24,9 @@ import {
   Calendar,
   MapPin,
   Eye,
+  Shield,
+  Search,
+  AlertOctagon,
 } from 'lucide-react';
 import {
   Select,
@@ -66,6 +69,29 @@ export function KycPage() {
   const [submitting, setSubmitting] = useState(false);
   const [idType, setIdType] = useState('');
   const [idNumber, setIdNumber] = useState('');
+
+  // PEP/AML screening state
+  const [pepChecking, setPepChecking] = useState(false);
+  const [pepResult, setPepResult] = useState<{
+    status: string;
+    isPep: boolean;
+    isSanctioned: boolean;
+    pepCount: number;
+    sanctionCount: number;
+    pepSummary: { country?: string; function?: string; specific?: string; active?: boolean }[];
+    checkedAt: string;
+  } | null>(null);
+  const [pepHistory, setPepHistory] = useState<{
+    id: string;
+    firstName: string;
+    lastName: string;
+    isPep: boolean;
+    isSanctioned: boolean;
+    pepCount: number;
+    sanctionCount: number;
+    status: string;
+    checkedAt: string;
+  }[]>([]);
 
   const fetchKycStatus = useCallback(async () => {
     setLoading(true);
@@ -138,6 +164,80 @@ export function KycPage() {
       setSubmitting(false);
     }
   };
+
+  const fetchPepHistory = useCallback(async () => {
+    try {
+      const res = await fetch('/api/kyc/pep-check');
+      if (res.ok) {
+        const data = await res.json();
+        setPepHistory(data.checks || []);
+        if (data.checks?.length > 0) {
+          const latest = data.checks[0];
+          setPepResult({
+            status: latest.status,
+            isPep: latest.isPep,
+            isSanctioned: latest.isSanctioned,
+            pepCount: latest.pepCount,
+            sanctionCount: latest.sanctionCount,
+            pepSummary: [],
+            checkedAt: latest.checkedAt,
+          });
+        }
+      }
+    } catch {
+      // silently fail
+    }
+  }, []);
+
+  const handlePepCheck = async () => {
+    if (!kycData?.firstName || !kycData?.lastName) {
+      toast.error('Please complete your profile with first and last name first');
+      return;
+    }
+    setPepChecking(true);
+    try {
+      const res = await fetch('/api/kyc/pep-check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: kycData.firstName,
+          lastName: kycData.lastName,
+          dobStart: kycData.dob || undefined,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPepResult({
+          status: data.status,
+          isPep: data.isPep,
+          isSanctioned: data.isSanctioned,
+          pepCount: data.pepCount,
+          sanctionCount: data.sanctionCount,
+          pepSummary: data.pepSummary || [],
+          checkedAt: data.checkedAt,
+        });
+        if (data.status === 'clear') {
+          toast.success('AML screening passed — no PEP or sanctions matches found.');
+        } else if (data.status === 'pep_review') {
+          toast.warning('Potential PEP match found. Our compliance team will review your account.');
+        } else if (data.status === 'sanctioned') {
+          toast.error('Sanctions match detected. Your account has been flagged for review.');
+        }
+        fetchPepHistory();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.error || 'AML screening failed');
+      }
+    } catch {
+      toast.error('Network error during AML screening');
+    } finally {
+      setPepChecking(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPepHistory();
+  }, [fetchPepHistory]);
 
   const statusCfg = kycData ? kycStatusConfig[kycData.kycStatus] || kycStatusConfig.pending : null;
   const isVerified = kycData?.kycStatus === 'approved';
@@ -394,6 +494,134 @@ export function KycPage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* ── PEP & Sanctions Screening (PEPChecker) ── */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Shield className="h-5 w-5 text-emerald-600" />
+                    AML &amp; PEP Screening
+                  </CardTitle>
+                  <CardDescription className="mt-1">
+                    Powered by PEPChecker — Politically Exposed Person and sanctions screening
+                  </CardDescription>
+                </div>
+                <img src="/partner-pepchecker.png" alt="PEPChecker" className="h-8 w-auto object-contain rounded opacity-80" />
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Current result */}
+              {pepResult ? (
+                <div className={`rounded-lg border p-4 ${pepResult.status === 'clear' ? 'border-emerald-200 bg-emerald-50' : pepResult.status === 'sanctioned' ? 'border-red-200 bg-red-50' : 'border-amber-200 bg-amber-50'}`}>
+                  <div className="flex items-center gap-3">
+                    {pepResult.status === 'clear' ? (
+                      <CheckCircle className="h-5 w-5 text-emerald-600 shrink-0" />
+                    ) : pepResult.status === 'sanctioned' ? (
+                      <AlertOctagon className="h-5 w-5 text-red-600 shrink-0" />
+                    ) : (
+                      <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" />
+                    )}
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">
+                        {pepResult.status === 'clear'
+                          ? 'No PEP or sanctions matches found'
+                          : pepResult.status === 'sanctioned'
+                            ? 'Sanctions match detected — account restricted'
+                            : `PEP match found — ${pepResult.pepCount} potential match${pepResult.pepCount > 1 ? 'es' : ''}`}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Checked on {new Date(pepResult.checkedAt).toLocaleString('en-GB')} for {kycData?.firstName} {kycData?.lastName}
+                      </p>
+                    </div>
+                    <Badge className={
+                      pepResult.status === 'clear'
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : pepResult.status === 'sanctioned'
+                          ? 'bg-red-100 text-red-700'
+                          : 'bg-amber-100 text-amber-700'
+                    }>
+                      {pepResult.status === 'clear' ? 'Clear' : pepResult.status === 'sanctioned' ? 'Flagged' : 'Review'}
+                    </Badge>
+                  </div>
+                  {pepResult.pepSummary.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground">Potential matches (summary):</p>
+                      {pepResult.pepSummary.map((match, i) => (
+                        <div key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
+                          <MapPin className="h-3 w-3 mt-0.5 shrink-0" />
+                          <span>{match.country}{match.specific ? ` — ${match.specific}` : ''}{match.active !== undefined ? (match.active ? ' (Active)' : ' (Inactive)') : ''}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-dashed border-border p-4 text-center">
+                  <Search className="mx-auto h-8 w-8 text-muted-foreground/40" />
+                  <p className="mt-2 text-sm text-muted-foreground">No AML screening performed yet</p>
+                  <p className="text-xs text-muted-foreground/60">Run a check to verify your PEP and sanctions status</p>
+                </div>
+              )}
+
+              {/* Run check button */}
+              <Button
+                onClick={handlePepCheck}
+                disabled={pepChecking || !kycData?.firstName || !kycData?.lastName}
+                variant="outline"
+                className="w-full border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+              >
+                {pepChecking ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Running AML screening...
+                  </>
+                ) : (
+                  <>
+                    <Search className="mr-2 h-4 w-4" />
+                    {pepResult ? 'Re-run AML Screening' : 'Run AML Screening'}
+                  </>
+                )}
+              </Button>
+
+              <p className="text-[11px] text-muted-foreground/60 text-center">
+                This screens your name against global PEP and sanctions databases via PEPChecker. Results are stored securely and reviewed by our compliance team if any matches are found.
+              </p>
+
+              {/* History */}
+              {pepHistory.length > 1 && (
+                <>
+                  <Separator />
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Screening History</p>
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {pepHistory.slice(0, 10).map((check) => (
+                        <div key={check.id} className="flex items-center justify-between text-xs rounded-lg border border-border/50 p-2.5">
+                          <div className="flex items-center gap-2">
+                            {check.status === 'clear' ? (
+                              <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
+                            ) : check.status === 'sanctioned' ? (
+                              <XCircle className="h-3.5 w-3.5 text-red-500" />
+                            ) : (
+                              <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                            )}
+                            <span className="text-muted-foreground">{check.firstName} {check.lastName}</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            {check.isPep && <Badge variant="outline" className="text-[10px] py-0">PEP</Badge>}
+                            {check.isSanctioned && <Badge variant="outline" className="text-[10px] py-0 text-red-600">Sanctioned</Badge>}
+                            {!check.isPep && !check.isSanctioned && <span className="text-emerald-600 font-medium">Clear</span>}
+                            <span className="text-muted-foreground/60">{new Date(check.checkedAt).toLocaleDateString('en-GB')}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Why verification matters */}
           <Card>

@@ -298,7 +298,7 @@ export default function GiftsSendPage() {
         return;
       }
 
-      // 2. Open Paystack popup
+      // 2. Open payment popup
       const PaystackPop = (await import('@paystack/inline-js')).default;
       const paystack = new PaystackPop();
       paystack.resumeTransaction(data.access_code, {
@@ -719,7 +719,7 @@ export default function GiftsSendPage() {
                   Processing...
                 </span>
               ) : (
-                <>Pay £{effectiveAmount + 1.5} with Paystack</>
+                <>Pay £{effectiveAmount + 1.5} securely</>
               )}
             </Button>
             <p className="text-center text-xs text-muted-foreground">

@@ -106,7 +106,7 @@ export function AdminSettlementPage() {
   const [companyRegNumber, setCompanyRegNumber] = useState('');
   const [invoiceEmail, setInvoiceEmail] = useState('');
 
-  // ── Section 2: Paystack Connection state ──
+  // ── Section 2: Payment Connection state ──
   const [paystackKeys, setPaystackKeys] = useState<PaystackKeysStatus | null>(null);
   const [paystackKeysLoading, setPaystackKeysLoading] = useState(true);
   const [integration, setIntegration] = useState<PaystackIntegration | null>(null);
@@ -149,7 +149,7 @@ export function AdminSettlementPage() {
       const json = await res.json();
       setPaystackKeys(json);
     } catch {
-      toast.error('Failed to load Paystack keys status');
+      toast.error('Failed to load payment keys status');
     } finally {
       setPaystackKeysLoading(false);
     }
@@ -181,7 +181,7 @@ export function AdminSettlementPage() {
         setSettlements(json.settlements);
       }
     } catch {
-      toast.error('Failed to fetch Paystack settlements');
+      toast.error('Failed to fetch settlements');
     } finally {
       setSettlementsLoading(false);
     }
@@ -240,7 +240,7 @@ export function AdminSettlementPage() {
   const handleRefreshSettlements = () => {
     fetchSettlements();
     fetchRevenue();
-    toast.success('Refreshing from Paystack…');
+    toast.success('Refreshing settlements…');
   };
 
   // ─── Render ───────────────────────────────────────────────────────────────
@@ -251,7 +251,7 @@ export function AdminSettlementPage() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Settlement &amp; Reconciliation</h1>
         <p className="text-muted-foreground">
-          Manage company details, Paystack connection, and reconcile settlements.
+          Manage company details, payment connection, and reconcile settlements.
         </p>
       </div>
 
@@ -330,12 +330,12 @@ export function AdminSettlementPage() {
         </CardContent>
       </Card>
 
-      {/* ═══════════ Section 2: Paystack Connection ═══════════ */}
+      {/* ═══════════ Section 2: Payment Connection ═══════════ */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
             <CreditCard className="h-5 w-5 text-muted-foreground" />
-            <CardTitle className="text-base">Paystack Connection</CardTitle>
+            <CardTitle className="text-base">Payment Processor Connection</CardTitle>
           </div>
           <CardDescription>
             Payment provider status and settlement account information.
@@ -350,7 +350,7 @@ export function AdminSettlementPage() {
               <div className="flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
                 <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-emerald-800">Paystack Connected</p>
+                  <p className="font-medium text-emerald-800">Payment Processor Connected</p>
                   {integrationLoading ? (
                     <Skeleton className="mt-1 h-4 w-48" />
                   ) : integration ? (
@@ -371,9 +371,9 @@ export function AdminSettlementPage() {
               <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
                 <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-amber-800">Paystack keys not yet configured</p>
+                  <p className="font-medium text-amber-800">Payment keys not yet configured</p>
                   <p className="mt-1 text-sm text-amber-700">
-                    Add your Paystack API keys in Settings to activate payments.
+                    Add your payment API keys in Settings to activate payments.
                   </p>
                   <Button
                     variant="outline"
@@ -392,19 +392,19 @@ export function AdminSettlementPage() {
 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <a
-              href="https://dashboard.paystack.com"
+              href="#"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-sm font-medium text-emerald-600 hover:text-emerald-700 transition-colors"
             >
-              Open Paystack Dashboard
+              Open Payment Dashboard
               <ExternalLink className="h-4 w-4" />
             </a>
           </div>
 
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Your settlement bank account is managed in your Paystack dashboard. Paystack settles
-            collected fees to your Kenyan bank account automatically on a T+1 cycle.
+            Your settlement bank account is managed in your payment processor dashboard. Settlements are processed
+            automatically to your Kenyan bank account on a T+1 cycle.
           </p>
         </CardContent>
       </Card>
@@ -417,7 +417,7 @@ export function AdminSettlementPage() {
               <TableProperties className="h-5 w-5 text-muted-foreground" />
               <div>
                 <CardTitle className="text-base">Reconciliation</CardTitle>
-                <CardDescription>Paystack settlement batches vs. collected fees.</CardDescription>
+                <CardDescription>Settlement batches vs. collected fees.</CardDescription>
               </div>
             </div>
             <Button
@@ -427,7 +427,7 @@ export function AdminSettlementPage() {
               disabled={settlementsLoading}
             >
               <RefreshCw className={`mr-2 h-4 w-4 ${settlementsLoading ? 'animate-spin' : ''}`} />
-              Refresh from Paystack
+              Refresh Settlements
             </Button>
           </div>
         </CardHeader>
@@ -466,7 +466,7 @@ export function AdminSettlementPage() {
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <AlertTriangle className="mb-3 h-8 w-8 text-amber-400" />
               <p className="text-sm text-muted-foreground">
-                Connect Paystack to view settlement batches.
+                Configure payment keys to view settlement batches.
               </p>
             </div>
           ) : settlementsLoading ? (
@@ -487,13 +487,13 @@ export function AdminSettlementPage() {
                     <tr className="border-b">
                       <th className="px-4 py-3 font-medium text-muted-foreground">Settlement Date</th>
                       <th className="px-4 py-3 font-medium text-muted-foreground text-right">Amount</th>
-                      <th className="px-4 py-3 font-medium text-muted-foreground">Paystack ID</th>
+                      <th className="px-4 py-3 font-medium text-muted-foreground">Settlement ID</th>
                       <th className="px-4 py-3 font-medium text-muted-foreground">Status</th>
                     </tr>
                   </thead>
                   <tbody>
                     {settlements.map((s) => {
-                      const amount = s.settlement_amount / 100; // Paystack amounts are in kobo/smallest unit
+                      const amount = s.settlement_amount / 100; // Amounts are in smallest unit
                       return (
                         <tr
                           key={s.id}

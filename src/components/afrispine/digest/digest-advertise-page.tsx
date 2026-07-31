@@ -224,7 +224,7 @@ export function DigestAdvertisePage() {
             {error ? (
               <><p className="text-lg font-bold mb-2" style={{ color: '#DC2626' }}>Payment Error</p><p className="text-sm mb-6" style={{ color: '#6B5E4B' }}>{error}</p><Button onClick={handleBook} className="text-white" style={{ background: '#0A4D2E' }}>Try Again</Button></>
             ) : (
-              <><Loader2 className="size-8 animate-spin mx-auto mb-4" style={{ color: '#0A4D2E' }} /><p className="text-lg font-medium" style={{ color: '#1A1008' }}>Redirecting to Paystack...</p></>
+              <><Loader2 className="size-8 animate-spin mx-auto mb-4" style={{ color: '#0A4D2E' }} /><p className="text-lg font-medium" style={{ color: '#1A1008' }}>Redirecting to payment...</p></>
             )}
           </section>
         )}
