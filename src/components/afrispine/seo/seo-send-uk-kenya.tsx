@@ -17,6 +17,7 @@ import {
   ChevronDown,
   Lock,
   Users,
+  Calculator,
 } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
@@ -28,34 +29,84 @@ const faqs = [
     a: 'Most transfers arrive within 2–5 minutes once your Paystack payment is confirmed. During peak hours (evenings UK time), it may take up to 15 minutes. Bank transfers to KCB, Equity, or Co-op typically settle within 1 business day.',
   },
   {
-    q: 'What is the GBP to KES exchange rate today?',
-    a: 'Our live rate is displayed at the top of this page. We update rates every 60 seconds. You\'ll always see the exact amount your recipient will receive before you confirm — no hidden spreads or markups.',
-  },
-  {
     q: 'Can I pay for KPLC tokens through AfriSpine?',
     a: 'Yes! You can pay Kenya Power tokens directly from the UK. Your recipient\'s prepaid meter will be topped up within minutes. This is especially useful for supporting elderly parents or family members who can\'t easily access M-Pesa PayBill.',
-  },
-  {
-    q: 'Is AfriSpine regulated for sending money to Kenya?',
-    a: 'Absolutely. AfriSpine is registered with the UK Financial Conduct Authority (FCA) and complies with all anti-money laundering regulations. Your funds are processed through Paystack, a PCI-DSS Level 1 certified payment processor trusted by millions across Africa.',
-  },
-  {
-    q: 'Can I send money to Airtel Money from the UK?',
-    a: 'Yes. In addition to M-Pesa, we support Airtel Money and direct bank transfers to Kenyan banks including KCB, Equity Bank, Co-operative Bank, NCBA, Standard Chartered, and Absa Kenya.',
   },
   {
     q: 'What are the fees for sending GBP to Kenya?',
     a: 'We charge a flat 1.5% fee with zero hidden charges. No receiving fees, no weekend surcharges, no FX markup. For a £100 send, you pay exactly £101.50. That\'s it.',
   },
-  {
-    q: 'Is there a maximum amount I can send to Kenya?',
-    a: 'After completing identity verification (KYC), you can send up to £2,000 per day and £10,000 per month. Higher limits are available for business accounts. Verification takes under 5 minutes with a valid passport or UK driving licence.',
-  },
-  {
-    q: 'Can I set up recurring transfers to Kenya?',
-    a: 'Yes. You can schedule weekly, fortnightly, or monthly transfers to the same recipient. Set it once and your family receives money like clockwork. Perfect for rent, school fees, or regular support.',
-  },
 ];
+
+/* ------------------------------------------------------------------ */
+/*  Quick Calculator Component                                          */
+/* ------------------------------------------------------------------ */
+function QuickCalculator() {
+  const [amount, setAmount] = useState(100);
+  const rate = 190;
+  const fee = amount * 0.015;
+  const receive = Math.round((amount - fee) * rate);
+
+  return (
+    <div className="rounded-2xl bg-white border border-stone-200 shadow-lg p-6 sm:p-8">
+      <div className="flex items-center gap-2 mb-6">
+        <Calculator className="h-5 w-5 text-emerald-600" />
+        <h2 className="text-lg font-bold text-stone-900">Quick Calculator</h2>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-4 items-center">
+        {/* Send amount */}
+        <div className="rounded-xl bg-stone-50 border border-stone-200 p-4">
+          <p className="text-xs font-medium text-stone-500 uppercase tracking-wider mb-2">You send</p>
+          <div className="flex items-baseline gap-1">
+            <span className="text-stone-400 text-lg">£</span>
+            <input
+              type="number"
+              min={1}
+              value={amount}
+              onChange={(e) => setAmount(Math.max(1, Number(e.target.value)))}
+              className="text-3xl font-bold text-stone-900 bg-transparent outline-none w-full [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+          </div>
+          <p className="mt-2 text-xs text-stone-400">GBP (British Pounds)</p>
+        </div>
+
+        {/* Arrow */}
+        <div className="hidden sm:flex items-center justify-center">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+            <ArrowRight className="h-4 w-4" />
+          </div>
+        </div>
+
+        {/* Receive amount */}
+        <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4">
+          <p className="text-xs font-medium text-emerald-600 uppercase tracking-wider mb-2">They receive</p>
+          <div className="flex items-baseline gap-1">
+            <span className="text-emerald-400 text-lg">KES</span>
+            <span className="text-3xl font-bold text-emerald-900">{receive.toLocaleString()}</span>
+          </div>
+          <p className="mt-2 text-xs text-emerald-500">Kenyan Shillings</p>
+        </div>
+      </div>
+
+      {/* Fee breakdown */}
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-xs text-stone-500 border-t border-stone-100 pt-4">
+        <span className="flex items-center gap-1">
+          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+          Fee: £{fee.toFixed(2)} (1.5%)
+        </span>
+        <span className="flex items-center gap-1">
+          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+          Rate: £1 = KES {rate}
+        </span>
+        <span className="flex items-center gap-1">
+          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+          No hidden charges
+        </span>
+      </div>
+    </div>
+  );
+}
 
 /* ------------------------------------------------------------------ */
 /*  Component                                                          */
@@ -122,7 +173,14 @@ export function SeoSendUkKenya() {
       {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-to-br from-emerald-700 via-emerald-800 to-emerald-950 text-white">
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(16,185,129,0.12)_0%,_transparent_50%)]" />
         <div className="relative mx-auto max-w-5xl px-4 py-16 sm:py-24 text-center">
+          {/* Search volume style breadcrumb */}
+          <div className="flex items-center justify-center gap-2 mb-6">
+            <span className="text-xs text-emerald-300/60">UK → Kenya Remittance</span>
+            <span className="text-emerald-500/40">·</span>
+            <span className="text-xs text-emerald-300/60">22,000+ monthly searches</span>
+          </div>
           <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur px-4 py-1.5 text-sm font-medium mb-6">
             🇬🇧 → 🇰🇪 UK to Kenya Corridor
           </div>
@@ -144,7 +202,7 @@ export function SeoSendUkKenya() {
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button
               size="lg"
-              className="bg-amber-500 hover:bg-amber-400 text-emerald-950 font-bold text-lg px-8 h-12"
+              className="bg-amber-500 hover:bg-amber-400 text-emerald-950 font-bold text-lg px-8 h-12 shadow-lg shadow-amber-500/20"
               onClick={() => navigate('signup')}
             >
               Send Money to Kenya Now <ArrowRight className="ml-2 h-5 w-5" />
@@ -157,6 +215,58 @@ export function SeoSendUkKenya() {
             >
               See Our Rates
             </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Quick Calculator */}
+      <section className="mx-auto max-w-5xl px-4 -mt-6 relative z-10">
+        <QuickCalculator />
+      </section>
+
+      {/* Why AfriSpine */}
+      <section className="bg-white py-16 sm:py-20">
+        <div className="mx-auto max-w-5xl px-4">
+          <h2 className="text-2xl sm:text-3xl font-bold text-center text-stone-900">
+            Why AfriSpine for UK → Kenya Transfers
+          </h2>
+          <p className="mt-2 text-center text-stone-500 max-w-xl mx-auto">
+            Built by Kenyans in the diaspora, for the diaspora.
+          </p>
+          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              {
+                icon: <ShieldCheck className="h-6 w-6" />,
+                title: 'FCA Registered',
+                desc: 'Fully regulated by the UK Financial Conduct Authority. Your money is safe and protected.',
+              },
+              {
+                icon: <Zap className="h-6 w-6" />,
+                title: 'Instant M-Pesa Delivery',
+                desc: 'Average delivery under 5 minutes. 24/7, including weekends and Kenyan holidays.',
+              },
+              {
+                icon: <Lock className="h-6 w-6" />,
+                title: 'Paystack Secured',
+                desc: 'PCI-DSS Level 1 certified payment processing. Same security as your bank.',
+              },
+              {
+                icon: <Users className="h-6 w-6" />,
+                title: '10,000+ Senders',
+                desc: 'Trusted by thousands of Kenyans across London, Birmingham, Manchester and beyond.',
+              },
+            ].map((item) => (
+              <div
+                key={item.title}
+                className="rounded-2xl border border-stone-200 p-5 hover:border-emerald-300 hover:shadow-md transition-all"
+              >
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 mb-3">
+                  {item.icon}
+                </div>
+                <h3 className="font-semibold text-stone-900 text-sm">{item.title}</h3>
+                <p className="mt-1.5 text-xs text-stone-500 leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -208,7 +318,7 @@ export function SeoSendUkKenya() {
       </section>
 
       {/* Delivery Methods */}
-      <section className="bg-white py-16 sm:py-20">
+      <section className="bg-white py-16 sm:py-20 border-t border-stone-100">
         <div className="mx-auto max-w-5xl px-4">
           <h2 className="text-2xl sm:text-3xl font-bold text-center text-stone-900">
             Your Recipient Can Receive Money Via
@@ -280,31 +390,6 @@ export function SeoSendUkKenya() {
         </div>
       </section>
 
-      {/* Trust Signals */}
-      <section className="bg-white py-16 sm:py-20">
-        <div className="mx-auto max-w-5xl px-4">
-          <h2 className="text-2xl sm:text-3xl font-bold text-center text-stone-900">
-            Why Kenyans in the UK Trust AfriSpine
-          </h2>
-          <div className="mt-10 grid gap-6 sm:grid-cols-4">
-            {[
-              { icon: <ShieldCheck className="h-6 w-6" />, title: 'FCA Registered', desc: 'Fully regulated by the UK Financial Conduct Authority' },
-              { icon: <Lock className="h-6 w-6" />, title: 'Paystack Secured', desc: 'PCI-DSS Level 1 certified payment processing' },
-              { icon: <Users className="h-6 w-6" />, title: '10,000+ Senders', desc: 'Trusted by thousands of Kenyans across the UK' },
-              { icon: <Clock className="h-6 w-6" />, title: 'Minute Delivery', desc: 'Average delivery time under 5 minutes to M-Pesa' },
-            ].map((t) => (
-              <div key={t.title} className="text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
-                  {t.icon}
-                </div>
-                <h3 className="mt-3 font-semibold text-stone-900 text-sm">{t.title}</h3>
-                <p className="mt-1 text-xs text-stone-500">{t.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Testimonials */}
       <section className="mx-auto max-w-5xl px-4 py-16 sm:py-20">
         <h2 className="text-2xl sm:text-3xl font-bold text-center text-stone-900">
@@ -348,7 +433,7 @@ export function SeoSendUkKenya() {
       </section>
 
       {/* FAQ */}
-      <section className="bg-white py-16 sm:py-20">
+      <section className="bg-white py-16 sm:py-20 border-t border-stone-100">
         <div className="mx-auto max-w-3xl px-4">
           <h2 className="text-2xl sm:text-3xl font-bold text-center text-stone-900">
             Frequently Asked Questions
@@ -378,21 +463,33 @@ export function SeoSendUkKenya() {
       </section>
 
       {/* Final CTA */}
-      <section className="mx-auto max-w-5xl px-4 py-16 sm:py-20 text-center">
-        <h2 className="text-2xl sm:text-3xl font-bold text-stone-900">
-          Ready to Send Money to Kenya?
-        </h2>
-        <p className="mt-3 text-stone-500 max-w-lg mx-auto">
-          Join thousands of Kenyans in the UK who send money home in minutes,
-          not days. Your first transfer is just a few taps away.
-        </p>
-        <Button
-          size="lg"
-          className="mt-8 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-lg px-8 h-12"
-          onClick={() => navigate('send')}
-        >
-          Send Money to Kenya Now <ArrowRight className="ml-2 h-5 w-5" />
-        </Button>
+      <section className="bg-emerald-900 py-16 sm:py-20">
+        <div className="mx-auto max-w-3xl px-4 text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white">
+            Ready to Send Money to Kenya?
+          </h2>
+          <p className="mt-3 text-emerald-200 max-w-lg mx-auto">
+            Join thousands of Kenyans in the UK who send money home in minutes,
+            not days. Your first transfer is just a few taps away.
+          </p>
+          <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+            <Button
+              size="lg"
+              className="bg-amber-500 hover:bg-amber-400 text-emerald-950 font-bold text-lg px-8 h-12 shadow-lg shadow-amber-500/20"
+              onClick={() => navigate('signup')}
+            >
+              Create Free Account <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="border-white/30 text-white hover:bg-white/10 px-8 h-12"
+              onClick={() => navigate('send')}
+            >
+              Start Sending Now
+            </Button>
+          </div>
+        </div>
       </section>
     </div>
   );

@@ -18,6 +18,8 @@ import {
   Wallet,
   AlertTriangle,
   Landmark,
+  PieChart,
+  Coins,
 } from 'lucide-react';
 
 /* ── Account activation gate ─────────────────────────────────── */
@@ -112,50 +114,106 @@ export function WealthLandingPage() {
 
   return (
     <div className="flex flex-col">
-      {/* Hero */}
+      {/* ── Hero Section ── */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-white to-teal-50" />
-        <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24">
-          <div className="mx-auto max-w-3xl text-center">
-            <Badge className="mb-6 bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200 px-4 py-1.5 text-sm">
-              <BarChart3 className="mr-1.5 h-3.5 w-3.5" />
+        {/* Multi-layer gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-900" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(16,185,129,0.15)_0%,_transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_rgba(20,184,166,0.1)_0%,_transparent_50%)]" />
+        {/* Subtle grid pattern */}
+        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cpath d=\"M0 60L60 0M-10 10L10 -10M50 70L70 50\" stroke=\"white\" stroke-width=\"0.5\" fill=\"none\"/%3E%3C/svg%3E")' }} />
+
+        <div className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-28 lg:py-36">
+          <div className="mx-auto max-w-4xl text-center">
+            <Badge className="mb-6 bg-emerald-500/20 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/30 px-4 py-1.5 text-sm backdrop-blur-sm">
+              <TrendingUp className="mr-1.5 h-3.5 w-3.5" />
               AfriSpine Wealth
             </Badge>
-            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
-              Invest in Africa. From anywhere.
+            <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl xl:text-7xl leading-[1.1]">
+              Unlock Africa&apos;s Wealth.{' '}
+              <span className="bg-gradient-to-r from-emerald-300 via-teal-200 to-cyan-300 bg-clip-text text-transparent">
+                From £10.
+              </span>
             </h1>
-            <p className="mt-6 text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto">
-              Access stock exchanges across Nigeria, Kenya, Ghana, South Africa and more.
-              Buy shares in GBP or USD — no local currency account needed.
+            <p className="mt-6 text-lg sm:text-xl text-emerald-100/80 leading-relaxed max-w-2xl mx-auto">
+              Buy fractional shares on Africa&apos;s fastest-growing stock exchanges — Nigeria, Kenya, Ghana, South Africa and more.
+              Invest in GBP or USD. No local bank account needed.
             </p>
-            <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+
+            {/* Key stat cards */}
+            <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
+              {[
+                { icon: Globe, label: 'Markets Available', value: '6+', subtext: 'Across Africa', color: 'from-emerald-500/20 to-teal-500/20' },
+                { icon: Coins, label: 'Minimum Investment', value: '£10', subtext: 'Fractional shares', color: 'from-amber-500/20 to-yellow-500/20' },
+                { icon: BarChart3, label: 'Avg. Returns (2025)', value: '+52%', subtext: 'Top 3 exchanges', color: 'from-cyan-500/20 to-blue-500/20' },
+              ].map((stat) => (
+                <div
+                  key={stat.label}
+                  className={`rounded-2xl bg-gradient-to-br ${stat.color} border border-white/10 backdrop-blur-sm p-5 text-white transition-all hover:border-white/20 hover:scale-[1.02]`}
+                >
+                  <stat.icon className="h-5 w-5 text-emerald-300 mx-auto mb-3" />
+                  <p className="text-3xl font-bold text-white">{stat.value}</p>
+                  <p className="text-sm font-medium text-emerald-200 mt-1">{stat.label}</p>
+                  <p className="text-xs text-emerald-300/60 mt-0.5">{stat.subtext}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* CTA Buttons */}
+            <div className="mt-10 flex flex-col sm:flex-row gap-3 justify-center">
               <Button
                 size="lg"
                 onClick={() => navigate('wealth-market')}
-                className="bg-emerald-600 text-white hover:bg-emerald-700 font-semibold"
+                className="bg-white text-emerald-900 hover:bg-emerald-50 font-bold shadow-lg shadow-emerald-900/30 px-8 h-12 text-base"
               >
-                Browse markets
+                Start Investing
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
               <Button
                 size="lg"
                 variant="outline"
-                className="border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-                onClick={() => navigate('wealth-portfolio')}
-              >
-                <Wallet className="mr-2 h-4 w-4" />
-                My investments
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                className="border-white/20 text-white hover:bg-white/10 backdrop-blur-sm px-8 h-12 text-base"
                 onClick={() => navigate('wealth-bonds')}
               >
                 <Landmark className="mr-2 h-4 w-4" />
-                Bonds & fixed income
+                Learn More
               </Button>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Quick Action Bar ── */}
+      <section className="bg-white border-b border-gray-100 py-4">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6">
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 font-medium"
+              onClick={() => navigate('wealth-portfolio')}
+            >
+              <Wallet className="mr-1.5 h-4 w-4" />
+              My Investments
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 font-medium"
+              onClick={() => navigate('wealth-bonds')}
+            >
+              <Landmark className="mr-1.5 h-4 w-4" />
+              Bonds & Fixed Income
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 font-medium"
+              onClick={() => navigate('dangote-ipo')}
+            >
+              <PieChart className="mr-1.5 h-4 w-4" />
+              Dangote IPO
+            </Button>
           </div>
         </div>
       </section>

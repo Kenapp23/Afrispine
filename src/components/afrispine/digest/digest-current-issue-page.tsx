@@ -70,54 +70,171 @@ export function DigestCurrentIssuePage() {
     return (
       <div className="min-h-screen" style={{ backgroundColor: CREAM, color: NEAR_BLACK }}>
         <div className="max-w-[900px] mx-auto px-4 md:px-8">
-          {/* Header */}
-          <header className="pt-12 pb-8 text-center" style={{ borderBottom: '1px solid rgba(201, 152, 26, 0.2)' }}>
-            <h1
-              className="text-sm md:text-base font-bold tracking-[0.3em] uppercase mb-2"
-              style={{ color: GOLD, fontFamily: 'sans-serif' }}
-            >
-              THE AFRI SPINE DIGEST
-            </h1>
-            <p className="text-xs italic" style={{ color: 'rgba(26, 16, 8, 0.45)', fontFamily: 'sans-serif' }}>
-              Africa's pulse. Your portfolio. Every week.
-            </p>
+          {/* ── Magazine-Style Header ── */}
+          <header className="pt-12 pb-8 text-center" style={{ borderBottom: '2px solid rgba(201, 152, 26, 0.3)' }}>
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <div
+                className="h-px w-12"
+                style={{ backgroundColor: GOLD }}
+              />
+              <h1
+                className="text-sm md:text-base font-bold tracking-[0.3em] uppercase"
+                style={{ color: GOLD, fontFamily: 'sans-serif' }}
+              >
+                AFRI SPINE DIGEST
+              </h1>
+              <div
+                className="h-px w-12"
+                style={{ backgroundColor: GOLD }}
+              />
+            </div>
+            <div className="flex items-center justify-center gap-4 text-xs" style={{ color: 'rgba(26, 16, 8, 0.45)', fontFamily: 'sans-serif' }}>
+              <span>Issue #1</span>
+              <span style={{ color: GOLD }}>·</span>
+              <span>July 2025</span>
+              <span style={{ color: GOLD }}>·</span>
+              <span className="italic">Africa&apos;s pulse. Your portfolio. Every week.</span>
+            </div>
           </header>
 
-          {/* Coming Soon Hero */}
-          <div className="flex flex-col items-center justify-center py-20 md:py-32 text-center">
-            {/* Decorative element */}
-            <div
-              className="w-24 h-24 rounded-2xl flex items-center justify-center mb-8"
-              style={{ background: `linear-gradient(135deg, ${AFRISPINE_GREEN}, #0d6b3f)`, boxShadow: `0 8px 32px rgba(10, 77, 46, 0.25)` }}
-            >
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                <path d="M8 7h8" />
-                <path d="M8 11h6" />
-              </svg>
+          {/* ── Featured Story + Sidebar Teasers ── */}
+          <div className="py-10 md:py-14">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+              {/* Featured story (large) */}
+              <div className="md:col-span-3">
+                <div
+                  className="rounded-2xl overflow-hidden relative"
+                  style={{ backgroundColor: 'rgba(10, 77, 46, 0.04)', border: '1px solid rgba(10, 77, 46, 0.08)' }}
+                >
+                  <div className="relative h-48 md:h-64 overflow-hidden">
+                    <div
+                      className="absolute inset-0"
+                      style={{ background: `linear-gradient(135deg, ${AFRISPINE_GREEN}, #0d6b3f, #14734a)` }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                        <path d="M8 7h8" />
+                        <path d="M8 11h6" />
+                      </svg>
+                    </div>
+                    {/* Decorative grid lines */}
+                    <div className="absolute inset-0 opacity-10">
+                      <div className="grid grid-cols-6 h-full">
+                        {Array.from({ length: 6 }).map((_, i) => (
+                          <div key={i} className="border-r border-white/30" />
+                        ))}
+                      </div>
+                    </div>
+                    <div className="absolute top-4 left-4">
+                      <span
+                        className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider"
+                        style={{ backgroundColor: GOLD, color: '#fff' }}
+                      >
+                        Cover Story
+                      </span>
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <p className="text-xs uppercase tracking-widest font-bold mb-2" style={{ color: GOLD, fontFamily: 'sans-serif' }}>
+                      Feature · Issue #1
+                    </p>
+                    <h2
+                      className="text-2xl md:text-3xl font-serif font-bold leading-tight mb-3"
+                      style={{ color: NEAR_BLACK }}
+                    >
+                      How the NGX became Africa&apos;s best-performing stock market in 2025
+                    </h2>
+                    <p className="text-sm leading-relaxed" style={{ color: 'rgba(26, 16, 8, 0.55)', fontFamily: 'sans-serif' }}>
+                      A deep dive into Nigeria&apos;s remarkable 51% rally — from FX liberalisation to Dangote Refinery — and what it means for diaspora investors.
+                    </p>
+                    <div className="mt-4 flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: AFRISPINE_GREEN }}>
+                        AS
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold" style={{ color: NEAR_BLACK, fontFamily: 'sans-serif' }}>AfriSpine Research</p>
+                        <p className="text-[10px]" style={{ color: 'rgba(26, 16, 8, 0.4)', fontFamily: 'sans-serif' }}>8 min read</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sidebar story teasers */}
+              <div className="md:col-span-2 flex flex-col gap-4">
+                {[
+                  {
+                    tag: 'Markets',
+                    title: 'GSE Ghana surges 134% — the comeback story nobody predicted',
+                    time: '5 min read',
+                  },
+                  {
+                    tag: 'Opinion',
+                    title: 'Why fractional shares are the future of African investing',
+                    time: '4 min read',
+                  },
+                  {
+                    tag: 'Bonds',
+                    title: 'Kenya\'s infrastructure bonds: 18% yields attract diaspora capital',
+                    time: '6 min read',
+                  },
+                ].map((story) => (
+                  <div
+                    key={story.title}
+                    className="rounded-xl p-4 transition-all hover:shadow-md cursor-pointer"
+                    style={{ backgroundColor: 'rgba(255, 255, 255, 0.6)', border: '1px solid rgba(10, 77, 46, 0.08)' }}
+                  >
+                    <span
+                      className="inline-block text-[10px] font-bold uppercase tracking-widest mb-2"
+                      style={{ color: GOLD, fontFamily: 'sans-serif' }}
+                    >
+                      {story.tag}
+                    </span>
+                    <h3 className="font-serif text-sm font-bold leading-snug" style={{ color: NEAR_BLACK }}>
+                      {story.title}
+                    </h3>
+                    <p className="mt-2 text-[10px]" style={{ color: 'rgba(26, 16, 8, 0.4)', fontFamily: 'sans-serif' }}>
+                      {story.time}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
+          </div>
 
-            <h2
-              className="text-3xl md:text-5xl font-serif mb-4"
-              style={{ color: NEAR_BLACK, lineHeight: 1.15 }}
-            >
-              {t('digest.comingSoon', 'Coming Soon')}
-            </h2>
-            <p
-              className="text-base md:text-lg max-w-md mb-8"
-              style={{ color: 'rgba(26, 16, 8, 0.55)', fontFamily: 'sans-serif', lineHeight: 1.7 }}
-            >
-              {t('digest.comingSoonDesc', 'The AfriSpine Digest is Africa\'s premier investment magazine for the diaspora. Our first issue is being crafted with care. Subscribe now to be the first to read it.')}
-            </p>
-
-            {/* Subscribe CTA */}
+          {/* ── Subscribe CTA Strip ── */}
+          <div
+            className="rounded-2xl p-6 md:p-8 mb-10"
+            style={{ backgroundColor: AFRISPINE_GREEN, border: '2px solid rgba(201, 152, 26, 0.15)' }}
+          >
+            <div className="text-center mb-6">
+              <h3 className="text-xl font-serif font-bold text-white mb-1">
+                {t('digest.comingSoon', 'Issue #1 is on its way')}
+              </h3>
+              <p className="text-sm" style={{ color: 'rgba(255,255,255,0.7)', fontFamily: 'sans-serif' }}>
+                Subscribe free and be the first to read it when it drops.
+              </p>
+            </div>
             <ComingSoonSubscribe />
+            <div className="flex items-center justify-center gap-1 mt-4">
+              {['📨', '🔒', '✓'].map((emoji, i) => (
+                <React.Fragment key={i}>
+                  {i > 0 && <span className="text-white/20 mx-1">·</span>}
+                  <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.5)', fontFamily: 'sans-serif' }}>
+                    {emoji} {['Weekly delivery', 'No spam', 'Unsubscribe anytime'][i]}
+                  </span>
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
 
-            {/* Browse archive link */}
+          {/* Browse archive link */}
+          <div className="text-center mb-10">
             <button
               onClick={() => navigate('digest-archive' as any)}
-              className="mt-8 text-sm underline underline-offset-4 transition-colors duration-200 hover:opacity-60"
+              className="text-sm underline underline-offset-4 transition-colors duration-200 hover:opacity-60"
               style={{ color: AFRISPINE_GREEN, fontFamily: 'sans-serif' }}
             >
               {t('digest.browseArchive', 'Browse the archive →')}

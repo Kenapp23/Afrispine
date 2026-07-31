@@ -3,7 +3,8 @@
 import React, { useState, useMemo } from 'react';
 import { useAppStore } from '@/stores/app';
 import { Button } from '@/components/ui/button';
-import { Gift, ArrowRight, MessageSquareHeart, Zap, Store } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Gift, ArrowRight, MessageSquareHeart, Zap, Store, Smartphone, Banknote, Ticket } from 'lucide-react';
 import { allMerchants, getMerchantsByCountry, MERCH_COUNTRIES, type Merchant } from '@/lib/merchants';
 
 /* ── Occasion data ─────────────────────────────────────────────── */
@@ -93,38 +94,37 @@ export default function GiftsHubPage() {
     <main className="min-h-screen" style={{ backgroundColor: '#FAFAF8' }}>
       {/* ── Hero Section ───────────────────────────────────────── */}
       <section className="relative overflow-hidden">
-        {/* Warm gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(245,158,11,0.12)_0%,_transparent_60%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_rgba(234,88,12,0.08)_0%,_transparent_50%)]" />
-
+        {/* Multi-layer gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-800 via-emerald-700 to-teal-800" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(16,185,129,0.2)_0%,_transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_rgba(20,184,166,0.12)_0%,_transparent_50%)]" />
         {/* Decorative elements */}
         <div className="absolute top-6 right-8 text-5xl opacity-20 select-none hidden sm:block" aria-hidden="true">🎁</div>
         <div className="absolute bottom-10 left-6 text-4xl opacity-15 select-none hidden md:block" aria-hidden="true">✨</div>
         <div className="absolute top-20 left-1/4 text-3xl opacity-10 select-none hidden lg:block" aria-hidden="true">🌟</div>
 
         <div className="relative mx-auto max-w-3xl px-5 pt-16 pb-14 sm:pt-24 sm:pb-20 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-amber-100/80 px-4 py-1.5 text-xs font-semibold text-amber-800 mb-6">
+          <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/20 border border-emerald-400/30 px-4 py-1.5 text-xs font-semibold text-emerald-200 mb-6 backdrop-blur-sm">
             <Gift className="size-3.5" />
             AfriSpine Gifts
           </div>
 
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-gray-900 leading-[1.1]">
-            Send the gift of{' '}
-            <span className="bg-gradient-to-r from-amber-600 via-orange-500 to-amber-700 bg-clip-text text-transparent">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white leading-[1.1]">
+            Send Gifts to{' '}
+            <span className="bg-gradient-to-r from-emerald-300 via-teal-200 to-cyan-300 bg-clip-text text-transparent">
               Africa
             </span>
           </h1>
 
-          <p className="mt-5 text-base sm:text-lg text-gray-600 max-w-xl mx-auto leading-relaxed">
-            Digital gift vouchers redeemable at stores across Kenya, Nigeria, Ghana and more.
-            Your love, delivered.
+          <p className="mt-5 text-base sm:text-lg text-emerald-100/80 max-w-xl mx-auto leading-relaxed">
+            Instant digital gift delivery to Kenya, Nigeria, Ghana and more.
+            Airtime, mobile money &amp; vouchers — delivered in seconds.
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Button
               size="lg"
-              className="bg-gradient-to-r from-amber-600 to-orange-500 hover:from-amber-700 hover:to-orange-600 text-white shadow-lg shadow-amber-500/20 rounded-full px-8 h-12 text-base font-semibold"
+              className="bg-white text-emerald-900 hover:bg-emerald-50 shadow-lg shadow-emerald-900/30 rounded-full px-8 h-12 text-base font-bold"
               onClick={() => {
                 const first = occasions[0];
                 navigate('gifts-send', { occasion: first.id });
@@ -136,12 +136,62 @@ export default function GiftsHubPage() {
             <Button
               variant="outline"
               size="lg"
-              className="rounded-full px-6 h-12 border-amber-300 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
+              className="rounded-full px-6 h-12 border-white/20 text-white hover:bg-white/10 backdrop-blur-sm"
               onClick={() => navigate('gifts-redeem')}
             >
               Redeem a voucher
             </Button>
           </div>
+        </div>
+      </section>
+
+      {/* ── Gift Category Cards ── */}
+      <section className="mx-auto max-w-4xl px-5 -mt-8 relative z-10">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[
+            {
+              icon: Smartphone,
+              title: 'Airtime Top-Up',
+              description: 'Instantly top up Safaricom, MTN, Airtel and other networks across Africa. From £5.',
+              action: 'Send Airtime',
+              gradient: 'from-emerald-500 to-teal-500',
+            },
+            {
+              icon: Banknote,
+              title: 'Mobile Money',
+              description: 'Send directly to M-Pesa, MTN MoMo, Airtel Money wallets. Your loved ones get funds in minutes.',
+              action: 'Send Mobile Money',
+              gradient: 'from-amber-500 to-orange-500',
+            },
+            {
+              icon: Ticket,
+              title: 'Gift Vouchers',
+              description: 'Redeemable at 100+ African brands — supermarkets, restaurants, fashion and more.',
+              action: 'Browse Vouchers',
+              gradient: 'from-cyan-500 to-blue-500',
+            },
+          ].map((cat) => (
+            <Card
+              key={cat.title}
+              className="group cursor-pointer border-0 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 bg-white overflow-hidden"
+              onClick={() => navigate('gifts-send', { occasion: 'birthday' })}
+            >
+              <CardContent className="p-6">
+                <div className={`inline-flex items-center justify-center h-12 w-12 rounded-xl bg-gradient-to-br ${cat.gradient} text-white mb-4 shadow-md`}>{
+                  <cat.icon className="size-6" />
+                }</div>
+                <h3 className="font-bold text-gray-900 text-lg">{cat.title}</h3>
+                <p className="mt-2 text-sm text-gray-500 leading-relaxed">{cat.description}</p>
+                <Button
+                  variant="ghost"
+                  className="mt-4 text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 px-0 font-semibold text-sm"
+                >
+                  {cat.action}
+                  <ArrowRight className="size-3.5 ml-1" />
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </section>
 
