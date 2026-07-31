@@ -74,7 +74,7 @@ export function SignupPage() {
         ...data.sender,
         fullName: `${data.sender.firstName || ''} ${data.sender.lastName || ''}`.trim(),
       };
-      loginAsSender(senderWithFullName, data.token, 'onboarding');
+      loginAsSender(senderWithFullName, data.token, 'dashboard');
     } catch {
       toast.error('Something went wrong');
     } finally {

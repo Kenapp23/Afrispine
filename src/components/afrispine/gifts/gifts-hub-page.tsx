@@ -59,6 +59,13 @@ function MerchantLogo({ merchant, size = 'md' }: { merchant: Merchant; size?: 's
     lg: 'h-16 w-16 rounded-2xl object-contain',
   };
 
+  const initials = merchant.name
+    .split(/\s+/)
+    .map(w => w[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+
   return (
     <div className="relative">
       <img
@@ -73,7 +80,7 @@ function MerchantLogo({ merchant, size = 'md' }: { merchant: Merchant; size?: 's
       <div
         className={`hidden ${fallbackSizes[size]} bg-emerald-600 flex items-center justify-center text-white font-bold ${sizeClasses[size].split(' ').pop()}`}
       >
-        {merchant.name.charAt(0)}
+        {initials}
       </div>
     </div>
   );

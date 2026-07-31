@@ -213,6 +213,14 @@ export function LandingPage() {
               <span className="text-xs font-medium text-gray-600">PEPChecker</span>
               <span className="text-[10px] text-muted-foreground">AML &amp; sanctions screening</span>
             </div>
+            {/* Airtel Money */}
+            <div className="flex flex-col items-center gap-1">
+              <div className="flex h-12 w-auto sm:h-14 items-center justify-center rounded-xl border border-border bg-white p-2 transition-colors hover:border-emerald-200">
+                <img src="/partner-airtel-money.png" alt="Airtel Money" className="h-full w-auto max-w-[120px] object-contain" />
+              </div>
+              <span className="text-xs font-medium text-gray-600">Airtel Money</span>
+              <span className="text-[10px] text-muted-foreground">Mobile money</span>
+            </div>
             {/* M-Pesa */}
             <div className="flex flex-col items-center gap-1">
               <div className="flex h-12 w-auto sm:h-14 items-center justify-center rounded-xl border border-border bg-white p-2 transition-colors hover:border-emerald-200">

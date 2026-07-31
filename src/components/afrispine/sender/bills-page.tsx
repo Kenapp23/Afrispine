@@ -65,13 +65,13 @@ const dstvPackages = [
 ] as const;
 
 const billTypes = [
-  { id: 'kplc_prepaid', label: 'KPLC Electricity', icon: Zap, paybill: '888880', accountLabel: 'Meter number', accountPlaceholder: 'Enter 11-digit meter number', color: 'text-amber-500', bg: 'bg-amber-50 border-amber-200', available: true },
-  { id: 'nairobi_water', label: 'Nairobi Water', icon: Droplets, paybill: '444700', accountLabel: 'Account number', accountPlaceholder: 'Enter account number', color: 'text-blue-500', bg: 'bg-blue-50 border-blue-200', available: true },
-  { id: 'dstv', label: 'DStv', icon: Tv, paybill: '444700', accountLabel: 'Smartcard number', accountPlaceholder: 'Enter 10-digit smartcard number', color: 'text-purple-500', bg: 'bg-purple-50 border-purple-200', available: true },
-  { id: 'gotv', label: 'GOtv', icon: Tv, paybill: '444700', accountLabel: 'IUC number', accountPlaceholder: 'Enter IUC number', color: 'text-purple-500', bg: 'bg-purple-50 border-purple-200', available: true },
-  { id: 'airtime', label: 'Airtime Top-up', icon: Smartphone, paybill: '', accountLabel: 'Phone number', accountPlaceholder: 'e.g. 0712345678', color: 'text-emerald-500', bg: 'bg-emerald-50 border-emerald-200', available: true },
-  { id: 'sha', label: 'SHA Health', icon: HeartPulse, paybill: '200222', accountLabel: 'National ID', accountPlaceholder: 'Enter member national ID', color: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-200', available: false, comingSoon: true, comingSoonMessage: "We are monitoring SHA's payment infrastructure reliability before enabling this service." },
-  { id: 'school_fees', label: 'School Fees', icon: GraduationCap, paybill: '', accountLabel: 'Student ID', accountPlaceholder: 'Enter student ID', color: 'text-gray-500', bg: 'bg-gray-50 border-gray-200', available: false, comingSoon: true, comingSoonMessage: 'Coming soon' },
+  { id: 'kplc_prepaid', label: 'KPLC Electricity', icon: Zap, logoUrl: '/bill-kplc.png', paybill: '888880', accountLabel: 'Meter number', accountPlaceholder: 'Enter 11-digit meter number', color: 'text-amber-500', bg: 'bg-amber-50 border-amber-200', available: true },
+  { id: 'nairobi_water', label: 'Nairobi Water', icon: Droplets, logoUrl: '/bill-nairobi-water.png', paybill: '444700', accountLabel: 'Account number', accountPlaceholder: 'Enter account number', color: 'text-blue-500', bg: 'bg-blue-50 border-blue-200', available: true },
+  { id: 'dstv', label: 'DStv', icon: Tv, logoUrl: '/bill-dstv.png', paybill: '444700', accountLabel: 'Smartcard number', accountPlaceholder: 'Enter 10-digit smartcard number', color: 'text-purple-500', bg: 'bg-purple-50 border-purple-200', available: true },
+  { id: 'gotv', label: 'GOtv', icon: Tv, logoUrl: '/bill-gotv.png', paybill: '444700', accountLabel: 'IUC number', accountPlaceholder: 'Enter IUC number', color: 'text-purple-500', bg: 'bg-purple-50 border-purple-200', available: true },
+  { id: 'airtime', label: 'Airtime Top-up', icon: Smartphone, logoUrl: '/bill-airtime.png', paybill: '', accountLabel: 'Phone number', accountPlaceholder: 'e.g. 0712345678', color: 'text-emerald-500', bg: 'bg-emerald-50 border-emerald-200', available: true },
+  { id: 'sha', label: 'SHA Health', icon: HeartPulse, logoUrl: '', paybill: '200222', accountLabel: 'National ID', accountPlaceholder: 'Enter member national ID', color: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-200', available: false, comingSoon: true, comingSoonMessage: "We are monitoring SHA's payment infrastructure reliability before enabling this service." },
+  { id: 'school_fees', label: 'School Fees', icon: GraduationCap, logoUrl: '', paybill: '', accountLabel: 'Student ID', accountPlaceholder: 'Enter student ID', color: 'text-gray-500', bg: 'bg-gray-50 border-gray-200', available: false, comingSoon: true, comingSoonMessage: 'Coming soon' },
 ] as const;
 
 type BillTypeId = (typeof billTypes)[number]['id'];
@@ -568,7 +568,18 @@ export function BillsPage() {
                   onClick={() => handleSelectBillType(bt.id)}
                   className={`group relative flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all hover:shadow-md hover:-translate-y-0.5 ${bt.bg} hover:border-emerald-300`}
                 >
-                  <Icon className={`h-7 w-7 ${bt.color} group-hover:scale-110 transition-transform`} />
+                  {bt.logoUrl ? (
+                    <img
+                      src={bt.logoUrl}
+                      alt={bt.label}
+                      className="h-10 w-10 object-contain group-hover:scale-110 transition-transform"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                        (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                  ) : null}
+                  <Icon className={`h-7 w-7 ${bt.color} group-hover:scale-110 transition-transform ${bt.logoUrl ? 'hidden' : ''}`} />
                   <span className="text-sm font-semibold text-gray-700 group-hover:text-emerald-700">
                     {bt.label}
                   </span>
@@ -600,9 +611,13 @@ export function BillsPage() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div className="flex items-center gap-2">
-              {React.createElement(currentBill.icon, {
-                className: `h-5 w-5 ${currentBill.color}`,
-              })}
+              {currentBill.logoUrl ? (
+                <img src={currentBill.logoUrl} alt={currentBill.label} className="h-5 w-5 object-contain" />
+              ) : (
+                React.createElement(currentBill.icon, {
+                  className: `h-5 w-5 ${currentBill.color}`,
+                })
+              )}
               <h2 className="text-lg font-semibold text-gray-800">
                 {currentBill.label}
               </h2>

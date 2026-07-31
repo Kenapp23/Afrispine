@@ -125,13 +125,6 @@ export function LoginPage() {
                 Sign up
               </button>
             </p>
-            <button
-              type="button"
-              onClick={() => navigate('admin-login')}
-              className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              Admin console
-            </button>
           </CardFooter>
         </form>
       </Card>

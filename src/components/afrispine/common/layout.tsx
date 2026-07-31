@@ -110,14 +110,14 @@ export function PublicNavbar() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         <button
           onClick={() => navigate('landing')}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2.5"
         >
           <img
             src="/afrispine-logo.jpg"
             alt="AfriSpine"
-            className="h-9 w-auto rounded-md object-contain"
+            className="h-8 w-8 rounded-md object-cover sm:h-9 sm:w-9"
           />
-          <span className="text-xl font-bold text-emerald-600">AfriSpine</span>
+          <span className="text-lg font-bold text-emerald-600 sm:text-xl tracking-tight">AfriSpine</span>
         </button>
 
         {/* Desktop nav */}
@@ -418,6 +418,11 @@ const SENDER_BACK_MAP: Partial<Record<ViewName, ViewName>> = {
   airtime: 'dashboard',
   bills: 'dashboard',
   'group-sends': 'dashboard',
+  'gifts-send': 'gifts',
+  'gifts-redeem': 'gifts',
+  'gifts-merchant': 'gifts',
+  chama: 'dashboard',
+  kyc: 'dashboard',
 };
 
 // Map of views → their breadcrumb label
@@ -430,6 +435,11 @@ const SENDER_BREADCRUMB: Partial<Record<ViewName, string>> = {
   'wealth-watchlist': 'breadcrumb.watchlist',
   'wealth-activation': 'breadcrumb.activateAccount',
   'transfer-detail': 'breadcrumb.transferDetail',
+  'gifts-send': 'Send Gift',
+  'gifts-redeem': 'Redeem Voucher',
+  'gifts-merchant': 'Merchant Onboarding',
+  chama: 'Chama',
+  kyc: 'KYC Verification',
 };
 
 export function SenderLayout({ children }: { children: React.ReactNode }) {
