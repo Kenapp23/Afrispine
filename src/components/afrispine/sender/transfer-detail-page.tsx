@@ -56,7 +56,7 @@ export function TransferDetailPage() {
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="text-muted-foreground">You sent</p>
-                  <p className="text-lg font-bold">£100.00</p>
+                  <p className="text-lg font-bold">$100.00</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">They received</p>
@@ -68,7 +68,7 @@ export function TransferDetailPage() {
                 </div>
                 <div>
                   <p className="text-muted-foreground">Transfer fee</p>
-                  <p>£2.99</p>
+                  <p>$2.99</p>
                 </div>
               </div>
 

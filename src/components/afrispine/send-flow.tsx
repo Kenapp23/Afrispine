@@ -90,7 +90,7 @@ function CorridorStep() {
 
   const src = SOURCE_COUNTRIES.find(s => s.code === senderCountry)
   const dst = DESTINATIONS[recvCountry]
-  const symbol = src?.symbol || '£'
+  const symbol = src?.symbol || '$'
   const amt = parseFloat(sendAmount) || 0
   const estRecv = liveFxRate ? Math.round(amt * liveFxRate * 100) / 100 : null
 
@@ -567,7 +567,7 @@ function ConfirmationStep() {
   const recipientName = useAppStore(s => s.recipientName)
   const reset = useAppStore(s => s.reset)
 
-  const srcSymbol = quoteData ? getCurrencySymbol(quoteData.sendCurrency) : '£'
+  const srcSymbol = quoteData ? getCurrencySymbol(quoteData.sendCurrency) : '$'
   const recvSymbol = quoteData ? getCurrencySymbol(quoteData.recvCurrency) : ''
 
   return (

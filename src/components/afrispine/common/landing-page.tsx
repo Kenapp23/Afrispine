@@ -581,7 +581,7 @@ export function LandingPage() {
                   <p className="mt-1 text-xs text-muted-foreground">Send money home</p>
                   <div className="mt-4 w-full space-y-2">
                     <div className="h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
-                      <span className="text-xs font-medium text-emerald-700">£100 → KES</span>
+                      <span className="text-xs font-medium text-emerald-700">$100 → KES</span>
                     </div>
                     <div className="h-6 rounded-md bg-gray-100" />
                     <div className="h-6 rounded-md bg-emerald-600 w-3/4 mx-auto" />

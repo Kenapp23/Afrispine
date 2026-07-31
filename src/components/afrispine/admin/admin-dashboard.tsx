@@ -27,10 +27,10 @@ const statusColor: Record<string, string> = {
 
 // ─── KPI data ─────────────────────────────────────────────────
 const kpis = [
-  { label: 'Total volume (30d)', value: '£847,320', change: '+14%', icon: Banknote, positive: true },
+  { label: 'Total volume (30d)', value: '$847,320', change: '+14%', icon: Banknote, positive: true },
   { label: 'Transfers (30d)', value: '3,241', change: '+8%', icon: ArrowLeftRight, positive: true },
   { label: 'Active senders', value: '1,847', change: '+22%', icon: Users, positive: true },
-  { label: 'Revenue (30d)', value: '£12,710', change: '+16%', icon: TrendingUp, positive: true },
+  { label: 'Revenue (30d)', value: '$12,710', change: '+16%', icon: TrendingUp, positive: true },
   { label: 'Avg delivery time', value: '4.2 min', change: '-12%', icon: ArrowUpRight, positive: true },
   { label: 'Failed rate', value: '1.8%', change: '+0.3%', icon: AlertTriangle, positive: false },
 ];
@@ -80,13 +80,13 @@ const corridorConfig = {
 
 // ─── Recent transactions ───────────────────────────────────────
 const recentTxns = [
-  { id: 'TXN-101', sender: 'John Doherty', recipient: 'Jane Wanjiru', amount: '£100.00', status: 'delivered', date: '30 Jun 2025' },
-  { id: 'TXN-102', sender: 'Sarah Mitchell', recipient: 'Emeka Okonkwo', amount: '£250.00', status: 'processing', date: '30 Jun 2025' },
-  { id: 'TXN-103', sender: 'David Kimani', recipient: 'Kwame Asante', amount: '£75.00', status: 'delivered', date: '30 Jun 2025' },
-  { id: 'TXN-104', sender: 'Lisa Petersen', recipient: 'Amina Hassan', amount: '£50.00', status: 'failed', date: '29 Jun 2025' },
-  { id: 'TXN-105', sender: 'Mark Thompson', recipient: 'Fatou Diallo', amount: '£300.00', status: 'pending', date: '29 Jun 2025' },
-  { id: 'TXN-106', sender: 'Chidi Nwosu', recipient: 'Grace Muthoni', amount: '£150.00', status: 'delivered', date: '29 Jun 2025' },
-  { id: 'TXN-107', sender: 'Amara Osei', recipient: 'Olusegun Adeyemi', amount: '£1,200.00', status: 'delivered', date: '28 Jun 2025' },
+  { id: 'TXN-101', sender: 'John Doherty', recipient: 'Jane Wanjiru', amount: '$100.00', status: 'delivered', date: '30 Jun 2025' },
+  { id: 'TXN-102', sender: 'Sarah Mitchell', recipient: 'Emeka Okonkwo', amount: '$250.00', status: 'processing', date: '30 Jun 2025' },
+  { id: 'TXN-103', sender: 'David Kimani', recipient: 'Kwame Asante', amount: '$75.00', status: 'delivered', date: '30 Jun 2025' },
+  { id: 'TXN-104', sender: 'Lisa Petersen', recipient: 'Amina Hassan', amount: '$50.00', status: 'failed', date: '29 Jun 2025' },
+  { id: 'TXN-105', sender: 'Mark Thompson', recipient: 'Fatou Diallo', amount: '$300.00', status: 'pending', date: '29 Jun 2025' },
+  { id: 'TXN-106', sender: 'Chidi Nwosu', recipient: 'Grace Muthoni', amount: '$150.00', status: 'delivered', date: '29 Jun 2025' },
+  { id: 'TXN-107', sender: 'Amara Osei', recipient: 'Olusegun Adeyemi', amount: '$1,200.00', status: 'delivered', date: '28 Jun 2025' },
 ];
 
 // ─── Custom label for pie chart ───────────────────────────────

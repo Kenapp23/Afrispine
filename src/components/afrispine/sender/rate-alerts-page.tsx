@@ -46,7 +46,7 @@ interface RateAlert {
 }
 
 const emptyForm = {
-  fromCurrency: 'GBP',
+  fromCurrency: 'USD',
   toCurrency: 'KES',
   targetRate: '',
   direction: 'above' as 'above' | 'below',

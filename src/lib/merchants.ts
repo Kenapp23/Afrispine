@@ -55,17 +55,6 @@ const kenya: Merchant[] = [
     isActive: true,
   },
   {
-    id: 'ke-tuskys',
-    name: 'Tuskys',
-    slug: 'tuskys',
-    country: 'Kenya',
-    countryCode: 'KE',
-    category: 'Supermarket',
-    logoUrl: 'https://logo.clearbit.com/tuskys.com',
-    description: 'Tuskys Supermarket — one of Kenya\'s largest retail chains.',
-    isActive: true,
-  },
-  {
     id: 'ke-quickmart',
     name: 'Quickmart',
     slug: 'quickmart',
@@ -1415,15 +1404,18 @@ const tanzania: Merchant[] = [
 /*  COMBINED EXPORTS                                                  */
 /* ================================================================== */
 
-/** All active merchants across all countries */
-export const allMerchants: Merchant[] = [
+/** All merchants across all countries (including inactive — for admin use) */
+export const MERCHANTS: Merchant[] = [
   ...kenya,
   ...nigeria,
   ...southAfrica,
   ...ghana,
   ...uganda,
   ...tanzania,
-].filter((m) => m.isActive);
+];
+
+/** All active merchants across all countries */
+export const allMerchants: Merchant[] = MERCHANTS.filter((m) => m.isActive);
 
 /** Get merchants filtered by country code (e.g. 'KE', 'NG') */
 export function getMerchantsByCountry(countryCode: string): Merchant[] {

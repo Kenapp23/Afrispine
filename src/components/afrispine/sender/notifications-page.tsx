@@ -164,7 +164,7 @@ export function NotificationsPage() {
           id: `notif-kyc-1`,
           type: 'kyc',
           title: 'Complete Your Verification',
-          message: 'Verify your identity to unlock higher transfer limits of up to £10,000 per day. Go to the KYC tab to get started.',
+          message: 'Verify your identity to unlock higher transfer limits of up to $10,000 per day. Go to the KYC tab to get started.',
           timestamp: sender.createdAt || new Date().toISOString(),
           read: false,
         });
@@ -173,7 +173,7 @@ export function NotificationsPage() {
           id: `notif-kyc-2`,
           type: 'kyc',
           title: 'Identity Verified',
-          message: `Your identity was verified on ${sender.kycCompletedAt ? new Date(sender.kycCompletedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'a previous date'}. Your daily limit is now £${(sender.dailyLimitGbp || 10000).toLocaleString()}.`,
+          message: `Your identity was verified on ${sender.kycCompletedAt ? new Date(sender.kycCompletedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'a previous date'}. Your daily limit is now $${(sender.dailyLimitGbp || 10000).toLocaleString()}.`,
           timestamp: sender.kycCompletedAt || sender.createdAt || new Date().toISOString(),
           read: true,
           status: 'approved',

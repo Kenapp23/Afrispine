@@ -132,7 +132,7 @@ export function WealthLandingPage() {
             <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl xl:text-7xl leading-[1.1]">
               Unlock Africa&apos;s Wealth.{' '}
               <span className="bg-gradient-to-r from-emerald-300 via-teal-200 to-cyan-300 bg-clip-text text-transparent">
-                From £10.
+                From $10.
               </span>
             </h1>
             <p className="mt-6 text-lg sm:text-xl text-emerald-100/80 leading-relaxed max-w-2xl mx-auto">
@@ -144,7 +144,7 @@ export function WealthLandingPage() {
             <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
               {[
                 { icon: Globe, label: 'Markets Available', value: '6+', subtext: 'Across Africa', color: 'from-emerald-500/20 to-teal-500/20' },
-                { icon: Coins, label: 'Minimum Investment', value: '£10', subtext: 'Fractional shares', color: 'from-amber-500/20 to-yellow-500/20' },
+                { icon: Coins, label: 'Minimum Investment', value: '$10', subtext: 'Fractional shares', color: 'from-amber-500/20 to-yellow-500/20' },
                 { icon: BarChart3, label: 'Avg. Returns (2025)', value: '+52%', subtext: 'Top 3 exchanges', color: 'from-cyan-500/20 to-blue-500/20' },
               ].map((stat) => (
                 <div

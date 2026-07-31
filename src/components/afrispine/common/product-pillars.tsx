@@ -7,7 +7,7 @@ const PILLARS = [
   {
     icon: Send,
     headline: 'Send money home',
-    sub: 'From £10 to £10,000. Arrives in minutes. M-Pesa, MTN MoMo, bank — your choice.',
+    sub: 'From $10 to $10,000. Arrives in minutes. M-Pesa, MTN MoMo, bank — your choice.',
     cta: 'Send now →',
     navigateTo: 'signup' as const,
     highlight: '1.5% · No hidden fees',
@@ -16,10 +16,10 @@ const PILLARS = [
   {
     icon: TrendingUp,
     headline: 'Own a piece of Africa',
-    sub: 'Buy stocks on the NSE, NGX, JSE and more. From £10. Plus bonds paying 12–16%.',
+    sub: 'Buy stocks on the NSE, NGX, JSE and more. From $10. Plus bonds paying 12–16%.',
     cta: 'Start investing →',
     navigateTo: 'wealth-landing' as const,
-    highlight: '8 exchanges · From £10',
+    highlight: '8 exchanges · From $10',
     badge: '🔥 Dangote IPO coming',
   },
   {

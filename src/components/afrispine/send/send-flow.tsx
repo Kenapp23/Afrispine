@@ -52,12 +52,17 @@ const corridors = [
   { from: 'CA', to: 'KE', sendLabel: 'CAD', receiveLabel: 'KES', label: 'Canada → Kenya' },
   { from: 'CA', to: 'NG', sendLabel: 'CAD', receiveLabel: 'NGN', label: 'Canada → Nigeria' },
   { from: 'CA', to: 'GH', sendLabel: 'CAD', receiveLabel: 'GHS', label: 'Canada → Ghana' },
+  { from: 'EU', to: 'KE', sendLabel: 'EUR', receiveLabel: 'KES', label: 'Europe → Kenya' },
+  { from: 'EU', to: 'NG', sendLabel: 'EUR', receiveLabel: 'NGN', label: 'Europe → Nigeria' },
+  { from: 'EU', to: 'GH', sendLabel: 'EUR', receiveLabel: 'GHS', label: 'Europe → Ghana' },
+  { from: 'EU', to: 'TZ', sendLabel: 'EUR', receiveLabel: 'TZS', label: 'Europe → Tanzania' },
 ];
 
 const quickAmounts: Record<string, number[]> = {
   GBP: [50, 100, 200, 500],
   USD: [50, 100, 200, 500],
   CAD: [50, 100, 200, 500],
+  EUR: [50, 100, 200, 500],
 };
 
 const rails = [
@@ -276,6 +281,13 @@ function FieldError({ message }: { message?: string }) {
 }
 
 // ─── Step 1: Amount & Corridor ────────────────────────────────
+const SEND_CURRENCIES = [
+  { code: 'USD', label: 'USD ($)', flag: '🇺🇸' },
+  { code: 'EUR', label: 'EUR (€)', flag: '🇪🇺' },
+  { code: 'CAD', label: 'CAD (C$)', flag: '🇨🇦' },
+  { code: 'GBP', label: 'GBP (£)', flag: '🇬🇧' },
+];
+
 function StepAmount() {
   const store = useAppStore();
   const [amount, setAmount] = useState(store.sendAmount || '');
@@ -284,7 +296,10 @@ function StepAmount() {
   const [amountError, setAmountError] = useState('');
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  const activeCorridor = corridors.find((c) => `${c.from}-${c.to}` === corridorKey) || corridors[0];
+  const [selectedCurrency, setSelectedCurrency] = useState(store.preferredCurrency || store.sendCurrency);
+
+  const filteredCorridors = corridors.filter((c) => c.sendLabel === selectedCurrency);
+  const activeCorridor = corridors.find((c) => `${c.from}-${c.to}` === corridorKey) || filteredCorridors[0] || corridors[0];
 
   const fetchQuote = useCallback(async (sendAmt: number) => {
     if (!sendAmt || sendAmt <= 0) return;
@@ -391,7 +406,7 @@ function StepAmount() {
   };
 
   const currentCorridor = corridors.find((c) => `${c.from}-${c.to}` === corridorKey) || corridors[0];
-  const presets = quickAmounts[currentCorridor.sendLabel] || quickAmounts.GBP;
+  const presets = quickAmounts[currentCorridor.sendLabel] || quickAmounts.USD;
   const hasQuote = store.sendAmount > 0;
 
   return (
@@ -401,6 +416,44 @@ function StepAmount() {
         <CardDescription>Select the corridor and enter the amount</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Currency selector */}
+        <div className="space-y-2">
+          <Label>Send currency</Label>
+          <div className="flex flex-wrap gap-2">
+            {SEND_CURRENCIES.map((cur) => (
+              <button
+                key={cur.code}
+                type="button"
+                onClick={() => {
+                  setSelectedCurrency(cur.code);
+                  store.setPreferredCurrency(cur.code);
+                  // Auto-select the first corridor of the new currency
+                  const first = corridors.find((c) => c.sendLabel === cur.code);
+                  if (first) {
+                    const key = `${first.from}-${first.to}`;
+                    setCorridorKey(key);
+                    const num = parseFloat(amount as string);
+                    if (num > 0) {
+                      store.updateQuote({
+                        sendCorridor: { from: first.from, to: first.to },
+                        sendCurrency: first.sendLabel,
+                        receiveCurrency: first.receiveLabel,
+                      });
+                    }
+                  }
+                }}
+                className={`rounded-lg border px-3 py-2 text-sm font-medium transition-all ${
+                  selectedCurrency === cur.code
+                    ? 'border-emerald-600 bg-emerald-600 text-white shadow-sm'
+                    : 'border-border bg-background text-gray-700 hover:border-emerald-300 hover:bg-emerald-50'
+                }`}
+              >
+                {cur.flag} {cur.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Corridor selector */}
         <div className="space-y-2">
           <Label>Send from → Receive in</Label>
@@ -409,7 +462,7 @@ function StepAmount() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {corridors.map((c) => (
+              {(filteredCorridors.length > 0 ? filteredCorridors : corridors).map((c) => (
                 <SelectItem key={`${c.from}-${c.to}`} value={`${c.from}-${c.to}`}>
                   {c.label} ({c.sendLabel} → {c.receiveLabel})
                 </SelectItem>
@@ -1252,7 +1305,7 @@ function StepConfirmation() {
         type="first_send"
         data={{
           amount: txn?.amount?.toString() || '0',
-          currency: txn?.sendCurrency || 'GBP',
+          currency: txn?.sendCurrency || 'USD',
           country: store.recvCountry || 'KE',
           name: 'AfriSpine User',
         }}

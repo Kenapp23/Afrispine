@@ -121,7 +121,7 @@ const REVENUE_STREAMS = [
   {
     name: 'Trading Fees',
     description: 'Flat fee or percentage per equity trade',
-    tiers: '£1.50 flat (< £500) · 0.5% (£500–£10k) · 0.3% (> £10k)',
+    tiers: '$1.50 flat (< $500) · 0.5% ($500–$10k) · 0.3% (> $10k)',
     frequency: 'Per trade',
     icon: ArrowRightLeft,
   },
@@ -156,7 +156,7 @@ const REVENUE_STREAMS = [
   {
     name: 'Premium (Wealth Pro)',
     description: 'Monthly subscription for premium features: real-time data, research, priority support',
-    tiers: '£9.99/month',
+    tiers: '$9.99/month',
     frequency: 'Monthly',
     icon: Crown,
   },
@@ -171,7 +171,7 @@ function fmtUsd(n: number) {
 }
 
 function fmtGbp(n: number) {
-  return `£${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function orderStatusBadge(status: string) {
@@ -400,7 +400,7 @@ export function AdminWealthPage() {
       },
       {
         label: 'Revenue This Month',
-        value: statsLoading ? undefined : (adminStats.revenueThisMonth > 0 ? fmtGbp(adminStats.revenueThisMonth) : '£0'),
+        value: statsLoading ? undefined : (adminStats.revenueThisMonth > 0 ? fmtGbp(adminStats.revenueThisMonth) : '$0'),
         sub: adminStats.revenueThisMonth > 0 ? 'Fees collected' : 'No activity yet',
         icon: DollarSign,
       },
@@ -1073,9 +1073,9 @@ export function AdminWealthPage() {
             <p className="text-sm text-emerald-700">
               With {ipoStats.total.toLocaleString()} pre-registrations and an estimated 15% conversion,
               projected first-year revenue from trading fees alone could reach
-              <span className="font-bold"> £45,000+ </span>
-              assuming an average trade size of £2,000. Premium subscriptions at £9.99/month
-              with 200 subscribers add an additional <span className="font-bold">£23,976/year</span>.
+              <span className="font-bold"> $45,000+ </span>
+              assuming an average trade size of $2,000. Premium subscriptions at $9.99/month
+              with 200 subscribers add an additional <span className="font-bold">$23,976/year</span>.
             </p>
           </div>
         </CardContent>

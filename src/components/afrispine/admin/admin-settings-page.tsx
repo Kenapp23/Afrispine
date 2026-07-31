@@ -373,7 +373,7 @@ function FeeStructureCard() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const [globalFeePct, setGlobalFeePct] = useState('1.5');
-  const [baseChargeCurrency, setBaseChargeCurrency] = useState('GBP');
+  const [baseChargeCurrency, setBaseChargeCurrency] = useState('USD');
   const [margins, setMargins] = useState<CorridorMargin[]>([]);
 
   const [newCorridor, setNewCorridor] = useState('');
@@ -387,7 +387,7 @@ function FeeStructureCard() {
       if (res.ok) {
         const s = data.settings || {};
         setGlobalFeePct(s.default_fee_pct ?? '1.5');
-        setBaseChargeCurrency(s.base_charge_currency ?? 'GBP');
+        setBaseChargeCurrency(s.base_charge_currency ?? 'USD');
         setMargins(data.margins || []);
       }
     } catch {

@@ -27,7 +27,7 @@ export function SendFlow() {
   }, []);
 
   const corridor = corridors.find(c => c.id === selectedCorridor);
-  const cur = corridor?.sourceCurrency || 'GBP';
+  const cur = corridor?.sourceCurrency || 'USD';
 
   async function getQuote() {
     if (!selectedCorridor || !amount) return;
@@ -139,7 +139,7 @@ export function SendFlow() {
                       <p className="font-semibold text-gray-900">
                         {c.sourceCountry === 'GB' ? '🇬🇧 UK' : '🇺🇸 US'} → 🇰🇪 Kenya M-Pesa
                       </p>
-                      <p className="text-sm text-gray-500">Rate: 1 {c.sourceCurrency} = {c.baseRate} KES · Fee: {c.sourceCurrency === 'GBP' ? '£' : '$'}{c.feeFixed.toFixed(2)}</p>
+                      <p className="text-sm text-gray-500">Rate: 1 {c.sourceCurrency} = {c.baseRate} KES · Fee: {c.sourceCurrency === 'GBP' ? '£' : c.sourceCurrency === 'EUR' ? '€' : c.sourceCurrency === 'CAD' ? 'C$' : '$'}{c.feeFixed.toFixed(2)}</p>
                     </div>
                     {selectedCorridor === c.id && <Check className="w-5 h-5 text-emerald-600" />}
                   </div>
@@ -150,7 +150,7 @@ export function SendFlow() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">You send ({cur})</label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">{cur === 'GBP' ? '£' : '$'}</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">{cur === 'GBP' ? '£' : cur === 'EUR' ? '€' : cur === 'CAD' ? 'C$' : '$'}</span>
                   <input type="number" min={corridor.minAmount} max={corridor.maxAmount} step="0.01" value={amount}
                     onChange={e => setAmount(e.target.value)}
                     className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl text-2xl font-bold focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"

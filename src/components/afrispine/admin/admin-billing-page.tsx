@@ -35,7 +35,7 @@ const invoices = [
     id: 'INV-2025-0042',
     provider: 'LemFi',
     period: 'Jun 2025',
-    amount: '£3,748.80',
+    amount: '$3,748.80',
     due: '15 Jul 2025',
     status: 'sent',
     txns: 1247,
@@ -44,7 +44,7 @@ const invoices = [
     id: 'INV-2025-0041',
     provider: "Africa's Talking Pay",
     period: 'Jun 2025',
-    amount: '£2,979.00',
+    amount: '$2,979.00',
     due: '15 Jul 2025',
     status: 'draft',
     txns: 843,
@@ -53,7 +53,7 @@ const invoices = [
     id: 'INV-2025-0040',
     provider: 'PAPSS',
     period: 'Jun 2025',
-    amount: '£1,726.40',
+    amount: '$1,726.40',
     due: '15 Jul 2025',
     status: 'paid',
     txns: 672,
@@ -62,7 +62,7 @@ const invoices = [
     id: 'INV-2025-0039',
     provider: 'Ripple ODL',
     period: 'Jun 2025',
-    amount: '£2,410.40',
+    amount: '$2,410.40',
     due: '10 Jul 2025',
     status: 'overdue',
     txns: 479,
@@ -71,7 +71,7 @@ const invoices = [
     id: 'INV-2025-0038',
     provider: 'LemFi',
     period: 'May 2025',
-    amount: '£3,102.50',
+    amount: '$3,102.50',
     due: '15 Jun 2025',
     status: 'paid',
     txns: 1089,
@@ -80,7 +80,7 @@ const invoices = [
     id: 'INV-2025-0037',
     provider: "Africa's Talking Pay",
     period: 'May 2025',
-    amount: '£2,514.00',
+    amount: '$2,514.00',
     due: '15 Jun 2025',
     status: 'paid',
     txns: 761,
@@ -93,7 +93,7 @@ export function AdminBillingPage() {
   const totalOutstanding = invoices
     .filter((i) => i.status !== 'paid')
     .reduce((sum, i) => {
-      const num = parseFloat(i.amount.replace('£', '').replace(',', ''));
+      const num = parseFloat(i.amount.replace('$', '').replace(',', ''));
       return sum + num;
     }, 0);
 
@@ -119,7 +119,7 @@ export function AdminBillingPage() {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Paid (30d)</p>
-              <p className="text-xl font-bold text-gray-900">£7,342.90</p>
+              <p className="text-xl font-bold text-gray-900">$7,342.90</p>
               <p className="text-xs text-emerald-600 font-medium">3 invoices</p>
             </div>
           </CardContent>
@@ -131,7 +131,7 @@ export function AdminBillingPage() {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Outstanding</p>
-              <p className="text-xl font-bold text-gray-900">£{totalOutstanding.toLocaleString('en-GB', { minimumFractionDigits: 2 })}</p>
+              <p className="text-xl font-bold text-gray-900">${totalOutstanding.toLocaleString('en-GB', { minimumFractionDigits: 2 })}</p>
               <p className="text-xs text-amber-600 font-medium">3 invoices</p>
             </div>
           </CardContent>
@@ -143,7 +143,7 @@ export function AdminBillingPage() {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Overdue</p>
-              <p className="text-xl font-bold text-gray-900">£2,410.40</p>
+              <p className="text-xl font-bold text-gray-900">$2,410.40</p>
               <p className="text-xs text-red-500 font-medium">1 invoice</p>
             </div>
           </CardContent>

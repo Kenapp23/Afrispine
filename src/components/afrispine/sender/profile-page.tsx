@@ -307,7 +307,7 @@ export function ProfilePage() {
                   <ShieldCheck className="h-4 w-4" />
                   <span>Daily limit</span>
                 </div>
-                <span className="font-medium">£{dailyLimit.toLocaleString()}</span>
+                <span className="font-medium">${`$${dailyLimit.toLocaleString()}`}</span>
               </div>
             </div>
 

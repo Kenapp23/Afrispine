@@ -276,7 +276,7 @@ export function KycPage() {
                   <p className="font-semibold text-gray-900">{statusCfg.label}</p>
                   <p className="text-sm text-muted-foreground mt-0.5">
                     {isVerified
-                      ? `Verified on ${kycData?.kycCompletedAt ? new Date(kycData.kycCompletedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'a previous date'}. Your transfer limit is £${(kycData?.dailyLimitGbp || 2000).toLocaleString()} per day.`
+                      ? `Verified on ${kycData?.kycCompletedAt ? new Date(kycData.kycCompletedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'a previous date'}. Your transfer limit is kycData?.dailyLimitGbp || 2000).toLocaleString()} per day.`
                       : isPending
                         ? 'Complete the form below to verify your identity and increase your transfer limits.'
                         : isReview
@@ -462,11 +462,11 @@ export function KycPage() {
                       <p className="font-medium text-gray-700">Transfer Limits</p>
                       <div className="flex justify-between text-xs">
                         <span className="text-muted-foreground">Unverified limit</span>
-                        <span className="font-medium">£2,000 / day</span>
+                        <span className="font-medium">$2,000 / day</span>
                       </div>
                       <div className="flex justify-between text-xs">
                         <span className="text-muted-foreground">Verified limit</span>
-                        <span className="font-medium text-emerald-700">£10,000 / day</span>
+                        <span className="font-medium text-emerald-700">$10,000 / day</span>
                       </div>
                     </div>
 
@@ -636,7 +636,7 @@ export function KycPage() {
                   </div>
                   <p className="text-sm font-medium">Higher Limits</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Send up to £10,000 per day after verification
+                    Send up to $10,000 per day after verification
                   </p>
                 </div>
                 <div className="rounded-lg border border-border p-4 text-center">

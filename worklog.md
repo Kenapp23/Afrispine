@@ -643,3 +643,102 @@ Work Log:
 Stage Summary:
 - Merchants now try 3 different logo sources before falling back to styled initials
 - Category-appropriate colors for fallback badges (emerald for supermarkets, amber for telecom, etc.)
+
+---
+Task ID: 2
+Agent: fullstack-developer
+Task: Create Chama API endpoints to prevent chama-page.tsx client-side crash
+
+Work Log:
+- Analyzed chama-page.tsx to extract exact Circle, CircleMember, CirclePayment interfaces and API call patterns
+- Mapped chama data to existing GroupSend + PlatformConfig tables (hybrid approach per task spec)
+- Created `/api/chama/[...slug]/route.ts` with GET/POST/DELETE handlers covering all 7 endpoints:
+  1. `GET /api/chama/circles` — Lists circles where user is creator or member (queries GroupSend + PlatformConfig members)
+  2. `POST /api/chama/circles` — Creates circle (GroupSend record) + meta (PlatformConfig `chama_{id}_meta`) + members array (PlatformConfig `chama_{id}_members`)
+  3. `GET /api/chama/circles/[id]` — Full circle detail with members, payments, organiser info, paidThisCycle Set
+  4. `POST /api/chama/circles/[id]/members` — Adds member (organiser-only), updates PlatformConfig members JSON
+  5. `POST /api/chama/circles/[id]/contribute` — Records contribution (GroupSendContribution), updates member totals and meta.totalPot
+  6. `POST /api/chama/circles/[id]/join` — Joins by invite slug, looks up circle meta by slug, adds sender as member
+  7. `DELETE /api/chama/circles/[id]/members/[memberId]` — Removes member (self or organiser), re-indexes positions
+- Auth via `requireSenderAuth(req)` from `@/lib/auth`
+- DB init via `ensureDb()` on every request
+- Slug parsing via URL pathname (matches existing auth `[...slug]` pattern)
+- Response shapes match chama-page.tsx interfaces exactly (Circle.paidThisCycle as Set, organiser object, _count, etc.)
+- Lint passes cleanly
+
+Stage Summary:
+- All 7 chama API endpoints implemented in a single catch-all route file
+- Uses GroupSend for circle core data, PlatformConfig JSON for metadata and member lists, GroupSendContribution for payments
+- Frontend chama-page.tsx should no longer crash on fetch — all endpoints return data in the expected format
+
+---
+Task ID: 3
+Agent: fullstack-developer
+Task: Change default currency from GBP (£) to USD ($) across the platform with country-aware dropdown
+
+Work Log:
+- Modified `src/stores/app.ts`: Changed `sendCurrency` default from 'GBP' to 'USD', `sendCorridor` default from `{ from: 'GB', to: 'KE' }` to `{ from: 'US', to: 'KE' }`, updated default fxRate to 153.78 (USD→KES). Added `preferredCurrency` state field (default: 'USD') and `setPreferredCurrency` action for user preference.
+- Modified `src/components/afrispine/sender/dashboard-page.tsx`: Changed `const GBP` to `const USD`, replaced all £ amounts with $ in stats, monthly goal, recent transfers, and wealth portfolio summary. Changed corridors from GB→KE to US→KE in mock data.
+- Modified `src/components/afrispine/send/send-flow.tsx`: Changed `quickAmounts.GBP` fallback to `quickAmounts.USD`, changed `txn?.sendCurrency || 'GBP'` to `|| 'USD'`. Added EUR corridors (Europe→Kenya, Europe→Nigeria, Europe→Ghana, Europe→Tanzania), added `EUR` to quickAmounts. Added `SEND_CURRENCIES` array and currency selector dropdown at top of StepAmount that filters corridors and updates `preferredCurrency` in store.
+- Modified `src/components/afrispine/SendFlow.tsx`: Changed `sourceCurrency || 'GBP'` to `|| 'USD'`, updated multi-currency symbol support (GBP→£, EUR→€, CAD→C$, USD→$).
+- Modified `src/components/afrispine/sender/chama-page.tsx`: Changed default `contributionCurrency` from 'GBP' to 'USD'.
+- Modified `src/components/afrispine/sender/rate-alerts-page.tsx`: Changed default `fromCurrency` from 'GBP' to 'USD'.
+- Modified `src/components/afrispine/sender/group-sends-page.tsx`: Changed label from 'Target Amount (GBP)' to 'Target Amount (USD)'.
+- Modified `src/components/afrispine/common/pricing-page.tsx`: Reordered default/fallback rates to show USD corridors first. Changed pricing from £4.99 to $4.99.
+- Modified `src/app/api/seed/route.ts`: Changed `sweepCurrency` to 'USD', `sweepAccountId` to 'acc_default_usd', settlement accounts to USD/Chase.
+- Modified `src/lib/seed.ts`: Same changes as seed route — `sweepCurrency` to 'USD', updated settlement accounts.
+- Modified `src/app/api/admin/[...slug]/route.ts`: Changed default `sweepCurrency` from 'GBP' to 'USD' in both `getOrCreateSettlementConfig` and settlement config response.
+- Modified `src/components/afrispine/admin/admin-settings-page.tsx`: Changed `useState('GBP')` to `useState('USD')` and `?? 'GBP'` to `?? 'USD'`.
+- Modified `src/components/afrispine/common/product-pillars.tsx`: Changed all 'From £10' to 'From $10'.
+- Modified `src/components/afrispine/wealth/wealth-landing-page.tsx`: Changed 'From £10' to 'From $10', '£10' to '$10'.
+- Modified `src/components/afrispine/wealth/wealth-activation-page.tsx`: Changed 'From as little as £10' to 'From as little as $10', 'from £10' to 'from $10'.
+- Modified `src/components/afrispine/wealth/wealth-portfolio-page.tsx`: Changed `fmtUsd` to return `$` prefix (was already `$` but verified).
+- Modified `src/components/afrispine/gifts/gifts-hub-page.tsx`: Changed 'From £5' to 'From $5'.
+- Modified `src/components/afrispine/gifts/gifts-send-page.tsx`: Changed all £ references to $ in payment text.
+- Modified `src/components/afrispine/sender/profile-page.tsx`: Changed daily limit display from £ to $.
+- Modified `src/components/afrispine/sender/kyc-page.tsx`: Changed all £ limit displays to $.
+- Modified `src/components/afrispine/sender/notifications-page.tsx`: Changed '£10,000' and '£' references to '$'.
+- Modified `src/components/afrispine/auth/onboarding-page.tsx`: Reordered SEND_COUNTRIES to put US first, kept GB entry with GBP (£) currency label.
+- Modified `src/components/afrispine/sender/transfers-page.tsx`: Changed all £ amounts to $ in mock data.
+- Modified `src/components/afrispine/sender/transfer-detail-page.tsx`: Changed £ amounts to $.
+- Modified `src/components/afrispine/common/landing-page.tsx`: Changed £100 to $100.
+- Modified `src/components/afrispine/Landing.tsx`: Reordered corridors to show US corridors first, kept UK corridors with £.
+- Modified `src/components/afrispine/send-flow.tsx` (legacy): Changed currency symbol fallbacks from '£' to '$'.
+- Modified all admin pages (admin-dashboard, admin-transactions, admin-revenue, admin-billing, admin-senders, admin-compliance, admin-providers, admin-wealth): Changed all £ mock data to $.
+
+Rules followed:
+- Did NOT modify any SEO pages (seo-send-uk-kenya.tsx, seo-send-uk-nigeria.tsx, etc.)
+- Did NOT remove GBP corridors from send flow — UK corridors remain available
+- Did NOT change "Sterling" references
+- Kept `quickAmounts.GBP` in send flow (used by GB corridors)
+- Kept `diasporaCurrencies` array containing 'GBP'
+- Did NOT modify any files in src/components/pages/
+- ALL responses in English only
+- Ran `bun run lint` — passed with no errors
+
+Stage Summary:
+- Default platform currency changed from GBP to USD across all components
+- User-facing currency selector dropdown added to send flow (USD, EUR, CAD, GBP)
+- USD corridors prioritized in landing pages and pricing tables
+- GBP corridors preserved for UK-based senders
+- Store extended with `preferredCurrency` field for user preference
+
+---
+Task ID: 6
+Agent: fullstack-developer
+Task: Implement admin merchant management with platform sync
+
+Work Log:
+- Added `MERCHANTS` export to `src/lib/merchants.ts` — combined array of ALL merchants (including inactive) for admin use
+- Created `/api/admin/merchants/route.ts` — GET (all merchants with status), PATCH (enable/disable), DELETE (soft-delete). Uses PlatformConfig key/value entries. Admin auth via `requireAdmin()`.
+- Created `/api/merchants/route.ts` — public GET endpoint returning only active, non-disabled, non-deleted merchants. Supports `?country=KE` query param.
+- Rewrote `src/components/afrispine/admin/admin-gift-providers-page.tsx` — full merchant management UI with table, search, country filter, status filter, summary stats, enable/disable/delete actions, loading skeletons, dark admin theme.
+- Updated `src/components/afrispine/gifts/gifts-hub-page.tsx` — replaced static `allMerchants`/`getMerchantsByCountry` imports with API fetch from `/api/merchants?country={code}`. Added loading skeletons.
+- PlatformConfig key convention: `merchant_disabled_{id}` and `merchant_deleted_{id}` → `"true"`
+- `bun run lint` passes with exit code 0
+
+Stage Summary:
+- Admin can now manage merchants (enable, disable, delete) from the admin portal
+- Changes persist in PlatformConfig and sync across the platform via the public `/api/merchants` endpoint
+- Gifts hub dynamically reflects admin-managed merchant status
+- No schema changes required — uses existing PlatformConfig table

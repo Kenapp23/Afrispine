@@ -68,6 +68,9 @@ interface AppState {
   detectedCountry: string | null;
   setDetectedCountry: (c: string | null) => void;
 
+  preferredCurrency: string;
+  setPreferredCurrency: (c: string) => void;
+
   // Bill payment flow state
   billStep: number;
   billType: string | null;
@@ -102,8 +105,8 @@ interface AppState {
 }
 
 const initialState = {
-  sendStep: 1, sendCorridor: { from: 'GB', to: 'KE' }, sendCurrency: 'GBP', sendAmount: 100,
-  receiveCurrency: 'KES', receiveAmount: 0, fxRate: 169.3, feePct: 1.5, feeAmount: 1.5,
+  sendStep: 1, sendCorridor: { from: 'US', to: 'KE' }, sendCurrency: 'USD', sendAmount: 100,
+  receiveCurrency: 'KES', receiveAmount: 0, fxRate: 153.78, feePct: 1.5, feeAmount: 1.5,
   totalCharged: 101.5, selectedRail: 'mobile_money', selectedNetwork: 'm-pesa',
   selectedProvider: null, quoteExpiresAt: null, quoteId: null, recipientName: '',
   recipientPhone: '', recipientCountry: 'KE',
@@ -112,6 +115,7 @@ const initialState = {
   saveCardForRecurring: false,
   paymentLink: null, currentTransaction: null, senderId: null,
   detectedCountry: null,
+  preferredCurrency: 'USD',
   billStep: 1, billType: null,
   bizStep: 1, bizSellCurrency: 'USD', bizBuyCurrency: 'KES', bizSellAmount: 50000,
   bizBuyAmount: 0, bizFxRate: 129.4, bizMarginPct: 0.75, bizMarginAmount: 375,
@@ -158,6 +162,8 @@ export const useAppStore = create<AppState>((set) => ({
   ...initialState,
 
   setDetectedCountry: (c) => set({ detectedCountry: c }),
+
+  setPreferredCurrency: (c) => set({ preferredCurrency: c }),
 
   setBillStep: (s) => set({ billStep: s }),
   setBillType: (t) => set({ billType: t, billStep: 2 }),

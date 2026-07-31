@@ -37,18 +37,18 @@ interface Transfer {
 }
 
 const fallbackTransfers: Transfer[] = [
-  { id: 'TXN-001', recipient: 'Jane Wanjiku', amount: '£100.00', receiveAmount: 'KES 19,342', receiveCurrency: 'KES', status: 'delivered', date: '28 Jun 2025', corridor: 'GB → KE' },
-  { id: 'TXN-002', recipient: 'Emeka Okafor', amount: '£250.00', receiveAmount: 'NGN 496,875', receiveCurrency: 'NGN', status: 'processing', date: '29 Jun 2025', corridor: 'GB → NG' },
-  { id: 'TXN-003', recipient: 'Kwame Asante', amount: '£75.00', receiveAmount: 'GHS 1,149', receiveCurrency: 'GHS', status: 'delivered', date: '25 Jun 2025', corridor: 'GB → GH' },
-  { id: 'TXN-004', recipient: 'Amina Hassan', amount: '£50.00', receiveAmount: 'KES 9,671', receiveCurrency: 'KES', status: 'pending', date: '30 Jun 2025', corridor: 'GB → KE' },
-  { id: 'TXN-005', recipient: 'Fatou Diallo', amount: '£200.00', receiveAmount: 'GHS 3,064', receiveCurrency: 'GHS', status: 'failed', date: '24 Jun 2025', corridor: 'GB → GH' },
-  { id: 'TXN-006', recipient: 'John Ochieng', amount: '£150.00', receiveAmount: 'KES 29,013', receiveCurrency: 'KES', status: 'delivered', date: '22 Jun 2025', corridor: 'GB → KE' },
-  { id: 'TXN-007', recipient: 'Chidi Nwosu', amount: '£300.00', receiveAmount: 'NGN 596,250', receiveCurrency: 'NGN', status: 'refunded', date: '20 Jun 2025', corridor: 'GB → NG' },
-  { id: 'TXN-008', recipient: 'Mary Akinyi', amount: '£80.00', receiveAmount: 'KES 15,474', receiveCurrency: 'KES', status: 'delivered', date: '18 Jun 2025', corridor: 'GB → KE' },
-  { id: 'TXN-009', recipient: 'Abubakar Yusuf', amount: '£120.00', receiveAmount: 'NGN 238,500', receiveCurrency: 'NGN', status: 'delivered', date: '15 Jun 2025', corridor: 'GB → NG' },
-  { id: 'TXN-010', recipient: 'Esi Mensah', amount: '£90.00', receiveAmount: 'GHS 1,379', receiveCurrency: 'GHS', status: 'processing', date: '14 Jun 2025', corridor: 'GB → GH' },
-  { id: 'TXN-011', recipient: 'Grace Muthoni', amount: '£500.00', receiveAmount: 'KES 96,710', receiveCurrency: 'KES', status: 'delivered', date: '12 Jun 2025', corridor: 'GB → KE' },
-  { id: 'TXN-012', recipient: 'Obinna Eze', amount: '£175.00', receiveAmount: 'NGN 347,813', receiveCurrency: 'NGN', status: 'delivered', date: '10 Jun 2025', corridor: 'GB → NG' },
+  { id: 'TXN-001', recipient: 'Jane Wanjiku', amount: '$100.00', receiveAmount: 'KES 19,342', receiveCurrency: 'KES', status: 'delivered', date: '28 Jun 2025', corridor: 'GB → KE' },
+  { id: 'TXN-002', recipient: 'Emeka Okafor', amount: '$250.00', receiveAmount: 'NGN 496,875', receiveCurrency: 'NGN', status: 'processing', date: '29 Jun 2025', corridor: 'GB → NG' },
+  { id: 'TXN-003', recipient: 'Kwame Asante', amount: '$75.00', receiveAmount: 'GHS 1,149', receiveCurrency: 'GHS', status: 'delivered', date: '25 Jun 2025', corridor: 'GB → GH' },
+  { id: 'TXN-004', recipient: 'Amina Hassan', amount: '$50.00', receiveAmount: 'KES 9,671', receiveCurrency: 'KES', status: 'pending', date: '30 Jun 2025', corridor: 'GB → KE' },
+  { id: 'TXN-005', recipient: 'Fatou Diallo', amount: '$200.00', receiveAmount: 'GHS 3,064', receiveCurrency: 'GHS', status: 'failed', date: '24 Jun 2025', corridor: 'GB → GH' },
+  { id: 'TXN-006', recipient: 'John Ochieng', amount: '$150.00', receiveAmount: 'KES 29,013', receiveCurrency: 'KES', status: 'delivered', date: '22 Jun 2025', corridor: 'GB → KE' },
+  { id: 'TXN-007', recipient: 'Chidi Nwosu', amount: '$300.00', receiveAmount: 'NGN 596,250', receiveCurrency: 'NGN', status: 'refunded', date: '20 Jun 2025', corridor: 'GB → NG' },
+  { id: 'TXN-008', recipient: 'Mary Akinyi', amount: '$80.00', receiveAmount: 'KES 15,474', receiveCurrency: 'KES', status: 'delivered', date: '18 Jun 2025', corridor: 'GB → KE' },
+  { id: 'TXN-009', recipient: 'Abubakar Yusuf', amount: '$120.00', receiveAmount: 'NGN 238,500', receiveCurrency: 'NGN', status: 'delivered', date: '15 Jun 2025', corridor: 'GB → NG' },
+  { id: 'TXN-010', recipient: 'Esi Mensah', amount: '$90.00', receiveAmount: 'GHS 1,379', receiveCurrency: 'GHS', status: 'processing', date: '14 Jun 2025', corridor: 'GB → GH' },
+  { id: 'TXN-011', recipient: 'Grace Muthoni', amount: '$500.00', receiveAmount: 'KES 96,710', receiveCurrency: 'KES', status: 'delivered', date: '12 Jun 2025', corridor: 'GB → KE' },
+  { id: 'TXN-012', recipient: 'Obinna Eze', amount: '$175.00', receiveAmount: 'NGN 347,813', receiveCurrency: 'NGN', status: 'delivered', date: '10 Jun 2025', corridor: 'GB → NG' },
 ];
 
 const PER_PAGE = 8;

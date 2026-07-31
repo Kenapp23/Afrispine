@@ -204,7 +204,7 @@ export function ChamaPage() {
     type: circleName.types?.[0]?.value || 'general',
     country: effectiveCountryCode || '',
     contributionAmount: '',
-    contributionCurrency: 'GBP',
+    contributionCurrency: 'USD',
     frequency: 'monthly',
   });
   const [creating, setCreating] = useState(false);
@@ -275,7 +275,7 @@ export function ChamaPage() {
         const data = await res.json();
         toast({ title: 'Circle created successfully!', description: `Invite code: ${data.circle.slug}` });
         setCreateOpen(false);
-        setCreateForm({ name: '', type: circleName.types?.[0]?.value || 'general', contributionAmount: '', contributionCurrency: 'GBP', frequency: 'monthly' });
+        setCreateForm({ name: '', type: circleName.types?.[0]?.value || 'general', contributionAmount: '', contributionCurrency: 'USD', frequency: 'monthly' });
         await fetchCircles();
         // Open the newly created circle
         setSelectedCircle(data.circle);

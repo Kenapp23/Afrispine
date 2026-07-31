@@ -338,7 +338,7 @@ export default function GiftsSendPage() {
   /* ---- Step 4: Confirmation ---- */
   const handleShareWhatsApp = useCallback(() => {
     const text = encodeURIComponent(
-      `Hey ${recipientName}! I sent you a £${effectiveAmount} ${selectedMerchant?.name || ''} gift voucher via AfriSpine 🎁`,
+      `Hey ${recipientName}! I sent you a ${effectiveAmount} ${selectedMerchant?.name || ''} gift voucher via AfriSpine 🎁`,
     );
     window.open(`https://wa.me/?text=${text}`, '_blank');
   }, [recipientName, effectiveAmount, selectedMerchant]);
@@ -719,11 +719,11 @@ export default function GiftsSendPage() {
                   Processing...
                 </span>
               ) : (
-                <>Pay £{effectiveAmount + 1.5} securely</>
+                <>Pay ${effectiveAmount + 1.5} securely</>
               )}
             </Button>
             <p className="text-center text-xs text-muted-foreground">
-              Includes £1.50 voucher fee · Total: £{effectiveAmount + 1.5}
+              Includes $1.50 voucher fee · Total: ${effectiveAmount + 1.5}
             </p>
           </div>
         )}

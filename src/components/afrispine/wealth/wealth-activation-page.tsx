@@ -24,7 +24,7 @@ const benefits = [
   'Stocks, bonds, funds, and pre-IPO deals',
   'USD settlement — no local currency account needed',
   'Dividends paid directly to your wallet',
-  'From as little as £10',
+  'From as little as $10',
 ];
 
 const riskDisclaimerText =
@@ -38,8 +38,8 @@ const marketInsights = [
   },
   {
     label: 'Accessible minimums',
-    value: 'From £10',
-    desc: 'Start investing with as little as £10 — no minimum balance required.',
+    value: 'From $10',
+    desc: 'Start investing with as little as $10 — no minimum balance required.',
   },
   {
     label: 'USD dividends',
@@ -117,7 +117,7 @@ export function WealthActivationPage() {
               Open your AfriSpine Investment Account
             </h1>
             <p className="mt-4 max-w-lg text-base text-muted-foreground leading-relaxed sm:text-lg">
-              Invest in African stocks, bonds, and IPOs from £10. Your account
+              Invest in African stocks, bonds, and IPOs from $10. Your account
               activates in seconds.
             </p>
           </div>

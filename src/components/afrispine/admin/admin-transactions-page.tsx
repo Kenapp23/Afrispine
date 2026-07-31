@@ -25,22 +25,22 @@ const statusColor: Record<string, string> = {
 
 // ─── Transaction data (15+ records) ───────────────────────────
 const transactions = [
-  { id: 'TXN-20250630-001', sender: 'John Doherty', recipient: 'Jane Wanjiru', amount: '£100.00', fee: '£2.99', status: 'delivered', date: '30 Jun 2025, 14:23', corridor: 'UK → Kenya' },
-  { id: 'TXN-20250630-002', sender: 'Sarah Mitchell', recipient: 'Emeka Okonkwo', amount: '£250.00', fee: '£5.99', status: 'processing', date: '30 Jun 2025, 13:51', corridor: 'UK → Nigeria' },
-  { id: 'TXN-20250630-003', sender: 'David Kimani', recipient: 'Kwame Asante', amount: '£75.50', fee: '£2.49', status: 'delivered', date: '30 Jun 2025, 12:07', corridor: 'UK → Ghana' },
-  { id: 'TXN-20250629-004', sender: 'Lisa Petersen', recipient: 'Amina Hassan', amount: '£500.00', fee: '£9.99', status: 'failed', date: '29 Jun 2025, 18:44', corridor: 'UK → Kenya' },
-  { id: 'TXN-20250629-005', sender: 'Mark Thompson', recipient: 'Fatou Diallo', amount: '£300.00', fee: '£5.99', status: 'pending', date: '29 Jun 2025, 16:32', corridor: 'UK → Kenya' },
-  { id: 'TXN-20250629-006', sender: 'Chidi Nwosu', recipient: 'Grace Muthoni', amount: '£150.00', fee: '£3.99', status: 'delivered', date: '29 Jun 2025, 11:15', corridor: 'UK → Nigeria' },
-  { id: 'TXN-20250628-007', sender: 'Amara Osei', recipient: 'Olusegun Adeyemi', amount: '£1,200.00', fee: '£19.99', status: 'delivered', date: '28 Jun 2025, 09:48', corridor: 'UK → Nigeria' },
-  { id: 'TXN-20250628-008', sender: 'Rachel Brown', recipient: 'Ibrahim Musa', amount: '£45.00', fee: '£1.99', status: 'processing', date: '28 Jun 2025, 08:12', corridor: 'UK → Ghana' },
-  { id: 'TXN-20250627-009', sender: 'Paul Okafor', recipient: 'Nairobi Co-op', amount: '£800.00', fee: '£14.99', status: 'delivered', date: '27 Jun 2025, 17:55', corridor: 'UK → Kenya' },
-  { id: 'TXN-20250627-010', sender: 'Elena Mwangi', recipient: 'Tunde Bakare', amount: '£200.00', fee: '£4.49', status: 'failed', date: '27 Jun 2025, 15:03', corridor: 'UK → Nigeria' },
-  { id: 'TXN-20250626-011', sender: 'Yusuf Abubakar', recipient: 'Mary Njeri', amount: '£350.00', fee: '£6.99', status: 'delivered', date: '26 Jun 2025, 14:22', corridor: 'UK → Kenya' },
-  { id: 'TXN-20250626-012', sender: 'Fatima Diallo', recipient: 'Kofi Mensah', amount: '£180.00', fee: '£3.99', status: 'refunded', date: '26 Jun 2025, 10:45', corridor: 'UK → Ghana' },
-  { id: 'TXN-20250625-013', sender: 'Kwame Boateng', recipient: 'Chioma Eze', amount: '£420.00', fee: '£7.99', status: 'delivered', date: '25 Jun 2025, 16:18', corridor: 'UK → Nigeria' },
-  { id: 'TXN-20250625-014', sender: 'Amina Osei', recipient: 'Hassan Ali', amount: '£90.00', fee: '£2.49', status: 'pending', date: '25 Jun 2025, 09:33', corridor: 'UK → Kenya' },
-  { id: 'TXN-20250624-015', sender: 'Obinna Eze', recipient: 'Akosua Frimpong', amount: '£600.00', fee: '£11.49', status: 'delivered', date: '24 Jun 2025, 13:07', corridor: 'UK → Ghana' },
-  { id: 'TXN-20250624-016', sender: 'Ngozi Adekunle', recipient: 'Peter Oduya', amount: '£275.00', fee: '£5.49', status: 'processing', date: '24 Jun 2025, 08:55', corridor: 'UK → Kenya' },
+  { id: 'TXN-20250630-001', sender: 'John Doherty', recipient: 'Jane Wanjiru', amount: '$100.00', fee: '$2.99', status: 'delivered', date: '30 Jun 2025, 14:23', corridor: 'UK → Kenya' },
+  { id: 'TXN-20250630-002', sender: 'Sarah Mitchell', recipient: 'Emeka Okonkwo', amount: '$250.00', fee: '$5.99', status: 'processing', date: '30 Jun 2025, 13:51', corridor: 'UK → Nigeria' },
+  { id: 'TXN-20250630-003', sender: 'David Kimani', recipient: 'Kwame Asante', amount: '$75.50', fee: '$2.49', status: 'delivered', date: '30 Jun 2025, 12:07', corridor: 'UK → Ghana' },
+  { id: 'TXN-20250629-004', sender: 'Lisa Petersen', recipient: 'Amina Hassan', amount: '$500.00', fee: '$9.99', status: 'failed', date: '29 Jun 2025, 18:44', corridor: 'UK → Kenya' },
+  { id: 'TXN-20250629-005', sender: 'Mark Thompson', recipient: 'Fatou Diallo', amount: '$300.00', fee: '$5.99', status: 'pending', date: '29 Jun 2025, 16:32', corridor: 'UK → Kenya' },
+  { id: 'TXN-20250629-006', sender: 'Chidi Nwosu', recipient: 'Grace Muthoni', amount: '$150.00', fee: '$3.99', status: 'delivered', date: '29 Jun 2025, 11:15', corridor: 'UK → Nigeria' },
+  { id: 'TXN-20250628-007', sender: 'Amara Osei', recipient: 'Olusegun Adeyemi', amount: '$1,200.00', fee: '$19.99', status: 'delivered', date: '28 Jun 2025, 09:48', corridor: 'UK → Nigeria' },
+  { id: 'TXN-20250628-008', sender: 'Rachel Brown', recipient: 'Ibrahim Musa', amount: '$45.00', fee: '$1.99', status: 'processing', date: '28 Jun 2025, 08:12', corridor: 'UK → Ghana' },
+  { id: 'TXN-20250627-009', sender: 'Paul Okafor', recipient: 'Nairobi Co-op', amount: '$800.00', fee: '$14.99', status: 'delivered', date: '27 Jun 2025, 17:55', corridor: 'UK → Kenya' },
+  { id: 'TXN-20250627-010', sender: 'Elena Mwangi', recipient: 'Tunde Bakare', amount: '$200.00', fee: '$4.49', status: 'failed', date: '27 Jun 2025, 15:03', corridor: 'UK → Nigeria' },
+  { id: 'TXN-20250626-011', sender: 'Yusuf Abubakar', recipient: 'Mary Njeri', amount: '$350.00', fee: '$6.99', status: 'delivered', date: '26 Jun 2025, 14:22', corridor: 'UK → Kenya' },
+  { id: 'TXN-20250626-012', sender: 'Fatima Diallo', recipient: 'Kofi Mensah', amount: '$180.00', fee: '$3.99', status: 'refunded', date: '26 Jun 2025, 10:45', corridor: 'UK → Ghana' },
+  { id: 'TXN-20250625-013', sender: 'Kwame Boateng', recipient: 'Chioma Eze', amount: '$420.00', fee: '$7.99', status: 'delivered', date: '25 Jun 2025, 16:18', corridor: 'UK → Nigeria' },
+  { id: 'TXN-20250625-014', sender: 'Amina Osei', recipient: 'Hassan Ali', amount: '$90.00', fee: '$2.49', status: 'pending', date: '25 Jun 2025, 09:33', corridor: 'UK → Kenya' },
+  { id: 'TXN-20250624-015', sender: 'Obinna Eze', recipient: 'Akosua Frimpong', amount: '$600.00', fee: '$11.49', status: 'delivered', date: '24 Jun 2025, 13:07', corridor: 'UK → Ghana' },
+  { id: 'TXN-20250624-016', sender: 'Ngozi Adekunle', recipient: 'Peter Oduya', amount: '$275.00', fee: '$5.49', status: 'processing', date: '24 Jun 2025, 08:55', corridor: 'UK → Kenya' },
 ];
 
 const statusTabs = ['All', 'Pending', 'Processing', 'Delivered', 'Failed', 'Refunded'];

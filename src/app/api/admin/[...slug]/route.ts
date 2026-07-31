@@ -36,7 +36,7 @@ async function getOrCreateSettlementConfig() {
     config = await db.settlementConfig.create({
       data: {
         companyName: 'AfriSpine Ltd',
-        sweepCurrency: 'GBP',
+        sweepCurrency: 'USD',
         sweepSchedule: 'daily',
         sweepMinimum: 50,
       },
@@ -110,7 +110,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
           companyRegNumber: config.companyRegNumber || '',
           vatNumber: config.vatNumber || '',
           sweepNotifyEmail: config.sweepNotifyEmail || '',
-          sweepCurrency: config.sweepCurrency || 'GBP',
+          sweepCurrency: config.sweepCurrency || 'USD',
           sweepSchedule: config.sweepSchedule || 'daily',
           sweepMinimum: config.sweepMinimum || 50,
         },

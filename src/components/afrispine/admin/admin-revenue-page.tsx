@@ -17,21 +17,21 @@ import { useAppStore } from '@/stores/app';
 const kpis = [
   {
     label: 'Total Revenue (30d)',
-    value: '£12,710',
+    value: '$12,710',
     change: '+16%',
     icon: Banknote,
     positive: true,
   },
   {
     label: 'Fee Income',
-    value: '£8,432',
+    value: '$8,432',
     change: '+12%',
     icon: TrendingUp,
     positive: true,
   },
   {
     label: 'Volume Processed',
-    value: '£847,320',
+    value: '$847,320',
     change: '+14%',
     icon: BarChart3,
     positive: true,
@@ -46,11 +46,11 @@ const kpis = [
 ];
 
 const corridors = [
-  { corridor: 'GB → KE', flag1: '🇬🇧', flag2: '🇰🇪', volume: '£312,400', fees: '£4,686', net: '£3,412', txns: 1247, growth: '+18%' },
-  { corridor: 'GB → NG', flag1: '🇬🇧', flag2: '🇳🇬', volume: '£245,800', fees: '£3,687', net: '£2,691', txns: 892, growth: '+11%' },
-  { corridor: 'US → KE', flag1: '🇺🇸', flag2: '🇰🇪', volume: '£134,200', fees: '£2,013', net: '£1,466', txns: 534, growth: '+24%' },
-  { corridor: 'GB → GH', flag1: '🇬🇧', flag2: '🇬🇭', volume: '£89,600', fees: '£1,344', net: '£980', txns: 312, growth: '+8%' },
-  { corridor: 'GB → TZ', flag1: '🇬🇧', flag2: '🇹🇿', volume: '£65,320', fees: '£980', net: '£714', txns: 256, growth: '+32%' },
+  { corridor: 'GB → KE', flag1: '🇬🇧', flag2: '🇰🇪', volume: '$312,400', fees: '$4,686', net: '$3,412', txns: 1247, growth: '+18%' },
+  { corridor: 'GB → NG', flag1: '🇬🇧', flag2: '🇳🇬', volume: '$245,800', fees: '$3,687', net: '$2,691', txns: 892, growth: '+11%' },
+  { corridor: 'US → KE', flag1: '🇺🇸', flag2: '🇰🇪', volume: '$134,200', fees: '$2,013', net: '$1,466', txns: 534, growth: '+24%' },
+  { corridor: 'GB → GH', flag1: '🇬🇧', flag2: '🇬🇭', volume: '$89,600', fees: '$1,344', net: '$980', txns: 312, growth: '+8%' },
+  { corridor: 'GB → TZ', flag1: '🇬🇧', flag2: '🇹🇿', volume: '$65,320', fees: '$980', net: '$714', txns: 256, growth: '+32%' },
 ];
 
 export function AdminRevenuePage() {
@@ -138,9 +138,9 @@ export function AdminRevenuePage() {
               <tfoot>
                 <tr className="border-t-2 border-border">
                   <td className="pt-3 font-bold">Total</td>
-                  <td className="pt-3 text-right font-bold">£847,320</td>
-                  <td className="pt-3 text-right font-bold text-emerald-600">£12,710</td>
-                  <td className="pt-3 text-right font-bold">£9,263</td>
+                  <td className="pt-3 text-right font-bold">$847,320</td>
+                  <td className="pt-3 text-right font-bold text-emerald-600">$12,710</td>
+                  <td className="pt-3 text-right font-bold">$9,263</td>
                   <td className="pt-3 text-right font-bold">3,241</td>
                   <td className="pt-3 text-right">
                     <Badge variant="secondary" className="bg-emerald-100 text-emerald-700">

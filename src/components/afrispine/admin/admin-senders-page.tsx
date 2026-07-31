@@ -33,19 +33,19 @@ const kycColor: Record<string, string> = {
 
 // ─── Sender data (12+ African diaspora names) ─────────────────
 const senders = [
-  { name: 'John Doherty', email: 'john.doherty@email.com', country: '\u{1F1EC}\u{1F1E7} United Kingdom', totalSent: '£4,700', transfers: 47, kyc: 'Verified', joined: '12 Mar 2025' },
-  { name: 'Sarah Mitchell', email: 'sarah.mitchell@email.com', country: '\u{1F1EC}\u{1F1E7} United Kingdom', totalSent: '£2,350', transfers: 23, kyc: 'Verified', joined: '28 Jan 2025' },
-  { name: 'David Kimani', email: 'david.kimani@email.com', country: '\u{1F1EC}\u{1F1E7} United Kingdom', totalSent: '£11,200', transfers: 112, kyc: 'Verified', joined: '05 Aug 2024' },
-  { name: 'Lisa Petersen', email: 'lisa.petersen@email.com', country: '\u{1F1FA}\u{1F1F8} United States', totalSent: '£800', transfers: 8, kyc: 'Pending', joined: '15 Jun 2025' },
-  { name: 'Mark Thompson', email: 'mark.thompson@email.com', country: '\u{1F1EC}\u{1F1E7} United Kingdom', totalSent: '£6,400', transfers: 64, kyc: 'Verified', joined: '22 Sep 2024' },
-  { name: 'Chidi Nwosu', email: 'chidi.nwosu@email.com', country: '\u{1F1EC}\u{1F1E7} United Kingdom', totalSent: '£0', transfers: 0, kyc: 'Not Started', joined: '01 Jul 2025' },
-  { name: 'Amara Osei', email: 'amara.osei@email.com', country: '\u{1F1EC}\u{1F1E7} United Kingdom', totalSent: '£9,100', transfers: 91, kyc: 'Verified', joined: '17 May 2024' },
-  { name: 'Rachel Brown', email: 'rachel.brown@email.com', country: '\u{1F1EC}\u{1F1E7} United Kingdom', totalSent: '£300', transfers: 3, kyc: 'Not Started', joined: '27 Jun 2025' },
-  { name: 'Yusuf Abubakar', email: 'yusuf.abubakar@email.com', country: '\u{1F1EC}\u{1F1E7} United Kingdom', totalSent: '£5,250', transfers: 52, kyc: 'Verified', joined: '10 Apr 2025' },
-  { name: 'Fatima Diallo', email: 'fatima.diallo@email.com', country: '\u{1F1EB}\u{1F1F7} France', totalSent: '£1,800', transfers: 18, kyc: 'Pending', joined: '03 May 2025' },
-  { name: 'Kwame Boateng', email: 'kwame.boateng@email.com', country: '\u{1F1E8}\u{1F1E6} Canada', totalSent: '£3,600', transfers: 36, kyc: 'Verified', joined: '19 Feb 2025' },
-  { name: 'Ngozi Adekunle', email: 'ngozi.adekunle@email.com', country: '\u{1F1EC}\u{1F1E7} United Kingdom', totalSent: '£7,800', transfers: 78, kyc: 'Verified', joined: '08 Nov 2024' },
-  { name: 'Obinna Eze', email: 'obinna.eze@email.com', country: '\u{1F1FA}\u{1F1F8} United States', totalSent: '£2,100', transfers: 21, kyc: 'Pending', joined: '22 Jun 2025' },
+  { name: 'John Doherty', email: 'john.doherty@email.com', country: '\u{1F1EC}\u{1F1E7} United Kingdom', totalSent: '$4,700', transfers: 47, kyc: 'Verified', joined: '12 Mar 2025' },
+  { name: 'Sarah Mitchell', email: 'sarah.mitchell@email.com', country: '\u{1F1EC}\u{1F1E7} United Kingdom', totalSent: '$2,350', transfers: 23, kyc: 'Verified', joined: '28 Jan 2025' },
+  { name: 'David Kimani', email: 'david.kimani@email.com', country: '\u{1F1EC}\u{1F1E7} United Kingdom', totalSent: '$11,200', transfers: 112, kyc: 'Verified', joined: '05 Aug 2024' },
+  { name: 'Lisa Petersen', email: 'lisa.petersen@email.com', country: '\u{1F1FA}\u{1F1F8} United States', totalSent: '$800', transfers: 8, kyc: 'Pending', joined: '15 Jun 2025' },
+  { name: 'Mark Thompson', email: 'mark.thompson@email.com', country: '\u{1F1EC}\u{1F1E7} United Kingdom', totalSent: '$6,400', transfers: 64, kyc: 'Verified', joined: '22 Sep 2024' },
+  { name: 'Chidi Nwosu', email: 'chidi.nwosu@email.com', country: '\u{1F1EC}\u{1F1E7} United Kingdom', totalSent: '$0', transfers: 0, kyc: 'Not Started', joined: '01 Jul 2025' },
+  { name: 'Amara Osei', email: 'amara.osei@email.com', country: '\u{1F1EC}\u{1F1E7} United Kingdom', totalSent: '$9,100', transfers: 91, kyc: 'Verified', joined: '17 May 2024' },
+  { name: 'Rachel Brown', email: 'rachel.brown@email.com', country: '\u{1F1EC}\u{1F1E7} United Kingdom', totalSent: '$300', transfers: 3, kyc: 'Not Started', joined: '27 Jun 2025' },
+  { name: 'Yusuf Abubakar', email: 'yusuf.abubakar@email.com', country: '\u{1F1EC}\u{1F1E7} United Kingdom', totalSent: '$5,250', transfers: 52, kyc: 'Verified', joined: '10 Apr 2025' },
+  { name: 'Fatima Diallo', email: 'fatima.diallo@email.com', country: '\u{1F1EB}\u{1F1F7} France', totalSent: '$1,800', transfers: 18, kyc: 'Pending', joined: '03 May 2025' },
+  { name: 'Kwame Boateng', email: 'kwame.boateng@email.com', country: '\u{1F1E8}\u{1F1E6} Canada', totalSent: '$3,600', transfers: 36, kyc: 'Verified', joined: '19 Feb 2025' },
+  { name: 'Ngozi Adekunle', email: 'ngozi.adekunle@email.com', country: '\u{1F1EC}\u{1F1E7} United Kingdom', totalSent: '$7,800', transfers: 78, kyc: 'Verified', joined: '08 Nov 2024' },
+  { name: 'Obinna Eze', email: 'obinna.eze@email.com', country: '\u{1F1FA}\u{1F1F8} United States', totalSent: '$2,100', transfers: 21, kyc: 'Pending', joined: '22 Jun 2025' },
 ];
 
 export function AdminSendersPage() {

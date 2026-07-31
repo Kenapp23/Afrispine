@@ -33,15 +33,15 @@ interface RateData {
 }
 
 const defaultRates: RateData[] = [
-  { corridor: 'United Kingdom → Kenya', sendCurrency: 'GBP', receiveCurrency: 'KES', rate: 0, fee: 0, estimatedDelivery: 'Minutes' },
   { corridor: 'United States → Kenya', sendCurrency: 'USD', receiveCurrency: 'KES', rate: 0, fee: 0, estimatedDelivery: 'Minutes' },
+  { corridor: 'United Kingdom → Kenya', sendCurrency: 'GBP', receiveCurrency: 'KES', rate: 0, fee: 0, estimatedDelivery: 'Minutes' },
   { corridor: 'United Kingdom → Nigeria', sendCurrency: 'GBP', receiveCurrency: 'NGN', rate: 0, fee: 0, estimatedDelivery: '1-2 hours' },
   { corridor: 'United Kingdom → Ghana', sendCurrency: 'GBP', receiveCurrency: 'GHS', rate: 0, fee: 0, estimatedDelivery: 'Minutes' },
 ];
 
 const fallbackRates: RateData[] = [
-  { corridor: 'United Kingdom → Kenya', sendCurrency: 'GBP', receiveCurrency: 'KES', rate: 193.42, fee: 2.99, estimatedDelivery: 'Minutes' },
   { corridor: 'United States → Kenya', sendCurrency: 'USD', receiveCurrency: 'KES', rate: 153.78, fee: 3.99, estimatedDelivery: 'Minutes' },
+  { corridor: 'United Kingdom → Kenya', sendCurrency: 'GBP', receiveCurrency: 'KES', rate: 193.42, fee: 2.99, estimatedDelivery: 'Minutes' },
   { corridor: 'United Kingdom → Nigeria', sendCurrency: 'GBP', receiveCurrency: 'NGN', rate: 1987.5, fee: 2.49, estimatedDelivery: '1-2 hours' },
   { corridor: 'United Kingdom → Ghana', sendCurrency: 'GBP', receiveCurrency: 'GHS', rate: 15.32, fee: 2.99, estimatedDelivery: 'Minutes' },
 ];
@@ -516,7 +516,7 @@ export function PricingPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <span className="text-4xl font-bold text-gray-900">£4.99</span>
+                <span className="text-4xl font-bold text-gray-900">$4.99</span>
                 <span className="ml-2 text-muted-foreground">/month</span>
               </div>
               <ul className="space-y-3">

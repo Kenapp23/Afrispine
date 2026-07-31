@@ -30,18 +30,18 @@ import { Check, ArrowLeft, ArrowRight, PartyPopper, Phone, User, Globe, Banknote
 
 const SEND_COUNTRIES = [
   {
-    code: 'GB',
-    flag: '\u{1F1EC}\u{1F1E7}',
-    name: 'United Kingdom',
-    currency: 'GBP (£)',
-    desc: 'Send pounds to Africa with great rates',
-  },
-  {
     code: 'US',
     flag: '\u{1F1FA}\u{1F1F8}',
     name: 'United States',
     currency: 'USD ($)',
     desc: 'Send dollars quickly and securely',
+  },
+  {
+    code: 'GB',
+    flag: '\u{1F1EC}\u{1F1E7}',
+    name: 'United Kingdom',
+    currency: 'GBP (£)',
+    desc: 'Send pounds to Africa with great rates',
   },
   {
     code: 'CA',

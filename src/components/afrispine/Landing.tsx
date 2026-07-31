@@ -68,13 +68,13 @@ export function Landing() {
           <p className="text-gray-500 text-center mb-8">8 receive countries. Multiple rails per corridor.</p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
+              { flag: '🇺🇸→🇰🇪', label: 'US → Kenya', rate: '$1 = KES 153.8' },
               { flag: '🇬🇧→🇰🇪', label: 'UK → Kenya', rate: '£1 = KES 169.3' },
-              { flag: '🇺🇸→🇰🇪', label: 'US → Kenya', rate: '$1 = KES 133.3' },
-              { flag: '🇬🇧→🇳🇬', label: 'UK → Nigeria', rate: '£1 = NGN 1,920' },
-              { flag: '🇬🇧→🇬🇭', label: 'UK → Ghana', rate: '£1 = GHS 15.2' },
               { flag: '🇺🇸→🇳🇬', label: 'US → Nigeria', rate: '$1 = NGN 1,512' },
+              { flag: '🇬🇧→🇳🇬', label: 'UK → Nigeria', rate: '£1 = NGN 1,920' },
               { flag: '🇺🇸→🇬🇭', label: 'US → Ghana', rate: '$1 = GHS 12.0' },
-              { flag: '🇬🇧→🇿🇦', label: 'UK → South Africa', rate: 'Bank transfer' },
+              { flag: '🇬🇧→🇬🇭', label: 'UK → Ghana', rate: '£1 = GHS 15.2' },
+              { flag: '🇺🇸→🇿🇦', label: 'US → South Africa', rate: '$1 = ZAR 18.5' },
               { flag: '🇺🇸→🇺🇬', label: 'US → Uganda', rate: '$1 = UGX 3,680' },
             ].map(c => (
               <button key={c.label} onClick={() => nav('send')} className="bg-white rounded-xl p-4 border border-gray-100 hover:shadow-lg hover:border-emerald-200 transition text-left group">

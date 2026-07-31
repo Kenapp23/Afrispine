@@ -116,22 +116,47 @@ export async function POST(req: NextRequest) {
 
     // ── /api/auth/admin/login ──────────────────────────────────
     if (slug[0] === 'admin' && slug[1] === 'login' && slug.length === 2) {
-      await ensureAdminSeeded();
+      try {
+        await ensureAdminSeeded();
+      } catch (seedErr: any) {
+        return err('Admin database initialization failed', 500, seedErr.message);
+      }
 
       const { email, password } = await body(req);
 
       if (!email || !password)
         return err('Email and password are required', 400);
 
-      const admin = await db.adminUser.findUnique({
-        where: { email: email.trim().toLowerCase() },
-      });
-      if (!admin) return err('Invalid credentials', 401);
+      const normalizedEmail = email.trim().toLowerCase();
+      let admin: any;
+      try {
+        admin = await db.adminUser.findUnique({
+          where: { email: normalizedEmail },
+        });
+      } catch (dbErr: any) {
+        return err('Database error during admin lookup', 500, dbErr.message);
+      }
+      if (!admin) {
+        // List existing admins for debugging (never expose passwords)
+        let adminCount = 0;
+        let adminEmails: string[] = [];
+        try {
+          const allAdmins = await db.adminUser.findMany({ select: { email: true, isActive: true } });
+          adminCount = allAdmins.length;
+          adminEmails = allAdmins.map((a: any) => `${a.email} (active: ${a.isActive})`);
+        } catch {}
+        return err('Invalid credentials', 401, `No admin found for '${normalizedEmail}'. DB has ${adminCount} admin(s): [${adminEmails.join(', ')}]`);
+      }
 
       if (!admin.isActive) return err('Account is not active', 403);
 
-      const valid = await verifyPassword(password, admin.passwordHash);
-      if (!valid) return err('Invalid credentials', 401);
+      let valid: boolean;
+      try {
+        valid = await verifyPassword(password, admin.passwordHash);
+      } catch (pwErr: any) {
+        return err('Password verification error', 500, pwErr.message);
+      }
+      if (!valid) return err('Invalid credentials', 401, `Password mismatch for admin '${normalizedEmail}'`);
 
       await db.adminUser.update({
         where: { id: admin.id },

@@ -257,7 +257,7 @@ export function GroupSendsPage() {
 
                 {/* Target amount */}
                 <div className="grid gap-2">
-                  <Label htmlFor="gs-amount">Target Amount (GBP)</Label>
+                  <Label htmlFor="gs-amount">Target Amount (USD)</Label>
                   <Input
                     id="gs-amount"
                     type="number"

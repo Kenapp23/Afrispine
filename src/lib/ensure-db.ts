@@ -11,6 +11,7 @@ import { db } from './db'
 import bcrypt from 'bcryptjs'
 
 let ensured = false
+let adminEnsured = false
 
 // ─── Embedded DDL ───────────────────────────────────────────────
 // Generated via: npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script
@@ -572,7 +573,8 @@ export async function ensureDb(): Promise<void> {
       console.log('[ensureDb] Schema created and verified successfully')
     } catch (verifyError: any) {
       console.error('[ensureDb] Schema creation completed but verification failed:', verifyError.message)
-      // Don't set ensured=true — will retry on next request
+      // Reset flag so we retry on next request
+      ensured = false
       throw verifyError
     }
   }
@@ -580,23 +582,58 @@ export async function ensureDb(): Promise<void> {
 
 /** Ensure DB + seed the admin user if none exists */
 export async function ensureAdminSeeded(): Promise<void> {
-  await ensureDb()
-  try {
-    const count = await db.adminUser.count()
-    if (count === 0) {
-      const hash = await bcrypt.hash('Admin@2024', 12)
-      await db.adminUser.create({
-        data: {
-          email: 'admin@afrispine.com',
-          passwordHash: hash,
-          fullName: 'AfriSpine Admin',
-          role: 'superadmin',
-          isActive: true,
-        },
-      })
-      console.log('[ensureDb] Admin user seeded')
+  // Always re-verify schema if not yet ensured
+  if (!ensured) {
+    await ensureDb()
+  }
+  // Reset admin flag on every call to handle ephemeral Vercel filesystem
+  if (!adminEnsured) {
+    try {
+      const count = await db.adminUser.count()
+      if (count === 0) {
+        console.log('[ensureAdminSeeded] No admin found, creating default admin...')
+        const hash = await bcrypt.hash('Admin@2024', 12)
+        await db.adminUser.create({
+          data: {
+            email: 'admin@afrispine.com',
+            passwordHash: hash,
+            fullName: 'AfriSpine Admin',
+            role: 'superadmin',
+            isActive: true,
+          },
+        })
+        console.log('[ensureAdminSeeded] Admin user seeded successfully')
+      } else {
+        console.log('[ensureAdminSeeded] Admin user exists, skipping seed')
+      }
+      adminEnsured = true
+    } catch (e: any) {
+      console.error('[ensureAdminSeeded] Admin seed failed, resetting flags:', e.message)
+      // Reset both flags to force full retry on next request
+      ensured = false
+      adminEnsured = false
+      // Try once more with fresh state
+      try {
+        await ensureDb()
+        const count = await db.adminUser.count()
+        if (count === 0) {
+          const hash = await bcrypt.hash('Admin@2024', 12)
+          await db.adminUser.create({
+            data: {
+              email: 'admin@afrispine.com',
+              passwordHash: hash,
+              fullName: 'AfriSpine Admin',
+              role: 'superadmin',
+              isActive: true,
+            },
+          })
+          console.log('[ensureAdminSeeded] Admin user seeded on retry')
+        }
+        adminEnsured = true
+      } catch (retryErr: any) {
+        console.error('[ensureAdminSeeded] Retry also failed:', retryErr.message)
+        throw new Error(`Admin database initialization failed: ${retryErr.message}`)
+      }
     }
-  } catch (e: any) {
-    console.error('[ensureDb] Admin seed failed:', e.message)
   }
 }

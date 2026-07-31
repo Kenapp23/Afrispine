@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useAppStore } from '@/stores/app';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Gift, ArrowRight, MessageSquareHeart, Zap, Store, Smartphone, Banknote, Ticket } from 'lucide-react';
-import { allMerchants, getMerchantsByCountry, MERCH_COUNTRIES, type Merchant, type MerchantCategory } from '@/lib/merchants';
+import { MERCH_COUNTRIES, type Merchant, type MerchantCategory } from '@/lib/merchants';
 
 /* ── Occasion data ─────────────────────────────────────────────── */
 
@@ -156,11 +157,35 @@ function MerchantLogo({ merchant, size = 'md' }: { merchant: Merchant; size?: 's
 export default function GiftsHubPage() {
   const navigate = useAppStore((s) => s.navigate);
   const [selectedCountry, setSelectedCountry] = useState<string>('all');
+  const [merchants, setMerchants] = useState<Merchant[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const displayedMerchants = useMemo(() => {
-    if (selectedCountry === 'all') return allMerchants.slice(0, 12);
-    return getMerchantsByCountry(selectedCountry);
+  const fetchMerchants = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = selectedCountry !== 'all' ? `?country=${selectedCountry}` : '';
+      const res = await fetch(`/api/merchants${params}`);
+      if (!res.ok) throw new Error('Failed to fetch merchants');
+      const data = await res.json();
+      setMerchants(data.merchants ?? []);
+    } catch {
+      setMerchants([]);
+    } finally {
+      setLoading(false);
+    }
   }, [selectedCountry]);
+
+  useEffect(() => {
+    fetchMerchants();
+  }, [fetchMerchants]);
+
+  // Limit displayed merchants for "all" view
+  const displayedMerchants = useMemo(() => {
+    if (selectedCountry === 'all') return merchants.slice(0, 12);
+    return merchants;
+  }, [merchants, selectedCountry]);
+
+  const totalMerchantCount = merchants.length;
 
   return (
     <main className="min-h-screen" style={{ backgroundColor: '#FAFAF8' }}>
@@ -224,7 +249,7 @@ export default function GiftsHubPage() {
             {
               icon: Smartphone,
               title: 'Airtime Top-Up',
-              description: 'Instantly top up Safaricom, MTN, Airtel and other networks across Africa. From £5.',
+              description: 'Instantly top up Safaricom, MTN, Airtel and other networks across Africa. From $5.',
               action: 'Send Airtime',
               gradient: 'from-emerald-500 to-teal-500',
             },
@@ -350,7 +375,7 @@ export default function GiftsHubPage() {
             Redeem at top African brands
           </h2>
           <p className="mt-2 text-gray-500 text-sm sm:text-base">
-            Gift vouchers accepted at {allMerchants.length}+ stores across {MERCH_COUNTRIES.length} countries.
+            Gift vouchers accepted at {totalMerchantCount}+ stores across {MERCH_COUNTRIES.length} countries.
           </p>
         </div>
 
@@ -382,29 +407,41 @@ export default function GiftsHubPage() {
         </div>
 
         {/* Merchant grid */}
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4 sm:gap-6">
-          {displayedMerchants.map((m) => (
-            <div
-              key={m.id}
-              className="flex flex-col items-center gap-2 group cursor-default"
-            >
-              <div className="transition-transform duration-200 group-hover:scale-105">
-                <MerchantLogo merchant={m} size="md" />
+        {loading ? (
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4 sm:gap-6">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div key={i} className="flex flex-col items-center gap-2">
+                <Skeleton className="h-12 w-12 rounded-xl" />
+                <Skeleton className="h-3 w-16" />
+                <Skeleton className="h-2 w-12" />
               </div>
-              <div className="text-center">
-                <p className="text-xs font-semibold text-gray-800 leading-tight line-clamp-2">
-                  {m.name}
-                </p>
-                <p className="text-[10px] text-gray-400 mt-0.5">
-                  {MERCH_COUNTRIES.find((c) => c.code === m.countryCode)?.flag} {m.country}
-                </p>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4 sm:gap-6">
+            {displayedMerchants.map((m) => (
+              <div
+                key={m.id}
+                className="flex flex-col items-center gap-2 group cursor-default"
+              >
+                <div className="transition-transform duration-200 group-hover:scale-105">
+                  <MerchantLogo merchant={m} size="md" />
+                </div>
+                <div className="text-center">
+                  <p className="text-xs font-semibold text-gray-800 leading-tight line-clamp-2">
+                    {m.name}
+                  </p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">
+                    {MERCH_COUNTRIES.find((c) => c.code === m.countryCode)?.flag} {m.country}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         <p className="mt-8 text-center text-sm text-gray-400">
-          &amp; {allMerchants.length}+ merchants across Kenya, Nigeria, Ghana, South Africa, Uganda, Tanzania&hellip;
+          &amp; {totalMerchantCount}+ merchants across Kenya, Nigeria, Ghana, South Africa, Uganda, Tanzania&hellip;
         </p>
       </section>
 
