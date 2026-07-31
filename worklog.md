@@ -385,3 +385,42 @@ Stage Summary:
 - No admin console exposure on user login
 - New users go to dashboard after signup
 - Back navigation added to all sender sub-pages
+---
+Task ID: 11
+Agent: Lead Engineer
+Task: Fix admin portal errors — settlement, settings, digest, partner management
+
+Work Log:
+- Diagnosed root cause: 10+ API routes called by admin pages did not exist (404s)
+- Created consolidated /api/admin/[...slug]/route.ts catch-all (shared SQLite on Vercel):
+  - GET/PUT /api/admin/settlement
+  - GET/POST/DELETE /api/admin/paystack-keys
+  - GET /api/admin/paystack-integration
+  - GET /api/admin/paystack-settlements
+  - GET /api/admin/revenue-summary
+  - GET/PUT /api/admin/settings
+  - GET/POST /api/admin/settings/admins
+  - PATCH/POST /api/admin/settings/admins/[id]
+  - GET /api/admin/revenue + /api/admin/revenue/export
+- Created /api/digest/[...slug]/route.ts catch-all:
+  - GET /api/digest/admin/stats
+  - GET /api/digest/issues
+  - GET /api/digest/stories
+- Rewrote admin-settings-page.tsx with partner management hub:
+  - Fincra (primary payment processor)
+  - Smile ID (KYC provider)
+  - PEPChecker (AML/sanctions screening)
+  - Africa's Talking (SMS/USSD)
+  - Resend (email delivery)
+- Updated admin-settlement-page.tsx: Fincra branding, key checks
+- Verified all APIs on live Vercel: save company details, save keys, read settlement, read keys, digest stats, settings, revenue summary, admin users
+
+Stage Summary:
+- All admin portal errors fixed:
+  - 'Failed to load revenue summary' → /api/admin/revenue-summary endpoint
+  - 'Failure to save details error' → PUT /api/admin/settlement endpoint
+  - 'Payment keys not yet configured' → /api/admin/paystack-keys endpoint
+  - 'Failed to load the latest issue' → /api/digest/* endpoints
+- Fincra and all partners now manageable from admin Settings page
+- Payment processor references updated from Paystack to Fincra
+- Pushed as commit 04de554 to GitHub, Vercel auto-deployed
