@@ -113,8 +113,8 @@ export function AdminSettlementPage() {
   const [integrationLoading, setIntegrationLoading] = useState(false);
 
   const keysConfigured =
-    paystackKeys?.keys?.paystack_secret_key?.isSet &&
-    paystackKeys?.keys?.paystack_public_key?.isSet;
+    paystackKeys?.keys?.['fincra_secret_key']?.isSet &&
+    paystackKeys?.keys?.['fincra_public_key']?.isSet;
 
   // ── Section 3: Reconciliation state ──
   const [settlements, setSettlements] = useState<PaystackSettlement[]>([]);
@@ -335,10 +335,10 @@ export function AdminSettlementPage() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <CreditCard className="h-5 w-5 text-muted-foreground" />
-            <CardTitle className="text-base">Payment Processor Connection</CardTitle>
+            <CardTitle className="text-base">Fincra Payment Connection</CardTitle>
           </div>
           <CardDescription>
-            Payment provider status and settlement account information.
+            Fincra payment provider status and settlement account information.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -350,16 +350,16 @@ export function AdminSettlementPage() {
               <div className="flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
                 <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-emerald-800">Payment Processor Connected</p>
+                  <p className="font-medium text-emerald-800">Fincra Connected</p>
                   {integrationLoading ? (
                     <Skeleton className="mt-1 h-4 w-48" />
                   ) : integration ? (
                     <p className="mt-1 text-sm text-emerald-700">
-                      Business: <span className="font-semibold">{integration.business_name}</span>
+                      Provider: <span className="font-semibold">{integration.business_name}</span>
                     </p>
                   ) : (
                     <p className="mt-1 text-sm text-emerald-700">
-                      Could not load business details.
+                      Fincra integration active.
                     </p>
                   )}
                 </div>
@@ -373,7 +373,7 @@ export function AdminSettlementPage() {
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-amber-800">Payment keys not yet configured</p>
                   <p className="mt-1 text-sm text-amber-700">
-                    Add your payment API keys in Settings to activate payments.
+                    Add your Fincra API keys in Settings to activate payments.
                   </p>
                   <Button
                     variant="outline"
@@ -381,7 +381,7 @@ export function AdminSettlementPage() {
                     className="mt-3"
                     onClick={() => navigate('admin-settings')}
                   >
-                    Go to Settings →
+                    Configure in Settings →
                   </Button>
                 </div>
               </div>
@@ -397,13 +397,13 @@ export function AdminSettlementPage() {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-sm font-medium text-emerald-600 hover:text-emerald-700 transition-colors"
             >
-              Open Payment Dashboard
+              Open Fincra Dashboard
               <ExternalLink className="h-4 w-4" />
             </a>
           </div>
 
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Your settlement bank account is managed in your payment processor dashboard. Settlements are processed
+            Your settlement bank account is managed in your Fincra dashboard. Settlements are processed
             automatically to your Kenyan bank account on a T+1 cycle.
           </p>
         </CardContent>
