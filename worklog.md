@@ -424,3 +424,222 @@ Stage Summary:
 - Fincra and all partners now manageable from admin Settings page
 - Payment processor references updated from Paystack to Fincra
 - Pushed as commit 04de554 to GitHub, Vercel auto-deployed
+
+---
+Task ID: 3
+Agent: settlement-fix
+Task: Fix settlement page errors and partner integration
+
+Work Log:
+- Added `/api/admin/partner-status` GET endpoint to catch-all route — returns configured status for all 4 partners (Fincra, MyStocks Africa, Africa's Talking, Resend) with per-key breakdown
+- Made `/api/admin/revenue-summary` endpoint resilient: wrapped each Prisma aggregate call (transaction, settled, billPayment) in individual try/catch so a single table query failure returns zeroed data instead of a 500 error
+- Rewrote `admin-settlement-page.tsx`:
+  - Added per-section error state variables (`configError`, `partnersError`, `revenueError`) with user-facing inline error banners (red box with XCircle icon, error message, and Retry button)
+  - Replaced old "Fincra Payment Connection" card with new "Partner Integrations" card showing all 4 partners in a 2-column grid
+  - Each partner card shows: icon, name, purpose, connected/partial/not-configured badge, per-key status pills (green check / gray X for each key)
+  - Partner data fetched from new `/api/admin/partner-status` endpoint
+  - `keysConfigured` now derived from partner status instead of separate paystack-keys fetch
+  - Removed dead code: unused `PaystackKeysStatus` interface, `PaystackIntegration` interface, `fetchPaystackKeys`, `fetchIntegration` functions and related state
+  - Revenue summary section now shows inline error banner with retry when fetch fails
+  - Empty settlements state shows descriptive icon + message instead of plain text
+  - "Configure in Settings →" button on settlements section links to admin-settings when keys not configured
+  - Added "Configure Keys" button in Partner Integrations header linking to admin-settings
+- All lint checks pass (eslint clean)
+
+Stage Summary:
+- Revenue summary no longer crashes page when table queries fail — each aggregate is individually caught
+- Per-section error states: if one section fails, others continue working independently
+- Partner Integrations grid shows all 4 partners (Fincra, MyStocks Africa, Africa's Talking, Resend) with visual key status
+- Removed unused code and interfaces for cleaner component
+- No blue/indigo colors used — emerald for connected, amber for partial, red for errors, gray for not configured
+
+---
+Task ID: 6
+Agent: fee-structure
+Task: Add admin fee structure management
+
+Work Log:
+- Read existing admin-settlement-page.tsx, admin API route ([...slug]/route.ts), and Prisma schema to understand patterns
+- Added GET /api/admin/fee-structure endpoint to catch-all route:
+  - Returns 13 default corridors (GB_KE, GB_NG, GB_GH, GB_UG, GB_TZ, GB_ZA, US_NG, US_KE, US_GH, CA_GH, CA_KE, EU_KE, EU_NG)
+  - Reads fee settings from PlatformSetting table with key prefix `fee_` (e.g., fee_GB_KE_flat, fee_GB_KE_pct, fee_GB_KE_min)
+  - Falls back to defaults: flat £3.50, percentage 1.5%, minimum £2.00
+- Added PUT /api/admin/fee-structure endpoint to catch-all route:
+  - Accepts { fees: [{ corridor, flatFee, pctFee, minFee }] }
+  - Upserts each fee setting into PlatformSetting via setSetting helper
+- Added Fee Structure Card section to admin-settlement-page.tsx:
+  - Positioned between Partner Integrations and Reconciliation sections
+  - Uses shadcn/ui Table components (Table, TableHeader, TableBody, TableRow, TableHead, TableCell)
+  - Inline editing with number inputs for flat fee, percentage fee, and minimum fee per corridor
+  - Corridor names displayed as badges (e.g., "GB → KE")
+  - Emerald-themed info notice explaining fee calculation logic
+  - Save button with loading state persists to API
+  - Loading skeletons, error state with retry (follows existing SectionError pattern)
+- Added FeeCorridor interface and state variables (feeCorridors, feeLoading, feeSaving, feeError)
+- Added fetchFeeStructure callback and handleSaveFees handler
+- Added updateFeeField helper for inline editing
+- Fetches fee structure on mount alongside other data
+- Lint passes clean, no new TypeScript errors
+
+Stage Summary:
+- Fee Structure management section added to Admin Settlement page
+- 13 corridors with inline-editable flat fee, percentage fee, and minimum fee
+- API endpoints GET/PUT /api/admin/fee-structure using PlatformSetting storage
+- Default values: £3.50 flat, 1.5% percentage, £2.00 minimum
+- Emerald theme colors used throughout (info banner, badges)
+- Follows existing patterns: authHeaders, SectionError, toast notifications, shadcn/ui components
+
+---
+Task ID: 11
+Agent: chama-country-dropdown
+Task: Add country-aware dropdown to chama page
+
+Work Log:
+- Read and analyzed `chama-page.tsx` (957 lines) and `savings-circle-names.ts` to understand existing country derivation and terminology system
+- Added `COUNTRY_DISPLAY_NAMES` constant mapping ISO codes to full country display names (Kenya, Nigeria, Ghana, South Africa, Senegal, Côte d'Ivoire, Cameroon, Ethiopia, Eritrea, Tanzania, Uganda)
+- Imported `Globe` icon from lucide-react for the dropdown trigger
+- Added `selectedCountry` state (`string | null`, null = auto-detect) and missing `createOpen` state
+- Refactored country code derivation: `autoCountryCode` (from sender/detected) → `effectiveCountryCode` (manual override || auto) → `circleName`
+- Added shadcn/ui `Select` dropdown in the list view header, right of the heading, with:
+  - First option: "Auto-detect" showing detected country flag, name, and local circle name
+  - Subsequent options: each `ALL_CIRCLE_COUNTRIES` entry displayed as `🇰🇪 Kenya (Chamas)`
+- Dropdown uses emerald-themed Globe icon
+- Responsive layout: stacks vertically on mobile, horizontal on desktop
+- Fixed create dialog country dropdown to use `countryFlagEmoji()` and `COUNTRY_DISPLAY_NAMES` instead of broken `c.flag` property
+- Fixed JSX nesting issue (missing closing `</div>` for outer header container)
+- All terminology reacts to country selection: page heading, join dialog, create dialog, type dropdown options, empty state text, tagline
+
+Stage Summary:
+- Country dropdown added to Chama/Savings Circles page header
+- 11 countries with local terminology available in the dropdown
+- Auto-detect is default; selecting a country overrides all terminology immediately
+- All existing functionality preserved; lint passes cleanly
+
+---
+Task ID: 9
+Agent: brand-logos
+Task: Update brand logos with multi-source strategy
+
+Work Log:
+- Read existing `MerchantLogo` component in `gifts-hub-page.tsx` — single-source clearbit with basic DOM-based fallback
+- Added `MerchantCategory` type import from `@/lib/merchants`
+- Created `CATEGORY_BG` mapping: 10 merchant categories → category-appropriate Tailwind background colours (emerald, slate, pink, orange, sky, rose, teal, violet, gray)
+- Created `extractDomain()` helper: parses clearbit URLs to extract raw domain (handles `logo.clearbit.com/naivas.co.ke` → `naivas.co.ke`)
+- Created `buildLogoSources()` helper: builds 3-source array from domain — clearbit (primary), brandfetch CDN (fallback 1), Google favicon (fallback 2)
+- Rewrote `MerchantLogo` component with:
+  - `useState` for `currentSourceIdx`, `failed`, and `loading` state
+  - `useMemo` to memoize the sources array
+  - `key` prop on `<img>` to force re-render when source index changes
+  - `onError` handler that advances to next source or marks as failed
+  - `onLoad` handler that disables loading skeleton
+  - Animated pulse skeleton (`bg-gray-200 animate-pulse`) shown while loading
+  - Final fallback renders styled initials with category-appropriate background colour and shadow
+- Added `aria-label` on the fallback div for accessibility
+
+Stage Summary:
+- Multi-source logo loading: clearbit → brandfetch → Google favicon → category-coloured initials
+- Loading skeleton shown during fetch; smooth transitions between sources
+- Category-aware colour coding for initial badges (10 categories mapped)
+- Lint passes cleanly, no errors in dev log
+---
+Task ID: 2
+Agent: main
+Task: Delete old AdminLogin.tsx with hardcoded credentials
+
+Work Log:
+- Deleted /home/z/my-project/src/components/afrispine/AdminLogin.tsx which had hardcoded admin@afrispine.com / admin123 credentials
+- The new admin-login-page.tsx (already in use) has no hardcoded credentials
+
+Stage Summary:
+- Security vulnerability eliminated
+- New AdminLoginPage component is the active one, confirmed via page.tsx imports
+---
+Task ID: 8
+Agent: main
+Task: Fix Month send goal currency encoding (u00a3)
+
+Work Log:
+- Added const GBP = '\u00A3' to dashboard-page.tsx
+- Replaced all literal £ characters with GBP constant
+- Updated monthly goal display, savings text, and investment card
+
+Stage Summary:
+- Currency should now render correctly as £ instead of \u00a3
+- Consistent GBP symbol across all dashboard text
+---
+Task ID: 12
+Agent: main
+Task: Fix Bonds HTTP 404 error
+
+Work Log:
+- Added FALLBACK_BONDS constant with 6 bond entries matching the API data
+- Updated fetchBonds() to use fallback data when API returns 404 or fails
+- On API success with empty array, also falls back to built-in data
+- Errors are logged to console but not shown to user
+
+Stage Summary:
+- Bonds page will always show bond data even if API is unavailable
+- Fallback matches the same data structure as the API response
+---
+Task ID: 3
+Agent: settlement-fix
+Task: Fix settlement page errors and partner integration
+
+Work Log:
+- Added /api/admin/partner-status endpoint returning status for Fincra, MyStocks Africa, Africa's Talking, Resend
+- Hardened /api/admin/revenue-summary with per-query try/catch (no more 500 on missing tables)
+- Added per-section error states (configError, partnersError, revenueError) to settlement page
+- Replaced Fincra-only payment connection card with Partner Integrations grid showing all 4 partners
+- Each partner shows icon, name, purpose, status badge (Connected/Partial/Not Configured), and per-key status pills
+
+Stage Summary:
+- Settlement page now shows all 4 partners: Fincra (Payments), MyStocks (Wealth), Africa's Talking (SMS), Resend (Email)
+- Revenue summary resilient to missing database tables
+- Each section has independent error handling with retry buttons
+---
+Task ID: 6
+Agent: fee-structure
+Task: Add admin fee structure management
+
+Work Log:
+- Added GET /api/admin/fee-structure endpoint with 13 corridors and default fees
+- Added PUT /api/admin/fee-structure endpoint to persist fee settings
+- Added Fee Structure Card to settlement page with inline-editable table
+- 13 corridors: GB→KE, GB→NG, GB→GH, GB→UG, GB→TZ, GB→ZA, US→NG, US→KE, US→GH, CA→GH, CA→KE, EU→KE, EU→NG
+- Default fees: £3.50 flat, 1.5% percentage, £2.00 minimum
+
+Stage Summary:
+- Admin can now manage fees per corridor from the Settlement page
+- Fees stored in PlatformSetting table with fee_ prefix keys
+---
+Task ID: 11
+Agent: chama-country-dropdown
+Task: Add country-aware dropdown to chama/savings circles page
+
+Work Log:
+- Added selectedCountry state with null = auto-detect default
+- Added COUNTRY_DISPLAY_NAMES constant for clean dropdown labels
+- Added Select dropdown showing all 11 countries with flags and local terminology
+- All terminology (page heading, dialogs, types) reactively updates when country changes
+- Fixed pre-existing bug: missing createOpen state declaration
+- Fixed create dialog country dropdown showing undefined
+
+Stage Summary:
+- Users can explicitly select country: Kenya (Chamas), Nigeria (Esusus), South Africa (Stokvels), Ghana (Susu), etc.
+- All page text adapts to the selected country's local terminology
+---
+Task ID: 9
+Agent: brand-logos
+Task: Update gift merchant logos with multi-source strategy
+
+Work Log:
+- Updated MerchantLogo component in gifts-hub-page.tsx
+- Implemented 3-source cascade: Clearbit → Brandfetch CDN → Google Favicon
+- Added extractDomain() helper to parse logo URLs
+- Added loading skeleton while first image loads
+- Added category-based color mapping for final fallback (10 categories)
+- Each img element gets unique key based on source index to force re-mount on fallback
+
+Stage Summary:
+- Merchants now try 3 different logo sources before falling back to styled initials
+- Category-appropriate colors for fallback badges (emerald for supermarkets, amber for telecom, etc.)

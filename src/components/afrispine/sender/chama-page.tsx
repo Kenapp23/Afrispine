@@ -38,6 +38,7 @@ import {
   LogOut,
   Copy,
   Sparkles,
+  Globe,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getSavingsCircleName, ALL_CIRCLE_COUNTRIES } from '@/lib/savings-circle-names';
@@ -133,6 +134,21 @@ const COUNTRY_NAME_TO_CODE: Record<string, string> = {
   tanzania: 'TZ', uganda: 'UG',
 };
 
+// ISO code → display country name mapping
+const COUNTRY_DISPLAY_NAMES: Record<string, string> = {
+  KE: 'Kenya',
+  NG: 'Nigeria',
+  GH: 'Ghana',
+  ZA: 'South Africa',
+  SN: 'Senegal',
+  CI: 'Côte d\'Ivoire',
+  CM: 'Cameroon',
+  ET: 'Ethiopia',
+  ER: 'Eritrea',
+  TZ: 'Tanzania',
+  UG: 'Uganda',
+};
+
 function countryFlagEmoji(code: string): string {
   if (!code || code.length !== 2) return '';
   const c = code.toUpperCase();
@@ -162,11 +178,18 @@ export function ChamaPage() {
   const detectedCountry = useAppStore((s) => s.detectedCountry);
   const { toast } = useToast();
 
-  // Cultural naming based on sender's country
-  const countryCode = deriveCountryCode(sender, detectedCountry);
-  const circleName = getSavingsCircleName(countryCode);
+  // Country selector state (null = auto-detect from sender/detected country)
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+
+  // Create dialog state
+  const [createOpen, setCreateOpen] = useState(false);
+
+  // Cultural naming based on sender's country, with manual override
+  const autoCountryCode = deriveCountryCode(sender, detectedCountry);
+  const effectiveCountryCode = selectedCountry || autoCountryCode;
+  const circleName = getSavingsCircleName(effectiveCountryCode);
   const circleCountries = ALL_CIRCLE_COUNTRIES;
-  const countryFlag = countryFlagEmoji(countryCode || '');
+  const countryFlag = countryFlagEmoji(effectiveCountryCode || '');
 
   // View state
   const [circles, setCircles] = useState<Circle[]>([]);
@@ -179,9 +202,8 @@ export function ChamaPage() {
   const [createForm, setCreateForm] = useState({
     name: '',
     type: circleName.types?.[0]?.value || 'general',
-    country: countryCode || '',
+    country: effectiveCountryCode || '',
     contributionAmount: '',
-    contributionCurrency: 'GBP',
     contributionCurrency: 'GBP',
     frequency: 'monthly',
   });
@@ -696,18 +718,34 @@ export function ChamaPage() {
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold text-gray-900">Savings Circles ({circleName.plural})</h1>
-            {countryFlag && countryCode && (
-              <Badge variant="secondary" className="gap-1.5 px-2.5 py-0.5 text-sm font-medium">
-                <span className="text-base leading-none">{countryFlag}</span>
-                {circleName.name}
-              </Badge>
-            )}
           </div>
           <p className="text-sm text-muted-foreground mt-1">
             {circleName.tagline} — rotating savings with friends and family.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+          <Select
+            value={selectedCountry || '__auto__'}
+            onValueChange={(v) => setSelectedCountry(v === '__auto__' ? null : v)}
+          >
+            <SelectTrigger className="w-full sm:w-[280px] gap-2">
+              <Globe className="h-4 w-4 text-emerald-600 shrink-0" />
+              <SelectValue placeholder="Auto-detect" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__auto__">
+                {autoCountryCode
+                  ? `${countryFlagEmoji(autoCountryCode)} Auto-detect (${COUNTRY_DISPLAY_NAMES[autoCountryCode] || autoCountryCode} — ${getSavingsCircleName(autoCountryCode).name})`
+                  : 'Auto-detect'}
+              </SelectItem>
+              {circleCountries.map((c) => (
+                <SelectItem key={c.code} value={c.code}>
+                  {countryFlagEmoji(c.code)} {COUNTRY_DISPLAY_NAMES[c.code] || c.code} ({c.plural})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <div className="flex items-center gap-2">
           <Dialog open={joinOpen} onOpenChange={setJoinOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" className="gap-1.5">
@@ -754,7 +792,7 @@ export function ChamaPage() {
                 <div>
                   <Label>Country *</Label>
                   <Select
-                    value={createForm.country || countryCode || ''}
+                    value={createForm.country || effectiveCountryCode || ''}
                     onValueChange={(v) => {
                       const code = v;
                       setCreateForm({ ...createForm, country: code });
@@ -768,7 +806,7 @@ export function ChamaPage() {
                     <SelectContent>
                       {circleCountries.map((c) => (
                         <SelectItem key={c.code} value={c.code}>
-                          {c.flag} {c.name} ({c.code})
+                          {countryFlagEmoji(c.code)} {COUNTRY_DISPLAY_NAMES[c.code] || c.code} ({c.name})
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -855,6 +893,7 @@ export function ChamaPage() {
             </DialogContent>
           </Dialog>
         </div>
+      </div>
       </div>
 
       {/* Loading State */}

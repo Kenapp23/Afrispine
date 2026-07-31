@@ -123,6 +123,64 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
       return NextResponse.json(status);
     }
 
+    // ─── /api/admin/partner-status ───
+    if (path === 'partner-status') {
+      const fincraPub = await getSetting('fincra_public_key');
+      const fincraSec = await getSetting('fincra_secret_key');
+      const mystocksKey = await getSetting('mystocks_api_key');
+      const mystocksId = await getSetting('mystocks_partner_id');
+      const atKey = await getSetting('at_api_key');
+      const atUser = await getSetting('at_username');
+      const resendKey = await getSetting('resend_api_key');
+
+      const hasKey = (k: string | null) => !!k && k.length > 5;
+
+      const partners = [
+        {
+          id: 'fincra',
+          name: 'Fincra',
+          purpose: 'Payments & Collections',
+          configured: hasKey(fincraSec) && hasKey(fincraPub),
+          keysSet: [hasKey(fincraPub), hasKey(fincraSec)].filter(Boolean).length,
+          keysTotal: 2,
+          keyLabels: ['Public Key', 'Secret Key'],
+          keyStatuses: [hasKey(fincraPub), hasKey(fincraSec)],
+        },
+        {
+          id: 'mystocks_africa',
+          name: 'MyStocks Africa',
+          purpose: 'Wealth & Investment',
+          configured: hasKey(mystocksKey) && hasKey(mystocksId),
+          keysSet: [hasKey(mystocksKey), hasKey(mystocksId)].filter(Boolean).length,
+          keysTotal: 2,
+          keyLabels: ['API Key', 'Partner ID'],
+          keyStatuses: [hasKey(mystocksKey), hasKey(mystocksId)],
+        },
+        {
+          id: 'africas_talking',
+          name: "Africa's Talking",
+          purpose: 'SMS & Notifications',
+          configured: hasKey(atKey) && hasKey(atUser),
+          keysSet: [hasKey(atUser), hasKey(atKey)].filter(Boolean).length,
+          keysTotal: 2,
+          keyLabels: ['Username', 'API Key'],
+          keyStatuses: [hasKey(atUser), hasKey(atKey)],
+        },
+        {
+          id: 'resend',
+          name: 'Resend',
+          purpose: 'Email Delivery',
+          configured: hasKey(resendKey),
+          keysSet: [hasKey(resendKey)].filter(Boolean).length,
+          keysTotal: 1,
+          keyLabels: ['API Key'],
+          keyStatuses: [hasKey(resendKey)],
+        },
+      ];
+
+      return NextResponse.json({ partners });
+    }
+
     // ─── /api/admin/paystack-integration ───
     if (path === 'paystack-integration') {
       const keys = await getPaymentKeysStatus();
@@ -155,26 +213,41 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
       const now = new Date();
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-      // Sum all fee amounts from transactions this month
-      const txResults = await db.transaction.aggregate({
-        where: { createdAt: { gte: monthStart } },
-        _sum: { feeAmount: true, sendAmount: true, totalCharged: true },
-        _count: true,
-      });
+      // Sum all fee amounts from transactions this month (safe - returns 0 on error)
+      let txResults = { _sum: { feeAmount: 0, sendAmount: 0, totalCharged: 0 }, _count: 0 } as any;
+      try {
+        txResults = await db.transaction.aggregate({
+          where: { createdAt: { gte: monthStart } },
+          _sum: { feeAmount: true, sendAmount: true, totalCharged: true },
+          _count: true,
+        });
+      } catch (e: any) {
+        console.error('[revenue-summary] transaction aggregate failed:', e.message);
+      }
 
       // Sum settled (delivered) transactions
-      const settledResults = await db.transaction.aggregate({
-        where: { createdAt: { gte: monthStart }, status: 'delivered' },
-        _sum: { feeAmount: true },
-        _count: true,
-      });
+      let settledResults = { _sum: { feeAmount: 0 }, _count: 0 } as any;
+      try {
+        settledResults = await db.transaction.aggregate({
+          where: { createdAt: { gte: monthStart }, status: 'delivered' },
+          _sum: { feeAmount: true },
+          _count: true,
+        });
+      } catch (e: any) {
+        console.error('[revenue-summary] settled aggregate failed:', e.message);
+      }
 
       // Also count bill payments
-      const billResults = await db.billPayment.aggregate({
-        where: { createdAt: { gte: monthStart } },
-        _sum: { amount: true },
-        _count: true,
-      });
+      let billResults = { _sum: { amount: 0 }, _count: 0 } as any;
+      try {
+        billResults = await db.billPayment.aggregate({
+          where: { createdAt: { gte: monthStart } },
+          _sum: { amount: true },
+          _count: true,
+        });
+      } catch (e: any) {
+        console.error('[revenue-summary] billPayment aggregate failed:', e.message);
+      }
 
       const totalFees = Number(txResults._sum.feeAmount || 0);
       const totalVolume = Number(txResults._sum.sendAmount || 0) + Number(billResults._sum.amount || 0);
@@ -369,6 +442,36 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
       });
     }
 
+    // ─── /api/admin/fee-structure ───
+    if (path === 'fee-structure') {
+      const corridors = [
+        'GB_KE', 'GB_NG', 'GB_GH', 'GB_UG', 'GB_TZ', 'GB_ZA',
+        'US_NG', 'US_KE', 'US_GH', 'CA_GH', 'CA_KE', 'EU_KE', 'EU_NG',
+      ];
+      const DEFAULT_FLAT = '3.50';
+      const DEFAULT_PCT = '1.5';
+      const DEFAULT_MIN = '2.00';
+
+      // Fetch all fee_ prefixed settings
+      const allFeeSettings = await db.platformSetting.findMany({
+        where: { key: { startsWith: 'fee_' } },
+      });
+      const feeMap: Record<string, string> = {};
+      for (const s of allFeeSettings) {
+        if (s.value) feeMap[s.key] = s.value;
+      }
+
+      const fees = corridors.map((c) => ({
+        corridor: c,
+        display: c.replace('_', ' → '),
+        flatFee: feeMap[`fee_${c}_flat`] ?? DEFAULT_FLAT,
+        pctFee: feeMap[`fee_${c}_pct`] ?? DEFAULT_PCT,
+        minFee: feeMap[`fee_${c}_min`] ?? DEFAULT_MIN,
+      }));
+
+      return NextResponse.json({ fees });
+    }
+
     // ─── /api/admin/providers ───
     if (path === 'providers') {
       const providers = await db.provider.findMany({
@@ -410,6 +513,31 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ slug
       if (body.sweepNotifyEmail !== undefined) updates.sweepNotifyEmail = String(body.sweepNotifyEmail);
 
       await db.settlementConfig.update({ where: { id: config.id }, data: updates });
+
+      return NextResponse.json({ success: true });
+    }
+
+    // ─── /api/admin/fee-structure ───
+    if (path === 'fee-structure') {
+      const body = await req.json();
+      const fees: { corridor: string; flatFee?: string; pctFee?: string; minFee?: string }[] = body.fees;
+
+      if (!Array.isArray(fees)) {
+        return NextResponse.json({ error: 'fees array is required' }, { status: 400 });
+      }
+
+      for (const f of fees) {
+        const c = String(f.corridor).toUpperCase();
+        if (f.flatFee !== undefined && f.flatFee !== '') {
+          await setSetting(`fee_${c}_flat`, String(f.flatFee));
+        }
+        if (f.pctFee !== undefined && f.pctFee !== '') {
+          await setSetting(`fee_${c}_pct`, String(f.pctFee));
+        }
+        if (f.minFee !== undefined && f.minFee !== '') {
+          await setSetting(`fee_${c}_min`, String(f.minFee));
+        }
+      }
 
       return NextResponse.json({ success: true });
     }

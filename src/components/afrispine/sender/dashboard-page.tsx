@@ -26,6 +26,8 @@ const statusIcon: Record<string, string> = {
   refunded: '↩',
 };
 
+const GBP = '\u00A3';
+
 function getGreeting() {
   const h = new Date().getHours();
   if (h < 12) return { text: 'Good morning', icon: Sun };
@@ -138,13 +140,13 @@ export function DashboardPage() {
         <CardContent className="pt-5 pb-5">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-medium text-gray-900">Monthly send goal</p>
-            <p className="text-sm font-semibold text-emerald-700">{`£${monthSent.toLocaleString()} / £${monthGoal.toLocaleString()}`}</p>
+            <p className="text-sm font-semibold text-emerald-700">{`${GBP}${monthSent.toLocaleString()} / ${GBP}${monthGoal.toLocaleString()}`}</p>
           </div>
           <Progress value={goalPct} className="h-2.5 [&>div]:bg-emerald-500" />
           <p className="mt-1.5 text-xs text-muted-foreground">
             {goalPct >= 100
-              ? 'Target reached! You saved an estimated £{(monthSent * 0.055).toFixed(0)} vs traditional providers.'
-              : `£${monthGoal - monthSent} more to reach your target. Save up to ${((monthGoal - monthSent) * 0.055).toFixed(0)} in fees with AfriSpine.`}
+              ? `Target reached! You saved an estimated ${GBP}${(monthSent * 0.055).toFixed(0)} vs traditional providers.`
+              : `${GBP}${monthGoal - monthSent} more to reach your target. Save up to ${((monthGoal - monthSent) * 0.055).toFixed(0)} in fees with AfriSpine.`}
           </p>
         </CardContent>
       </Card>
@@ -212,7 +214,7 @@ export function DashboardPage() {
                 <p className="text-sm text-muted-foreground truncate">
                   {hasWealthAccount
                     ? portfolioLoading ? 'Loading portfolio...' : portfolioSummary || 'View your holdings'
-                    : 'From £10. NSE, NGX, JSE and more.'}
+                    : `From ${GBP}10. NSE, NGX, JSE and more.`}
                 </p>
               </div>
             </div>

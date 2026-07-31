@@ -5,7 +5,7 @@ import { useAppStore } from '@/stores/app';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Gift, ArrowRight, MessageSquareHeart, Zap, Store, Smartphone, Banknote, Ticket } from 'lucide-react';
-import { allMerchants, getMerchantsByCountry, MERCH_COUNTRIES, type Merchant } from '@/lib/merchants';
+import { allMerchants, getMerchantsByCountry, MERCH_COUNTRIES, type Merchant, type MerchantCategory } from '@/lib/merchants';
 
 /* ── Occasion data ─────────────────────────────────────────────── */
 
@@ -40,23 +40,67 @@ const steps = [
   },
 ];
 
-/* ── Merchant logo component with fallback ────────────────────── */
+/* ── Category → colour mapping for initial badge fallback ──────── */
+
+const CATEGORY_BG: Record<MerchantCategory, string> = {
+  Supermarket: 'bg-emerald-600',
+  Electronics: 'bg-slate-600',
+  Fashion: 'bg-pink-500',
+  'Airtime/Telecom': 'bg-orange-500',
+  Travel: 'bg-sky-500',
+  'Food & Dining': 'bg-rose-600',
+  Healthcare: 'bg-teal-600',
+  Entertainment: 'bg-violet-600',
+  'E-Commerce': 'bg-emerald-600',
+  Utilities: 'bg-gray-500',
+};
+
+function extractDomain(logoUrl: string): string {
+  try {
+    // Handle: https://logo.clearbit.com/naivas.co.ke
+    const url = new URL(logoUrl);
+    if (url.hostname === 'logo.clearbit.com') {
+      return url.pathname.replace(/^\/+/, '');
+    }
+    return url.hostname;
+  } catch {
+    // Fallback: treat the string as a domain
+    return logoUrl.replace(/^https?:\/\//, '').split('/')[0];
+  }
+}
+
+function buildLogoSources(logoUrl: string): string[] {
+  const domain = extractDomain(logoUrl);
+  return [
+    logoUrl, // Primary: clearbit
+    `https://cdn.brandfetch.io/${domain}?w=128&h=128&format=png`, // Fallback 1
+    `https://www.google.com/s2/favicons?domain=${domain}&sz=128`, // Fallback 2
+  ];
+}
+
+/* ── Merchant logo component with multi-source fallback ─────────── */
 
 function MerchantLogo({ merchant, size = 'md' }: { merchant: Merchant; size?: 'sm' | 'md' | 'lg' }) {
+  const [currentSourceIdx, setCurrentSourceIdx] = useState(0);
+  const [failed, setFailed] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const sources = useMemo(() => buildLogoSources(merchant.logoUrl), [merchant.logoUrl]);
+
   const sizeClasses = {
     sm: 'h-8 w-8 rounded-lg text-xs',
     md: 'h-12 w-12 rounded-xl text-sm',
     lg: 'h-16 w-16 rounded-2xl text-base',
   };
-  const fallbackSizes = {
-    sm: 'h-8 w-8 rounded-lg',
-    md: 'h-12 w-12 rounded-xl',
-    lg: 'h-16 w-16 rounded-2xl',
-  };
   const imgSize = {
     sm: 'h-8 w-8 rounded-lg object-contain',
     md: 'h-12 w-12 rounded-xl object-contain',
     lg: 'h-16 w-16 rounded-2xl object-contain',
+  };
+  const skeletonSize = {
+    sm: 'h-8 w-8 rounded-lg',
+    md: 'h-12 w-12 rounded-xl',
+    lg: 'h-16 w-16 rounded-2xl',
   };
 
   const initials = merchant.name
@@ -66,22 +110,43 @@ function MerchantLogo({ merchant, size = 'md' }: { merchant: Merchant; size?: 's
     .join('')
     .toUpperCase();
 
-  return (
-    <div className="relative">
-      <img
-        src={merchant.logoUrl}
-        alt={merchant.name}
-        className={imgSize[size]}
-        onError={(e) => {
-          (e.target as HTMLImageElement).style.display = 'none';
-          (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
-        }}
-      />
+  const fallbackBg = CATEGORY_BG[merchant.category] ?? 'bg-emerald-600';
+
+  const handleImgError = () => {
+    const nextIdx = currentSourceIdx + 1;
+    if (nextIdx < sources.length) {
+      setCurrentSourceIdx(nextIdx);
+    } else {
+      setFailed(true);
+      setLoading(false);
+    }
+  };
+
+  // Show styled initials when all sources fail
+  if (failed) {
+    return (
       <div
-        className={`hidden ${fallbackSizes[size]} bg-emerald-600 flex items-center justify-center text-white font-bold ${sizeClasses[size].split(' ').pop()}`}
+        className={`${skeletonSize[size]} ${fallbackBg} flex items-center justify-center text-white font-bold ${sizeClasses[size].split(' ').pop()} shadow-sm`}
+        aria-label={merchant.name}
       >
         {initials}
       </div>
+    );
+  }
+
+  return (
+    <div className="relative">
+      {loading && (
+        <div className={`${skeletonSize[size]} animate-pulse bg-gray-200 absolute inset-0`} aria-hidden="true" />
+      )}
+      <img
+        key={sources[currentSourceIdx]}
+        src={sources[currentSourceIdx]}
+        alt={merchant.name}
+        className={imgSize[size]}
+        onLoad={() => setLoading(false)}
+        onError={handleImgError}
+      />
     </div>
   );
 }
