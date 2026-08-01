@@ -779,14 +779,24 @@ export function AdminSettingsPage() {
               </div>
               <div className="flex flex-col sm:flex-row gap-2">
                 <Button
-                  onClick={() => {
-                    const a = document.createElement('a');
-                    a.href = '/api/download-source';
-                    a.download = 'afrispine-full-source-v1.2.0.zip';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    toast.success('Download started!', { description: 'afrispine-full-source-v1.2.0.zip' });
+                  onClick={async () => {
+                    try {
+                      toast.info('Preparing download...', { description: 'Fetching 11MB archive' });
+                      const res = await fetch('/api/download-source');
+                      if (!res.ok) throw new Error('Download failed');
+                      const blob = await res.blob();
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = 'afrispine-full-source-v1.2.0.zip';
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      URL.revokeObjectURL(url);
+                      toast.success('Download complete!', { description: 'afrispine-full-source-v1.2.0.zip saved' });
+                    } catch (e) {
+                      toast.error('Download failed', { description: 'Could not download the file. Try again.' });
+                    }
                   }}
                   className="bg-emerald-600 hover:bg-emerald-700 text-white"
                 >
@@ -795,14 +805,23 @@ export function AdminSettingsPage() {
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => {
-                    const a = document.createElement('a');
-                    a.href = '/AFRISPINE-IMPORTANT-MATERIALS.md';
-                    a.download = 'AFRISPINE-IMPORTANT-MATERIALS.md';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    toast.success('Materials doc downloading', {});
+                  onClick={async () => {
+                    try {
+                      const res = await fetch('/AFRISPINE-IMPORTANT-MATERIALS.md');
+                      if (!res.ok) throw new Error('Download failed');
+                      const blob = await res.blob();
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = 'AFRISPINE-IMPORTANT-MATERIALS.md';
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      URL.revokeObjectURL(url);
+                      toast.success('Materials doc downloaded!');
+                    } catch (e) {
+                      toast.error('Download failed', { description: 'Could not download the file. Try again.' });
+                    }
                   }}
                 >
                   <FileArchive className="mr-2 h-4 w-4" />
