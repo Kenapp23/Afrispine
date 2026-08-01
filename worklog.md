@@ -350,3 +350,30 @@ Stage Summary:
 - 4 new database tables with proper indexes
 - Lint passes clean
 - All data persists in SQLite database across restarts
+---
+Task ID: 7
+Agent: main
+Task: Fix database persistence bug + generate downloadable ZIP archive
+
+Work Log:
+- Diagnosed database persistence issue in src/lib/ensure-db.ts
+- Found 40+ CREATE TABLE statements missing IF NOT EXISTS clause
+- Found 19 CREATE INDEX/CREATE UNIQUE INDEX statements missing IF NOT EXISTS
+- Fixed all 58 CREATE TABLE statements to use IF NOT EXISTS
+- Fixed all 19 CREATE INDEX statements to use IF NOT EXISTS
+- Verified with grep: 0 statements remain without IF NOT EXISTS
+- Generated comprehensive ZIP archive (312 files, 11MB) at public/afrispine-full-source-v1.2.0.zip
+- Created AFRISPINE-IMPORTANT-MATERIALS.md with full architecture docs, setup guide, settlement flow spec
+- Created /api/download-source API endpoint for ZIP download
+- Added download card to admin settings page with two download buttons
+- Pushed all changes to GitHub (Kenapp23/Afrispine, main branch)
+- Verified ZIP download returns valid 11MB archive
+- Verified materials doc returns 22KB markdown file
+
+Stage Summary:
+- DB PERSISTENCE BUG FIXED: All DDL statements now use IF NOT EXISTS, preventing data loss on server restart
+- DOWNLOADABLE ZIP: public/afrispine-full-source-v1.2.0.zip (312 files, 11MB)
+- MATERIALS DOC: public/AFRISPINE-IMPORTANT-MATERIALS.md (22KB, covers architecture, setup, settlement flow, API reference)
+- API ENDPOINT: GET /api/download-source returns ZIP as attachment
+- ADMIN UI: Download card added to admin settings page
+- GITHUB: Pushed to Kenapp23/Afrispine main branch (commit 2fdc0b0)
