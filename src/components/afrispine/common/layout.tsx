@@ -39,6 +39,7 @@ import {
   Newspaper,
   Store,
   FlaskConical,
+  KeyRound,
 } from 'lucide-react';
 import {
   Sheet,
@@ -529,6 +530,7 @@ const adminLinks: NavItem[] = [
   { view: 'admin-gift-providers', label: 'admin.giftProviders', icon: Store },
   { view: 'admin-gift-cards', label: 'admin.giftCards', icon: Gift },
   { view: 'admin-testing', label: 'admin.testing', icon: FlaskConical },
+  { view: 'admin-partners', label: 'admin.partners', icon: KeyRound, group: 'admin.system' },
   { view: 'admin-settings', label: 'admin.settings', icon: Settings },
 ];
 

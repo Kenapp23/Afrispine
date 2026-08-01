@@ -698,6 +698,71 @@ model FeeMatrix {
   createdAt     DateTime @default(now())
 }
 
+// ─── Settlement Engine Models ──────────────────────────────────
+
+model PartnerConfig {
+  id              String   @id @default(cuid())
+  partnerId       String   @unique
+  partnerName     String
+  purpose         String
+  environment     String   @default("production")
+  isActive        Boolean  @default(true)
+  configJson      String
+  lastVerifiedAt  DateTime?
+  verifiedBy      String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model SettlementRule {
+  id                String   @id @default(cuid())
+  ruleName          String
+  assetType         String   @default("equity")
+  currency          String   @default("USD")
+  afriSpineFeeBps   Int      @default(235)
+  partnerFeeBps     Int      @default(75)
+  brokerFeeBps      Int      @default(0)
+  afriSpineWallet   String?
+  partnerEndpoint   String?
+  brokerAccount     String?
+  settlementWindowMin Int   @default(15)
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model SettlementTransaction {
+  id                String   @id @default(cuid())
+  reference         String   @unique
+  senderId          String?
+  ruleId            String?
+  grossAmountUsd    Float
+  afriSpineFeeUsd   Float
+  partnerFeeUsd     Float
+  netAssetUsd       Float
+  status            String   @default("pending")
+  afriSpineTxRef    String?
+  partnerTxRef      String?
+  brokerTxRef       String?
+  cscsNominee       String?
+  assetCode         String?
+  quantity          Float?
+  pricePerUnit      Float?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([senderId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model CompanyConfig {
+  id                String   @id @default(cuid())
+  configKey         String   @unique
+  configJson        String
+  updatedAt         DateTime @updatedAt
+}
+
 // Keep legacy User/Post for scaffold compatibility
 model User {
   id        String   @id @default(cuid())

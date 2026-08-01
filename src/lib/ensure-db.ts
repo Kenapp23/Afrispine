@@ -602,6 +602,61 @@ CREATE TABLE IF NOT EXISTS "FeeMatrix" (
     "status" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+CREATE TABLE IF NOT EXISTS "PartnerConfig" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "partnerId" TEXT NOT NULL,
+    "partnerName" TEXT NOT NULL,
+    "purpose" TEXT NOT NULL,
+    "environment" TEXT NOT NULL DEFAULT 'production',
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "configJson" TEXT NOT NULL,
+    "lastVerifiedAt" DATETIME,
+    "verifiedBy" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL
+);
+CREATE TABLE IF NOT EXISTS "SettlementRule" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "ruleName" TEXT NOT NULL,
+    "assetType" TEXT NOT NULL DEFAULT 'equity',
+    "currency" TEXT NOT NULL DEFAULT 'USD',
+    "afriSpineFeeBps" INTEGER NOT NULL DEFAULT 235,
+    "partnerFeeBps" INTEGER NOT NULL DEFAULT 75,
+    "brokerFeeBps" INTEGER NOT NULL DEFAULT 0,
+    "afriSpineWallet" TEXT,
+    "partnerEndpoint" TEXT,
+    "brokerAccount" TEXT,
+    "settlementWindowMin" INTEGER NOT NULL DEFAULT 15,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL
+);
+CREATE TABLE IF NOT EXISTS "SettlementTransaction" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "reference" TEXT NOT NULL,
+    "senderId" TEXT,
+    "ruleId" TEXT,
+    "grossAmountUsd" REAL NOT NULL,
+    "afriSpineFeeUsd" REAL NOT NULL,
+    "partnerFeeUsd" REAL NOT NULL,
+    "netAssetUsd" REAL NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'pending',
+    "afriSpineTxRef" TEXT,
+    "partnerTxRef" TEXT,
+    "brokerTxRef" TEXT,
+    "cscsNominee" TEXT,
+    "assetCode" TEXT,
+    "quantity" REAL,
+    "pricePerUnit" REAL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL
+);
+CREATE TABLE IF NOT EXISTS "CompanyConfig" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "configKey" TEXT NOT NULL,
+    "configJson" TEXT NOT NULL,
+    "updatedAt" DATETIME NOT NULL
+);
 CREATE TABLE "User" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "email" TEXT NOT NULL,
@@ -637,6 +692,12 @@ CREATE INDEX "PepCheck_senderId_idx" ON "PepCheck"("senderId");
 CREATE INDEX "PepCheck_status_idx" ON "PepCheck"("status");
 CREATE INDEX "PepCheck_createdAt_idx" ON "PepCheck"("createdAt");
 CREATE UNIQUE INDEX "PlatformConfig_key_key" ON "PlatformConfig"("key");
+CREATE UNIQUE INDEX "PartnerConfig_partnerId_key" ON "PartnerConfig"("partnerId");
+CREATE UNIQUE INDEX "SettlementTransaction_reference_key" ON "SettlementTransaction"("reference");
+CREATE UNIQUE INDEX "CompanyConfig_configKey_key" ON "CompanyConfig"("configKey");
+CREATE INDEX "SettlementTransaction_senderId_idx" ON "SettlementTransaction"("senderId");
+CREATE INDEX "SettlementTransaction_status_idx" ON "SettlementTransaction"("status");
+CREATE INDEX "SettlementTransaction_createdAt_idx" ON "SettlementTransaction"("createdAt");
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 CREATE UNIQUE INDEX "GiftCardBrand_slug_key" ON "GiftCardBrand"("slug");
 CREATE UNIQUE INDEX "GiftCard_code_key" ON "GiftCard"("code");

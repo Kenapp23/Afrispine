@@ -282,3 +282,71 @@ Stage Summary:
 - Files created: 3 API routes, 1 admin component
 - Files modified: prisma/schema.prisma, ensure-db.ts, stores/app.ts, page.tsx, layout.tsx, i18n.ts
 - Lint passes clean
+
+---
+Task ID: 6-settlement-engine
+Agent: main
+Task: Settlement Engine — Partner keys, company config, settlement rules, execution ledger
+
+Work Log:
+PART 1 — Database Schema:
+- Added 4 models to prisma/schema.prisma: PartnerConfig, SettlementRule, SettlementTransaction, CompanyConfig
+- Added corresponding CREATE TABLE IF NOT EXISTS DDL to src/lib/ensure-db.ts with unique indexes
+- Ran bun run db:push — schema synced successfully
+
+PART 2 — Seed Endpoint:
+- Created /api/admin/settlement/seed (POST) — admin-only
+- Seeds 5 partners: Fincra, MyStocks Africa, Africa's Talking, Resend, NGX Broker Desk
+- Seeds 1 default settlement rule: equity_purchase_usd (235 bps + 75 bps)
+- Seeds 3 company configs: bank_details, tax_details, company_info (all empty strings)
+- Idempotent: skips if records already exist
+
+PART 3 — API Routes (10 endpoints):
+- /api/admin/partners GET — List all partners with masked secret values
+- /api/admin/partners/[id] GET — Full partner config for editing
+- /api/admin/partners/[id] PUT — Save config with mask-aware merge (preserves unedited secrets)
+- /api/admin/partners/switch-env POST — Toggle production/test environment
+- /api/admin/company/[key] GET — Get company config by key
+- /api/admin/company/[key] PUT — Upsert company config with read-after-write verification
+- /api/admin/settlement/rules GET/POST — List/create settlement rules
+- /api/admin/settlement/rules/[id] PUT — Update settlement rule
+- /api/admin/settlement/execute POST — Core settlement engine (4-step pipeline)
+- /api/admin/settlement/transactions GET — List with status/date filters
+- /api/admin/settlement/stats GET — Aggregated settlement statistics
+
+PART 4 — Settlement Execution Engine:
+- Loads matching rule by assetType + currency
+- Calculates fee splits: afriSpineFee, partnerFee, netAssetUsd
+- Creates SettlementTransaction with unique STL- reference
+- Simulates 4-step pipeline: pending → split_complete → partner_settled → broker_executed → completed
+- Creates DiasporaNseLedger and FeeMatrix entries for each settlement
+- Returns full breakdown with steps, amounts, tx refs
+
+PART 5 — Admin Frontend (admin-partners-page.tsx):
+- 4-tab layout: Partners, Company, Rules, Ledger
+- Tab 1: Partner Keys — 5 cards with per-partner field definitions, show/hide toggle, environment switch, save with DB verification
+- Tab 2: Company & Bank Details — 3 sections (Company Info, Bank Details, Tax), load from DB on mount, save with green checkmark
+- Tab 3: Settlement Rules — Table with fee preview ("On $1,000: ..."), create/edit dialogs
+- Tab 4: Settlement Ledger — Summary cards, test settlement form with result display, status filter buttons, transactions table with status badges
+
+PART 6 — App Wiring:
+- Added 'admin-partners' to ViewName in stores/app.ts
+- Added '/admin/partners' → 'admin-partners' URL mapping in page.tsx
+- Added 'admin-partners' to ADMIN_VIEWS array
+- Added admin sidebar link with KeyRound icon under 'admin.system' group in layout.tsx
+- Added renderAdminPage case for 'admin-partners'
+- Added 'admin.partners' and 'admin.system' i18n keys
+
+PART 7 — Security:
+- All routes admin-only via requireAdmin
+- GET /partners masks all secret values with ••••
+- PUT /partners/[id] detects masked values and preserves originals
+- All config saves include read-after-write verification
+- Key access/change logging in console
+
+Stage Summary:
+- Files created: 10 API routes, 1 admin component
+- Files modified: prisma/schema.prisma, ensure-db.ts, stores/app.ts, page.tsx, layout.tsx, i18n.ts
+- 4 new database tables with proper indexes
+- Lint passes clean
+- All data persists in SQLite database across restarts
