@@ -9,7 +9,7 @@ export type ViewName =
   | 'admin-login' | 'admin-dashboard' | 'admin-transactions' | 'admin-senders'
   | 'admin-providers' | 'admin-revenue' | 'admin-billing' | 'admin-settlement'
   | 'admin-compliance' | 'admin-settings' | 'admin-business' | 'admin-wealth'
-  | 'admin-gift-providers'
+  | 'admin-gift-providers' | 'admin-gift-cards' | 'admin-testing'
   | 'markets' | 'dangote-ipo' | 'china-corridor' | 'intra-africa'
   | 'wealth-landing' | 'wealth-market' | 'wealth-stock' | 'wealth-portfolio' | 'wealth-buy' | 'wealth-watchlist' | 'wealth-bonds' | 'wealth-activation'
   | 'gifts' | 'gifts-send' | 'gifts-redeem' | 'gifts-merchant'

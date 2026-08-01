@@ -38,6 +38,7 @@ import {
   Globe,
   Newspaper,
   Store,
+  FlaskConical,
 } from 'lucide-react';
 import {
   Sheet,
@@ -526,6 +527,8 @@ const adminLinks: NavItem[] = [
   { view: 'admin-wealth', label: 'admin.wealth', icon: TrendingUp },
   { view: 'admin-digest', label: 'Digest', icon: Newspaper },
   { view: 'admin-gift-providers', label: 'admin.giftProviders', icon: Store },
+  { view: 'admin-gift-cards', label: 'admin.giftCards', icon: Gift },
+  { view: 'admin-testing', label: 'admin.testing', icon: FlaskConical },
   { view: 'admin-settings', label: 'admin.settings', icon: Settings },
 ];
 

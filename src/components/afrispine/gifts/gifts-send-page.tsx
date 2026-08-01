@@ -6,855 +6,703 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { toast } from 'sonner';
 import {
   ArrowLeft,
+  ArrowRight,
   Gift,
-  ShoppingCart,
-  MessageSquareHeart,
   CheckCircle2,
   Copy,
-  Send,
-  MessageCircle,
+  QrCode,
   Search,
+  Loader2,
+  Sparkles,
+  Shield,
 } from 'lucide-react';
-import {
-  allMerchants,
-  getMerchantsByCountry,
-  getMerchantById,
-  MERCH_CATEGORIES,
-  MERCH_COUNTRIES,
-  type Merchant,
-} from '@/lib/merchants';
+import { MERCH_COUNTRIES } from '@/lib/merchants';
 
-/* ------------------------------------------------------------------ */
-/*  Static data                                                       */
-/* ------------------------------------------------------------------ */
+/* ── Types ──────────────────────────────────────────────────────── */
 
-const OCCASIONS = [
-  { id: 'christmas', label: 'Christmas', emoji: '🎄' },
-  { id: 'new-baby', label: 'New Baby', emoji: '👶' },
-  { id: 'graduation', label: 'Graduation', emoji: '🎓' },
-  { id: 'wedding', label: 'Wedding', emoji: '💒' },
-  { id: 'birthday', label: 'Birthday', emoji: '🎂' },
-  { id: 'new-home', label: 'New Home', emoji: '🏠' },
-  { id: 'get-well', label: 'Get Well', emoji: '💐' },
-  { id: 'eid-xmas', label: 'Eid / Xmas', emoji: '🌙' },
-] as const;
+interface GiftCardBrand {
+  id: string;
+  brandName: string;
+  slug: string;
+  logoUrl: string;
+  country: string;
+  countryCode: string;
+  category: string;
+  minAmount: number;
+  maxAmount: number;
+  smartContractAddress: string | null;
+}
 
-/* ── Merchant logo component with fallback ────────────────────── */
+interface PurchasedCard {
+  id: string;
+  code: string;
+  amount: number;
+  currency: string;
+  status: string;
+  qrCodeData: string;
+  blockchainTxHash: string | null;
+  smartContractRef: string | null;
+  recipientName: string | null;
+  recipientEmail: string | null;
+  recipientPhone: string | null;
+  message: string | null;
+  occasion: string | null;
+  expiresAt: string | null;
+  purchasedAt: string;
+  brand: { id: string; brandName: string; logoUrl: string; smartContractAddress: string | null };
+}
 
-function MerchantLogo({ merchant, size = 'md' }: { merchant: Merchant; size?: 'sm' | 'md' }) {
-  const containerSize = size === 'sm' ? 'h-10 w-10 rounded-lg' : 'h-12 w-12 rounded-xl';
-  const textSize = size === 'sm' ? 'text-xs' : 'text-sm';
+/* ── Logo Component ────────────────────────────────────────────── */
+
+function extractDomain(logoUrl: string): string {
+  try {
+    const url = new URL(logoUrl);
+    if (url.hostname === 'logo.clearbit.com') return url.pathname.replace(/^\/+/, '');
+    return url.hostname;
+  } catch {
+    return logoUrl.replace(/^https?:\/\//, '').split('/')[0];
+  }
+}
+
+function buildLogoSources(logoUrl: string): string[] {
+  const domain = extractDomain(logoUrl);
+  return [
+    logoUrl,
+    `https://cdn.brandfetch.io/${domain}?w=128&h=128&format=png`,
+    `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
+  ];
+}
+
+const CATEGORY_BG: Record<string, string> = {
+  Supermarket: 'bg-emerald-600', Electronics: 'bg-slate-600', Fashion: 'bg-pink-500',
+  'Airtime/Telecom': 'bg-orange-500', Travel: 'bg-sky-500', 'Food & Dining': 'bg-rose-600',
+  Healthcare: 'bg-teal-600', Entertainment: 'bg-violet-600', 'E-Commerce': 'bg-emerald-600',
+  Utilities: 'bg-gray-500', General: 'bg-emerald-600',
+};
+
+function BrandLogo({ brand, size = 'md' }: { brand: GiftCardBrand | { brandName: string; logoUrl: string; category?: string }; size?: 'sm' | 'md' | 'lg' }) {
+  const [currentSourceIdx, setCurrentSourceIdx] = useState(0);
+  const [failed, setFailed] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const sources = useMemo(() => buildLogoSources(brand.logoUrl), [brand.logoUrl]);
+  const skeletonSize = { sm: 'h-8 w-8 rounded-lg', md: 'h-12 w-12 rounded-xl', lg: 'h-16 w-16 rounded-2xl' };
+  const imgSize = { sm: 'h-8 w-8 rounded-lg object-contain', md: 'h-12 w-12 rounded-xl object-contain', lg: 'h-16 w-16 rounded-2xl object-contain' };
+
+  const initials = brand.brandName.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+  const fallbackBg = CATEGORY_BG[brand.category || 'General'] ?? 'bg-emerald-600';
+
+  if (failed) {
+    return <div className={`${skeletonSize[size]} ${fallbackBg} flex items-center justify-center text-white font-bold text-xs shadow-sm`}>{initials}</div>;
+  }
 
   return (
     <div className="relative">
-      <img
-        src={merchant.logoUrl}
-        alt={merchant.name}
-        className={`h-10 w-10 object-contain rounded ${size === 'sm' ? 'h-8 w-8 rounded-lg' : ''}`}
-        onError={(e) => {
-          (e.target as HTMLImageElement).style.display = 'none';
-          (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+      {loading && <div className={`${skeletonSize[size]} animate-pulse bg-gray-200 absolute inset-0`} />}
+      <img key={sources[currentSourceIdx]} src={sources[currentSourceIdx]} alt={brand.brandName} className={imgSize[size]}
+        onLoad={() => setLoading(false)}
+        onError={() => {
+          const next = currentSourceIdx + 1;
+          if (next < sources.length) setCurrentSourceIdx(next);
+          else { setFailed(true); setLoading(false); }
         }}
       />
-      <div className={`hidden ${containerSize} bg-emerald-600 flex items-center justify-center text-white font-bold ${textSize}`}>
-        {merchant.name.charAt(0)}
-      </div>
     </div>
   );
 }
 
-const PRESET_AMOUNTS = [10, 20, 50, 100] as const;
+/* ── QR Code Visual Component ──────────────────────────────── */
 
-const DELIVERY_OPTIONS = [
-  { id: 'whatsapp', label: 'WhatsApp', icon: MessageCircle },
-  { id: 'email', label: 'Email', icon: Send },
-  { id: 'copy-link', label: 'Copy Link', icon: Copy },
-] as const;
+function VisualQRCode({ code, brandName, size = 160 }: { code: string; brandName: string; size?: number }) {
+  const grid = useMemo(() => {
+    // Deterministic pattern based on code
+    const cells: boolean[][] = [];
+    const gridSize = 21;
+    let hash = 0;
+    for (let i = 0; i < code.length; i++) {
+      hash = ((hash << 5) - hash) + code.charCodeAt(i);
+      hash = hash & hash;
+    }
+    const seed = Math.abs(hash);
 
-/* ------------------------------------------------------------------ */
-/*  Sub-components                                                     */
-/* ------------------------------------------------------------------ */
+    for (let r = 0; r < gridSize; r++) {
+      cells[r] = [];
+      for (let c = 0; c < gridSize; c++) {
+        // Finder patterns (top-left, top-right, bottom-left)
+        const isTopLeft = r < 7 && c < 7;
+        const isTopRight = r < 7 && c >= gridSize - 7;
+        const isBottomLeft = r >= gridSize - 7 && c < 7;
 
-function ProgressIndicator({ step }: { step: number }) {
-  const labels = ['Occasion', 'Merchant', 'Personalise', 'Done'];
+        if (isTopLeft || isTopRight || isBottomLeft) {
+          const lr = isTopLeft ? r : isTopRight ? r : r - (gridSize - 7);
+          const lc = isTopLeft ? c : isTopRight ? c - (gridSize - 7) : c;
+          const isEdge = lr === 0 || lr === 6 || lc === 0 || lc === 6;
+          const isInner = lr >= 2 && lr <= 4 && lc >= 2 && lc <= 4;
+          cells[r][c] = isEdge || isInner;
+        } else {
+          // Pseudo-random based on position + seed
+          const val = ((seed * (r * 31 + c * 17 + 7)) + r * c) % 100;
+          cells[r][c] = val < 45;
+        }
+      }
+    }
+    return cells;
+  }, [code]);
+
+  const cellSize = size / 21;
+
   return (
-    <div className="flex items-center gap-1 w-full">
-      {labels.map((label, i) => {
-        const num = i + 1;
-        const active = num <= step;
-        const current = num === step;
-        return (
-          <React.Fragment key={label}>
-            {i > 0 && (
-              <div
-                className={`h-0.5 flex-1 rounded-full transition-colors duration-300 ${
-                  num <= step ? 'bg-emerald-500' : 'bg-muted'
-                }`}
-              />
-            )}
-            <div className="flex flex-col items-center gap-1">
-              <div
-                className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition-all duration-300 ${
-                  current
-                    ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30'
-                    : active
-                      ? 'bg-emerald-100 text-emerald-700'
-                      : 'bg-muted text-muted-foreground'
-                }`}
-              >
-                {active ? <CheckCircle2 className="h-4 w-4" /> : num}
-              </div>
-              <span
-                className={`text-[10px] font-medium leading-tight ${
-                  current
-                    ? 'text-emerald-600'
-                    : active
-                      ? 'text-emerald-500'
-                      : 'text-muted-foreground'
-                }`}
-              >
-                {label}
-              </span>
-            </div>
-          </React.Fragment>
-        );
-      })}
+    <div className="relative inline-block bg-white rounded-xl p-2 shadow-md border border-gray-200" style={{ width: size + 16, height: size + 16 }}>
+      <svg width={size} height={size} viewBox="0 0 21 21" className="block">
+        {grid.map((row, r) => row.map((cell, c) => (
+          <rect key={`${r}-${c}`} x={c} y={r} width={1} height={1} fill={cell ? '#111827' : 'transparent'} />
+        )))}
+        {/* Center clear area for brand initial */}
+        <rect x={8} y={8} width={5} height={5} fill="white" />
+        <rect x={8.5} y={8.5} width={4} height={4} rx={0.5} fill="#10B981" />
+        <text x={10.5} y={11} textAnchor="middle" fontSize={2.5} fill="white" fontWeight="bold" fontFamily="sans-serif">
+          {brandName[0]?.toUpperCase() || 'G'}
+        </text>
+      </svg>
     </div>
   );
 }
 
-function VoucherPreviewCard({
-  merchant,
-  amount,
-  recipientName,
-  message,
-  occasion,
-}: {
-  merchant?: Merchant;
-  amount: number;
-  recipientName: string;
-  message: string;
-  occasion?: string;
-}) {
-  return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-700 p-5 text-white shadow-lg">
-      {/* decorative circles */}
-      <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10" />
-      <div className="pointer-events-none absolute -bottom-4 -left-4 h-16 w-16 rounded-full bg-white/5" />
+/* ── Occasions & Currencies ──────────────────────────────────── */
 
-      <div className="relative space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold backdrop-blur-sm">
-            {occasion ? `${OCCASIONS.find((o) => o.id === occasion)?.emoji || ''} Gift Voucher` : 'Gift Voucher'}
-          </span>
-          <span className="text-2xl font-extrabold tracking-tight">
-            &pound;{amount}
-          </span>
-        </div>
+const OCCASIONS = [
+  { id: 'birthday', label: 'Birthday', emoji: '🎂' },
+  { id: 'wedding', label: 'Wedding', emoji: '💒' },
+  { id: 'graduation', label: 'Graduation', emoji: '🎓' },
+  { id: 'christmas', label: 'Christmas', emoji: '🎄' },
+  { id: 'new-baby', label: 'New Baby', emoji: '👶' },
+  { id: 'new-home', label: 'New Home', emoji: '🏠' },
+  { id: 'get-well', label: 'Get Well', emoji: '💪' },
+  { id: 'eid', label: 'Eid', emoji: '🙏' },
+];
 
-        {merchant && (
-          <div className="flex items-center gap-2">
-            <MerchantLogo merchant={merchant} size="sm" />
-            <span className="text-sm font-medium opacity-90">
-              {merchant.name} &middot; {merchant.country}
-            </span>
-          </div>
-        )}
+const CURRENCIES = [
+  { code: 'KES', symbol: 'KSh', name: 'Kenyan Shilling' },
+  { code: 'NGN', symbol: '₦', name: 'Nigerian Naira' },
+  { code: 'GHS', symbol: 'GH₵', name: 'Ghanaian Cedi' },
+  { code: 'ZAR', symbol: 'R', name: 'South African Rand' },
+  { code: 'UGX', symbol: 'USh', name: 'Ugandan Shilling' },
+  { code: 'TZS', symbol: 'TSh', name: 'Tanzanian Shilling' },
+];
 
-        {recipientName && (
-          <p className="text-sm opacity-80">
-            To: <span className="font-semibold text-white">{recipientName}</span>
-          </p>
-        )}
+const QUICK_AMOUNTS = [100, 250, 500, 1000, 2500, 5000];
 
-        {message && (
-          <p className="rounded-lg bg-white/10 px-3 py-2 text-xs italic leading-relaxed backdrop-blur-sm">
-            &ldquo;{message}&rdquo;
-          </p>
-        )}
-
-        <div className="flex items-center justify-between pt-1">
-          <span className="text-[10px] uppercase tracking-widest opacity-60">
-            AfriSpine Gifts
-          </span>
-          <div className="h-0.5 w-16 rounded-full bg-white/30" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Main page component                                                */
-/* ------------------------------------------------------------------ */
+/* ── Main Component ────────────────────────────────────────────── */
 
 export default function GiftsSendPage() {
-  const { navigate, viewParams } = useAppStore();
+  const navigate = useAppStore((s) => s.navigate);
+  const viewParams = useAppStore((s) => s.viewParams);
+  const sender = useAppStore((s) => s.sender);
 
-  // Form state
   const [step, setStep] = useState(1);
-  const [occasion, setOccasion] = useState('');
-  const [merchantId, setMerchantId] = useState('');
-  const [countryFilter, setCountryFilter] = useState<string>('all');
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [amount, setAmount] = useState(20);
-  const [customAmount, setCustomAmount] = useState('');
-  const [recipientName, setRecipientName] = useState('');
-  const [senderName, setSenderName] = useState('');
-  const [message, setMessage] = useState('');
-  const [deliveryMethod, setDeliveryMethod] = useState('whatsapp');
   const [loading, setLoading] = useState(false);
-  const [voucherData, setVoucherData] = useState<any>(null);
-  const [voucherRef, setVoucherRef] = useState('');
+  const [purchasing, setPurchasing] = useState(false);
+  const [brands, setBrands] = useState<GiftCardBrand[]>([]);
+  const [selectedCountry, setSelectedCountry] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedBrand, setSelectedBrand] = useState<GiftCardBrand | null>(null);
+  const [amount, setAmount] = useState('');
+  const [currency, setCurrency] = useState('KES');
+  const [recipientName, setRecipientName] = useState('');
+  const [recipientEmail, setRecipientEmail] = useState('');
+  const [recipientPhone, setRecipientPhone] = useState('');
+  const [occasion, setOccasion] = useState(viewParams.occasion || 'birthday');
+  const [message, setMessage] = useState('');
+  const [purchasedCard, setPurchasedCard] = useState<PurchasedCard | null>(null);
+  const [copied, setCopied] = useState(false);
 
-  // Auto-advance if occasion came from viewParams
-  useEffect(() => {
-    if (viewParams?.occasion) {
-      const found = OCCASIONS.find(
-        (o) => o.id === viewParams.occasion || o.label.toLowerCase() === viewParams.occasion.toLowerCase(),
-      );
-      if (found) {
-        setOccasion(found.id);
-        setStep(2);
-      }
-    }
-  }, [viewParams]);
-
-  // Derived
-  const effectiveAmount = customAmount ? Number(customAmount) : amount;
-  const selectedMerchant = getMerchantById(merchantId);
-  const selectedOccasion = OCCASIONS.find((o) => o.id === occasion);
-
-  const filteredMerchants = useMemo(() => {
-    let list = countryFilter === 'all' ? allMerchants : getMerchantsByCountry(countryFilter);
-    if (categoryFilter !== 'all') {
-      list = list.filter((m) => m.category === categoryFilter);
-    }
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      list = list.filter((m) => m.name.toLowerCase().includes(q) || m.category.toLowerCase().includes(q));
-    }
-    return list;
-  }, [countryFilter, categoryFilter, searchQuery]);
-
-  const goBack = useCallback(() => navigate('gifts'), [navigate]);
-  const prevStep = useCallback(() => setStep((s) => Math.max(1, s - 1)), []);
-
-  /* ---- Step 1: Occasion ---- */
-  const handleOccasionSelect = useCallback((id: string) => {
-    setOccasion(id);
-    setStep(2);
-  }, []);
-
-  /* ---- Step 2: Merchant + Amount ---- */
-  const handleNextFromStep2 = useCallback(() => {
-    if (!merchantId) {
-      toast.error('Please select a merchant');
-      return;
-    }
-    if (!effectiveAmount || effectiveAmount <= 0) {
-      toast.error('Please enter a valid amount');
-      return;
-    }
-    setStep(3);
-  }, [merchantId, effectiveAmount]);
-
-  /* ---- Step 3: Personalise + Pay ---- */
-  const handlePay = useCallback(async () => {
-    if (!recipientName.trim()) {
-      toast.error('Please enter the recipient\'s name');
-      return;
-    }
-    if (!senderName.trim()) {
-      toast.error('Please enter your name');
-      return;
-    }
+  // Fetch brands
+  const fetchBrands = useCallback(async () => {
     setLoading(true);
     try {
-      // 1. Call purchase API
-      const res = await fetch('/api/gifts/purchase', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          merchantId,
-          merchantName: selectedMerchant?.name || '',
-          occasion,
-          amountGbp: effectiveAmount,
-          recipientName,
-          recipientPhone: '',
-          recipientEmail: '',
-          senderMessage: message,
-          deliveryMethod,
-        }),
-      });
+      const params = selectedCountry !== 'all' ? `?country=${selectedCountry}` : '';
+      const res = await fetch(`/api/gift-cards/brands${params}`);
       const data = await res.json();
-      if (!res.ok) {
-        toast.error(data.error || 'Payment failed');
-        return;
-      }
-
-      // 2. Open payment popup
-      const PaystackPop = (await import('@paystack/inline-js')).default;
-      const paystack = new PaystackPop();
-      paystack.resumeTransaction(data.access_code, {
-        onSuccess: async () => {
-          // 3. Verify and get voucher details
-          try {
-            const verifyRes = await fetch('/api/gifts/verify', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ reference: data.reference }),
-            });
-            const voucherResult = await verifyRes.json();
-            setVoucherData(voucherResult.voucher || null);
-            setVoucherRef(data.voucherRef);
-            setStep(4);
-            toast.success('Gift voucher sent!');
-          } catch {
-            setVoucherRef(data.voucherRef);
-            setStep(4);
-            toast.success('Gift voucher sent!');
-          }
-        },
-        onClose: () => {
-          toast.error('Payment window was closed.');
-        },
-        onError: () => {
-          toast.error('Payment failed.');
-        },
-      });
+      setBrands(data.brands ?? []);
     } catch {
-      toast.error('Something went wrong');
+      setBrands([]);
     } finally {
       setLoading(false);
     }
-  }, [recipientName, senderName, merchantId, selectedMerchant, occasion, effectiveAmount, message, deliveryMethod]);
+  }, [selectedCountry]);
 
-  /* ---- Step 4: Confirmation ---- */
-  const handleShareWhatsApp = useCallback(() => {
-    const text = encodeURIComponent(
-      `Hey ${recipientName}! I sent you a ${effectiveAmount} ${selectedMerchant?.name || ''} gift voucher via AfriSpine 🎁`,
+  useEffect(() => { fetchBrands(); }, [fetchBrands]);
+
+  // Seed if empty
+  useEffect(() => {
+    if (brands.length === 0 && !loading) {
+      fetch('/api/gift-cards/seed-brands', { method: 'POST' })
+        .then(() => fetchBrands())
+        .catch(() => {});
+    }
+  }, [brands.length, loading]);
+
+  // Pre-select brand if passed in params
+  useEffect(() => {
+    if (viewParams.brand && brands.length > 0) {
+      const found = brands.find(b => b.id === viewParams.brand);
+      if (found) setSelectedBrand(found);
+    }
+  }, [viewParams.brand, brands]);
+
+  const filteredBrands = useMemo(() => {
+    if (!searchQuery) return brands;
+    return brands.filter(b =>
+      b.brandName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      b.category.toLowerCase().includes(searchQuery.toLowerCase())
     );
-    window.open(`https://wa.me/?text=${text}`, '_blank');
-  }, [recipientName, effectiveAmount, selectedMerchant]);
+  }, [brands, searchQuery]);
 
-  const handleSendAnother = useCallback(() => {
-    setStep(1);
-    setOccasion('');
-    setMerchantId('');
-    setAmount(20);
-    setCustomAmount('');
-    setRecipientName('');
-    setSenderName('');
-    setMessage('');
-    setDeliveryMethod('whatsapp');
-    setLoading(false);
-    setVoucherData(null);
-    setVoucherRef('');
-  }, []);
+  const selectedOcc = OCCASIONS.find(o => o.id === occasion);
+  const selectedCur = CURRENCIES.find(c => c.code === currency);
 
-  /* ================================================================ */
-  /*  RENDER                                                           */
-  /* ================================================================ */
+  const handlePurchase = async () => {
+    if (!selectedBrand || !amount || !currency) {
+      toast.error('Please select a brand and enter an amount');
+      return;
+    }
+
+    if (!sender) {
+      toast.error('Please log in to purchase a gift card');
+      navigate('login');
+      return;
+    }
+
+    setPurchasing(true);
+    try {
+      const res = await fetch('/api/gift-cards/purchase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          brandId: selectedBrand.id,
+          amount: parseFloat(amount),
+          currency,
+          recipientName: recipientName || undefined,
+          recipientEmail: recipientEmail || undefined,
+          recipientPhone: recipientPhone || undefined,
+          occasion,
+          message: message || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || 'Purchase failed');
+        return;
+      }
+
+      setPurchasedCard(data.giftCard);
+      setStep(4);
+      toast.success('Gift card purchased successfully!');
+    } catch {
+      toast.error('Purchase failed. Please try again.');
+    } finally {
+      setPurchasing(false);
+    }
+  };
+
+  const copyCode = () => {
+    if (purchasedCard) {
+      navigator.clipboard.writeText(purchasedCard.code).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50/60 via-white to-white">
-      {/* Back bar */}
-      {step > 1 && (
-        <div className="sticky top-0 z-10 flex items-center gap-3 bg-white/80 px-4 py-3 backdrop-blur-md border-b border-border/50">
-          <button
-            onClick={prevStep}
-            className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-muted transition-colors"
-            aria-label="Go back"
-          >
-            <ArrowLeft className="h-5 w-5 text-foreground" />
-          </button>
-          <div className="flex-1">
-            <ProgressIndicator step={step} />
-          </div>
+    <main className="min-h-screen" style={{ backgroundColor: '#FAFAF8' }}>
+      {/* Header */}
+      <div className="sticky top-0 z-10 flex items-center gap-3 bg-white/80 px-4 py-3 backdrop-blur-md border-b border-border/50">
+        <button
+          onClick={() => step > 1 ? setStep(step - 1) : navigate('gifts')}
+          className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-muted transition-colors"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <div className="flex-1">
+          <h1 className="text-base font-bold text-gray-900">
+            {step === 1 && 'Choose Brand'}
+            {step === 2 && 'Card Details'}
+            {step === 3 && 'Review & Confirm'}
+            {step === 4 && 'Gift Card Ready!'}
+          </h1>
         </div>
-      )}
+        <div className="flex items-center gap-1">
+          {[1, 2, 3, 4].map(s => (
+            <div
+              key={s}
+              className={`h-2 rounded-full transition-all ${s <= step ? 'bg-emerald-500 w-6' : 'bg-gray-200 w-2'}`}
+            />
+          ))}
+        </div>
+      </div>
 
-      <main className="mx-auto max-w-lg px-4 pb-8 pt-6">
-        {/* ============================================================ */}
-        {/*  STEP 1 — CHOOSE OCCASION                                    */}
-        {/* ============================================================ */}
+      <div className="mx-auto max-w-lg px-4 py-6 space-y-6">
+        {/* ═══ STEP 1: Select Brand ═══ */}
         {step === 1 && (
-          <div className="space-y-6">
-            <div className="text-center space-y-2">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/20">
-                <Gift className="h-7 w-7 text-white" />
-              </div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Send a Gift
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                What&apos;s the occasion?
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              {OCCASIONS.map((occ) => (
-                <button
-                  key={occ.id}
-                  onClick={() => handleOccasionSelect(occ.id)}
-                  className="group flex flex-col items-center gap-2 rounded-2xl border border-border/60 bg-white p-5 shadow-sm transition-all hover:border-emerald-300 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]"
-                >
-                  <span className="text-3xl transition-transform group-hover:scale-110">
-                    {occ.emoji}
-                  </span>
-                  <span className="text-sm font-medium text-gray-700">
-                    {occ.label}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ============================================================ */}
-        {/*  STEP 2 — CHOOSE MERCHANT & AMOUNT                           */}
-        {/* ============================================================ */}
-        {step === 2 && (
-          <div className="space-y-6">
-            {selectedOccasion && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span className="text-lg">{selectedOccasion.emoji}</span>
-                <span>
-                  <span className="font-medium text-foreground">{selectedOccasion.label}</span> —
-                  Choose a merchant
-                </span>
-              </div>
-            )}
-
-            {/* Merchant grid */}
-            <div className="space-y-3">
-              <Label className="text-sm font-semibold text-foreground">
-                <ShoppingCart className="mr-1.5 inline h-4 w-4" />
-                Select Merchant
-              </Label>
-
-              {/* Search bar */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Search merchants..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-
-              {/* Country filter pills */}
-              <div className="flex flex-wrap gap-1.5">
-                <button
-                  onClick={() => setCountryFilter('all')}
-                  className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${
-                    countryFilter === 'all'
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                  }`}
-                >
-                  All
-                </button>
-                {MERCH_COUNTRIES.map((c) => (
-                  <button
-                    key={c.code}
-                    onClick={() => setCountryFilter(c.code)}
-                    className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${
-                      countryFilter === c.code
-                        ? 'bg-emerald-600 text-white'
-                        : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                    }`}
-                  >
-                    {c.flag} {c.name}
-                  </button>
-                ))}
-              </div>
-
-              {/* Category filter pills */}
-              <div className="flex flex-wrap gap-1.5">
-                <button
-                  onClick={() => setCategoryFilter('all')}
-                  className={`rounded-full px-3 py-1 text-[11px] font-medium transition-colors ${
-                    categoryFilter === 'all'
-                      ? 'bg-gray-800 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  All Categories
-                </button>
-                {MERCH_CATEGORIES.map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => setCategoryFilter(cat)}
-                    className={`rounded-full px-3 py-1 text-[11px] font-medium transition-colors ${
-                      categoryFilter === cat
-                        ? 'bg-gray-800 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
-
-              {/* Merchant count */}
-              <p className="text-xs text-muted-foreground">
-                Showing {filteredMerchants.length} merchant{filteredMerchants.length !== 1 ? 's' : ''}
-              </p>
-
-              <div className="grid grid-cols-2 gap-3">
-                {filteredMerchants.map((m) => (
-                  <button
-                    key={m.id}
-                    onClick={() => setMerchantId(m.id)}
-                    className={`relative flex items-center gap-3 rounded-2xl border-2 p-3.5 transition-all text-left ${
-                      merchantId === m.id
-                        ? 'border-emerald-500 bg-emerald-50/60 shadow-md shadow-emerald-500/10'
-                        : 'border-border/60 bg-white hover:border-emerald-300 hover:shadow-sm'
-                    }`}
-                  >
-                    {merchantId === m.id && (
-                      <div className="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-white" />
-                      </div>
-                    )}
-                    <MerchantLogo merchant={m} size="sm" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-gray-900 truncate">{m.name}</p>
-                      <p className="text-[10px] text-muted-foreground">
-                        {MERCH_COUNTRIES.find((c) => c.code === m.countryCode)?.flag} {m.country} &middot; {m.category}
-                      </p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Amount selector */}
-            <div className="space-y-3">
-              <Label className="text-sm font-semibold text-foreground">
-                Gift Amount
-              </Label>
-              <div className="flex flex-wrap gap-2">
-                {PRESET_AMOUNTS.map((a) => (
-                  <button
-                    key={a}
-                    onClick={() => {
-                      setAmount(a);
-                      setCustomAmount('');
-                    }}
-                    className={`rounded-xl border-2 px-5 py-2.5 text-sm font-bold transition-all ${
-                      !customAmount && amount === a
-                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm'
-                        : 'border-border/60 bg-white text-gray-700 hover:border-emerald-300 hover:shadow-sm'
-                    }`}
-                  >
-                    &pound;{a}
-                  </button>
-                ))}
-              </div>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-foreground">
-                  &pound;
-                </span>
-                <Input
-                  type="number"
-                  min="1"
-                  placeholder="Or enter a custom amount"
-                  value={customAmount}
-                  onChange={(e) => {
-                    setCustomAmount(e.target.value);
-                    if (e.target.value) setAmount(0);
-                  }}
-                  className="pl-8"
-                />
-              </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Recipient gets the equivalent in local currency at today&apos;s AfriSpine FX rate.
-              </p>
-            </div>
-
-            {/* Continue */}
-            <Button
-              onClick={handleNextFromStep2}
-              disabled={!merchantId || !effectiveAmount || effectiveAmount <= 0}
-              className="w-full bg-emerald-600 text-white hover:bg-emerald-700"
-            >
-              Continue
-            </Button>
-          </div>
-        )}
-
-        {/* ============================================================ */}
-        {/*  STEP 3 — PERSONALISE & PAY                                  */}
-        {/* ============================================================ */}
-        {step === 3 && (
-          <div className="space-y-6">
-            <div className="text-center space-y-1">
-              <h2 className="text-lg font-bold text-gray-900">
-                <MessageSquareHeart className="mr-1.5 inline h-5 w-5 text-emerald-500" />
-                Personalise Your Gift
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Make it special for {selectedOccasion?.label ?? 'them'}
-              </p>
-            </div>
-
-            {/* Form fields */}
-            <div className="space-y-4 rounded-2xl border border-border/60 bg-white p-5 shadow-sm">
-              <div className="grid gap-2">
-                <Label htmlFor="recipient-name">Recipient&apos;s Name</Label>
-                <Input
-                  id="recipient-name"
-                  placeholder="e.g. Amina"
-                  value={recipientName}
-                  onChange={(e) => setRecipientName(e.target.value)}
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="sender-name">Your Name</Label>
-                <Input
-                  id="sender-name"
-                  placeholder="e.g. David"
-                  value={senderName}
-                  onChange={(e) => setSenderName(e.target.value)}
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="gift-message">Personal Message</Label>
-                  <span
-                    className={`text-xs font-medium ${
-                      message.length > 140 ? 'text-red-500' : 'text-muted-foreground'
-                    }`}
-                  >
-                    {message.length}/140
-                  </span>
-                </div>
-                <Textarea
-                  id="gift-message"
-                  placeholder="e.g. Happy Birthday! Enjoy shopping at Naivas 🎉"
-                  value={message}
-                  onChange={(e) => {
-                    if (e.target.value.length <= 140) setMessage(e.target.value);
-                  }}
-                  className="min-h-20 resize-none"
-                />
-              </div>
-
-              {/* Delivery method */}
-              <div className="grid gap-2">
-                <Label>Delivery Method</Label>
-                <RadioGroup
-                  value={deliveryMethod}
-                  onValueChange={setDeliveryMethod}
-                  className="grid grid-cols-3 gap-2"
-                >
-                  {DELIVERY_OPTIONS.map((opt) => (
-                    <label
-                      key={opt.id}
-                      htmlFor={`delivery-${opt.id}`}
-                      className={`flex cursor-pointer flex-col items-center gap-1.5 rounded-xl border-2 p-3 transition-all ${
-                        deliveryMethod === opt.id
-                          ? 'border-emerald-500 bg-emerald-50/60'
-                          : 'border-border/60 hover:border-emerald-300'
-                      }`}
-                    >
-                      <RadioGroupItem value={opt.id} id={`delivery-${opt.id}`} className="sr-only" />
-                      <opt.icon
-                        className={`h-5 w-5 ${
-                          deliveryMethod === opt.id ? 'text-emerald-600' : 'text-muted-foreground'
-                        }`}
-                      />
-                      <span
-                        className={`text-xs font-medium ${
-                          deliveryMethod === opt.id ? 'text-emerald-700' : 'text-muted-foreground'
-                        }`}
-                      >
-                        {opt.label}
-                      </span>
-                    </label>
-                  ))}
-                </RadioGroup>
-              </div>
-            </div>
-
-            {/* Voucher preview */}
-            <div className="space-y-2">
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                Voucher Preview
-              </Label>
-              <VoucherPreviewCard
-                merchant={selectedMerchant}
-                amount={effectiveAmount}
-                recipientName={recipientName}
-                message={message}
-                occasion={occasion}
+          <>
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search brands..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="pl-10"
               />
             </div>
 
-            {/* Pay button */}
-            <Button
-              onClick={handlePay}
-              disabled={!recipientName.trim() || !senderName.trim() || loading}
-              size="lg"
-              className="w-full bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-600/20"
-            >
+            {/* Country filter */}
+            <div className="flex flex-wrap gap-1.5">
+              <button onClick={() => setSelectedCountry('all')}
+                className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${selectedCountry === 'all' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}`}>
+                All
+              </button>
+              {MERCH_COUNTRIES.map(c => (
+                <button key={c.code} onClick={() => setSelectedCountry(c.code)}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${selectedCountry === c.code ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}`}>
+                  {c.flag} {c.code}
+                </button>
+              ))}
+            </div>
+
+            {/* Brand grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[50vh] overflow-y-auto">
               {loading ? (
-                <span className="flex items-center gap-2">
-                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  Processing...
-                </span>
-              ) : (
-                <>Pay ${effectiveAmount + 1.5} securely</>
-              )}
-            </Button>
-            <p className="text-center text-xs text-muted-foreground">
-              Includes $1.50 voucher fee · Total: ${effectiveAmount + 1.5}
-            </p>
-          </div>
+                Array.from({ length: 9 }).map((_, i) => (
+                  <div key={i} className="rounded-xl border p-4 space-y-3">
+                    <div className="h-10 w-10 rounded-lg bg-gray-200 animate-pulse" />
+                    <div className="h-3 w-20 bg-gray-200 animate-pulse rounded" />
+                    <div className="h-2 w-14 bg-gray-100 animate-pulse rounded" />
+                  </div>
+                ))
+              ) : filteredBrands.map(brand => (
+                <button
+                  key={brand.id}
+                  onClick={() => { setSelectedBrand(brand); setCurrency(brand.countryCode === 'KE' ? 'KES' : brand.countryCode === 'NG' ? 'NGN' : brand.countryCode === 'GH' ? 'GHS' : brand.countryCode === 'ZA' ? 'ZAR' : brand.countryCode === 'UG' ? 'UGX' : 'TZS'); setStep(2); }}
+                  className={`rounded-xl border p-4 flex flex-col items-center gap-2 transition-all hover:shadow-md hover:border-emerald-300 active:scale-[0.98] ${
+                    selectedBrand?.id === brand.id ? 'border-emerald-500 bg-emerald-50 shadow-md' : 'border-border/60 bg-white'
+                  }`}
+                >
+                  <BrandLogo brand={brand} size="md" />
+                  <p className="text-xs font-semibold text-gray-800 line-clamp-1">{brand.brandName}</p>
+                  <p className="text-[10px] text-gray-400">
+                    {MERCH_COUNTRIES.find(c => c.code === brand.countryCode)?.flag} {brand.country}
+                  </p>
+                  <p className="text-[10px] text-emerald-600 font-medium">
+                    {selectedCur?.symbol || '$'}{brand.minAmount} - {selectedCur?.symbol || '$'}{brand.maxAmount}
+                  </p>
+                </button>
+              ))}
+            </div>
+          </>
         )}
 
-        {/* ============================================================ */}
-        {/*  STEP 4 — CONFIRMATION                                       */}
-        {/* ============================================================ */}
-        {step === 4 && (
-          <div className="space-y-6">
-            <div className="text-center space-y-2">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
-                <Gift className="h-8 w-8 text-emerald-600" />
+        {/* ═══ STEP 2: Details ═══ */}
+        {step === 2 && selectedBrand && (
+          <>
+            {/* Selected brand */}
+            <div className="flex items-center gap-3 p-4 rounded-xl border bg-white">
+              <BrandLogo brand={selectedBrand} size="lg" />
+              <div className="flex-1">
+                <p className="font-bold text-gray-900">{selectedBrand.brandName}</p>
+                <p className="text-xs text-gray-500">{selectedBrand.category} · {selectedBrand.country}</p>
               </div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Gift sent! <span aria-hidden="true">🎁</span>
-              </h1>
-              <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-                Your {selectedOccasion?.label?.toLowerCase() || ''} gift to{' '}
-                <span className="font-semibold text-foreground">{voucherData?.recipientName || recipientName}</span>{' '}
-                is on its way via {voucherData?.deliveryMethod || deliveryMethod}.
-              </p>
+              <Badge variant="outline" className="text-emerald-700 border-emerald-200">Verified</Badge>
             </div>
 
-            {/* Voucher reference card */}
-            {voucherRef && (
-              <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-4 space-y-2 text-sm">
-                <p className="text-xs font-semibold text-amber-700 uppercase tracking-wider">Voucher Code</p>
-                <div className="flex items-center justify-between">
-                  <code className="text-base font-bold text-amber-900 tracking-wide">{voucherRef}</code>
+            {/* Amount */}
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold">Amount ({selectedCur?.name})</Label>
+              <Input
+                type="number"
+                placeholder="Enter amount"
+                value={amount}
+                onChange={e => setAmount(e.target.value)}
+                min={selectedBrand.minAmount}
+                max={selectedBrand.maxAmount}
+                className="text-lg font-mono"
+              />
+              <div className="flex flex-wrap gap-2">
+                {QUICK_AMOUNTS.filter(a => a >= selectedBrand.minAmount && a <= selectedBrand.maxAmount).map(qa => (
                   <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(voucherRef);
-                      toast.success('Voucher code copied!');
-                    }}
-                    className="flex items-center gap-1 text-xs font-medium text-amber-700 hover:text-amber-900 transition-colors"
+                    key={qa}
+                    onClick={() => setAmount(String(qa))}
+                    className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${amount === String(qa) ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                   >
-                    <Copy className="h-3.5 w-3.5" />
-                    Copy
+                    {selectedCur?.symbol || '$'}{qa.toLocaleString()}
                   </button>
-                </div>
+                ))}
               </div>
-            )}
-
-            {/* Voucher preview */}
-            <VoucherPreviewCard
-              merchant={selectedMerchant}
-              amount={effectiveAmount}
-              recipientName={voucherData?.recipientName || recipientName}
-              message={voucherData?.senderMessage || message}
-              occasion={occasion}
-            />
-
-            {/* Summary card */}
-            <div className="rounded-2xl border border-border/60 bg-white p-4 shadow-sm space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">From</span>
-                <span className="font-medium text-gray-900">{senderName}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">To</span>
-                <span className="font-medium text-gray-900">{voucherData?.recipientName || recipientName}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Merchant</span>
-                <span className="font-medium text-gray-900">{selectedMerchant?.name} &middot; {selectedMerchant?.country}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Amount</span>
-                <span className="font-bold text-emerald-600">&pound;{effectiveAmount}</span>
-              </div>
-              {voucherData?.amountLocal && voucherData?.currencyLocal && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Local Equivalent</span>
-                  <span className="font-semibold text-gray-900">
-                    {voucherData.amountLocal.toLocaleString()} {voucherData.currencyLocal}
-                  </span>
-                </div>
-              )}
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Voucher Fee</span>
-                <span className="text-gray-600">&pound;1.50</span>
-              </div>
-              <div className="border-t border-border/50 pt-2 flex justify-between">
-                <span className="font-medium text-gray-900">Total Charged</span>
-                <span className="font-bold text-gray-900">&pound;{effectiveAmount + 1.5}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Delivery</span>
-                <span className="font-medium text-gray-900 capitalize">{(voucherData?.deliveryMethod || deliveryMethod).replace('-', ' ')}</span>
-              </div>
-              {voucherData?.expiresAt && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Expires</span>
-                  <span className="font-medium text-gray-900">{new Date(voucherData.expiresAt).toLocaleDateString()}</span>
-                </div>
+              {parseFloat(amount) > 0 && (parseFloat(amount) < selectedBrand.minAmount || parseFloat(amount) > selectedBrand.maxAmount) && (
+                <p className="text-xs text-red-500">Amount must be between {selectedCur?.symbol}{selectedBrand.minAmount} and {selectedCur?.symbol}{selectedBrand.maxAmount}</p>
               )}
             </div>
 
-            {/* Actions */}
-            <div className="flex flex-col gap-3">
-              <Button
-                onClick={handleShareWhatsApp}
-                className="w-full bg-[#25D366] text-white hover:bg-[#1ebe57]"
-                size="lg"
-              >
-                <MessageCircle className="mr-2 h-5 w-5" />
-                Share on WhatsApp
-              </Button>
-              <Button
-                onClick={handleSendAnother}
-                variant="outline"
-                className="w-full"
-                size="lg"
-              >
-                <Gift className="mr-2 h-5 w-5" />
-                Send Another Gift
-              </Button>
+            {/* Currency */}
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold">Currency</Label>
+              <Select value={currency} onValueChange={setCurrency}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {CURRENCIES.map(c => (
+                    <SelectItem key={c.code} value={c.code}>{c.symbol} {c.code} — {c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          </div>
-        )}
 
-        {/* Step 1 back-to-gifts button at bottom */}
-        {step === 1 && (
-          <div className="pt-4">
-            <Button variant="ghost" onClick={goBack} className="w-full text-muted-foreground">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Gifts
+            {/* Occasion */}
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold">Occasion</Label>
+              <div className="flex flex-wrap gap-2">
+                {OCCASIONS.map(o => (
+                  <button
+                    key={o.id}
+                    onClick={() => setOccasion(o.id)}
+                    className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors flex items-center gap-1 ${occasion === o.id ? 'bg-amber-500 text-white' : 'bg-amber-50 text-amber-700 hover:bg-amber-100'}`}
+                  >
+                    <span>{o.emoji}</span> {o.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Recipient */}
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold">Recipient Details</Label>
+              <Input placeholder="Recipient name" value={recipientName} onChange={e => setRecipientName(e.target.value)} />
+              <Input placeholder="Recipient email (optional)" type="email" value={recipientEmail} onChange={e => setRecipientEmail(e.target.value)} />
+              <Input placeholder="Recipient phone (optional)" type="tel" value={recipientPhone} onChange={e => setRecipientPhone(e.target.value)} />
+            </div>
+
+            {/* Message */}
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold">Personal Message (optional)</Label>
+              <Textarea
+                placeholder="Write something special..."
+                value={message}
+                onChange={e => setMessage(e.target.value)}
+                rows={3}
+                className="resize-none"
+              />
+            </div>
+
+            <Button
+              onClick={() => setStep(3)}
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-12 font-bold"
+              disabled={!amount || parseFloat(amount) <= 0}
+            >
+              Continue to Review
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
-          </div>
+          </>
         )}
-      </main>
-    </div>
+
+        {/* ═══ STEP 3: Review & Confirm ═══ */}
+        {step === 3 && selectedBrand && (
+          <>
+            <div className="rounded-2xl border bg-white overflow-hidden shadow-sm">
+              {/* Card header */}
+              <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-6 text-white">
+                <div className="flex items-center gap-3">
+                  <BrandLogo brand={selectedBrand} size="lg" />
+                  <div>
+                    <p className="font-bold text-lg">{selectedBrand.brandName}</p>
+                    <p className="text-emerald-200 text-sm">{selectedOcc?.emoji} {selectedOcc?.label}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 space-y-4">
+                {/* Amount */}
+                <div className="text-center">
+                  <p className="text-4xl font-extrabold text-gray-900">
+                    {selectedCur?.symbol}{parseFloat(amount || '0').toLocaleString()}
+                  </p>
+                  <p className="text-sm text-gray-500">{currency}</p>
+                </div>
+
+                <div className="h-px bg-border/50" />
+
+                {/* Details */}
+                <div className="space-y-2 text-sm">
+                  {recipientName && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Recipient</span>
+                      <span className="font-semibold text-gray-900">{recipientName}</span>
+                    </div>
+                  )}
+                  {recipientEmail && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Email</span>
+                      <span className="font-medium text-gray-700">{recipientEmail}</span>
+                    </div>
+                  )}
+                  {recipientPhone && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Phone</span>
+                      <span className="font-medium text-gray-700">{recipientPhone}</span>
+                    </div>
+                  )}
+                  {message && (
+                    <div className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3">
+                      <p className="text-xs text-amber-700 font-medium mb-1">Message</p>
+                      <p className="text-sm text-amber-900 italic">&ldquo;{message}&rdquo;</p>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Expires</span>
+                    <span className="font-medium text-gray-700">12 months from purchase</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs text-emerald-600 bg-emerald-50 rounded-lg p-3">
+                  <Shield className="h-4 w-4 shrink-0" />
+                  <span>Protected by smart contract escrow with blockchain verification</span>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
+                    <ArrowLeft className="mr-1 h-4 w-4" /> Edit
+                  </Button>
+                  <Button
+                    onClick={handlePurchase}
+                    disabled={purchasing}
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white h-12 font-bold"
+                  >
+                    {purchasing ? <Loader2 className="h-5 w-5 animate-spin" /> : (
+                      <>
+                        <Sparkles className="mr-1 h-4 w-4" />
+                        Purchase Gift Card
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* ═══ STEP 4: Success ═══ */}
+        {step === 4 && purchasedCard && (
+          <>
+            <div className="text-center space-y-4">
+              <div className="inline-flex items-center justify-center size-16 rounded-full bg-emerald-100">
+                <CheckCircle2 className="size-8 text-emerald-600" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900">Gift Card Purchased!</h2>
+              <p className="text-sm text-gray-500">Your gift card has been created and is ready to share.</p>
+            </div>
+
+            {/* Gift Card Display */}
+            <div className="rounded-2xl border bg-white overflow-hidden shadow-lg">
+              {/* Card header with gradient */}
+              <div className="bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-700 p-6 text-white relative">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+                <div className="relative flex items-center gap-4">
+                  <BrandLogo brand={purchasedCard.brand} size="lg" />
+                  <div>
+                    <p className="font-bold text-lg">{purchasedCard.brand.brandName}</p>
+                    <p className="text-emerald-200 text-sm">{OCCASIONS.find(o => o.id === purchasedCard.occasion)?.emoji} {OCCASIONS.find(o => o.id === purchasedCard.occasion)?.label || purchasedCard.occasion}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 space-y-4">
+                {/* Amount */}
+                <div className="text-center">
+                  <p className="text-4xl font-extrabold text-gray-900">
+                    {CURRENCIES.find(c => c.code === purchasedCard.currency)?.symbol || '$'}{purchasedCard.amount.toLocaleString()}
+                  </p>
+                  <p className="text-sm text-gray-500">{purchasedCard.currency}</p>
+                </div>
+
+                <div className="h-px bg-border/50" />
+
+                {/* QR Code */}
+                <div className="flex justify-center">
+                  <VisualQRCode code={purchasedCard.code} brandName={purchasedCard.brand.brandName} size={160} />
+                </div>
+
+                {/* Code */}
+                <div className="text-center">
+                  <p className="text-xs text-gray-500 mb-1">Gift Card Code</p>
+                  <div className="inline-flex items-center gap-2 bg-gray-50 rounded-lg px-4 py-2 border">
+                    <code className="text-lg font-mono font-bold text-gray-900 tracking-wider">{purchasedCard.code}</code>
+                    <button onClick={copyCode} className="text-emerald-600 hover:text-emerald-700 transition-colors">
+                      {copied ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="h-px bg-border/50" />
+
+                {/* Details */}
+                <div className="space-y-2 text-sm">
+                  {purchasedCard.recipientName && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">To</span>
+                      <span className="font-semibold">{purchasedCard.recipientName}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Status</span>
+                    <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">Active</Badge>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Expires</span>
+                    <span className="font-medium">{purchasedCard.expiresAt ? new Date(purchasedCard.expiresAt).toLocaleDateString() : '12 months'}</span>
+                  </div>
+                  {purchasedCard.blockchainTxHash && (
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1 text-xs text-gray-500">
+                        <Shield className="h-3 w-3" /> Blockchain Verified
+                      </div>
+                      <p className="text-[10px] font-mono text-gray-400 break-all truncate max-h-4">{purchasedCard.blockchainTxHash}</p>
+                    </div>
+                  )}
+                </div>
+
+                {purchasedCard.message && (
+                  <div className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3">
+                    <p className="text-xs text-amber-700 font-medium mb-1">Message</p>
+                    <p className="text-sm text-amber-900 italic">&ldquo;{purchasedCard.message}&rdquo;</p>
+                  </div>
+                )}
+
+                <div className="flex gap-3 pt-2">
+                  <Button variant="outline" className="flex-1" onClick={copyCode}>
+                    <Copy className="mr-1 h-4 w-4" /> Copy Code
+                  </Button>
+                  <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => navigate('gifts')}>
+                    Done
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </main>
   );
 }

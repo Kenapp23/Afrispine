@@ -5,8 +5,25 @@ import { useAppStore } from '@/stores/app';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Gift, ArrowRight, MessageSquareHeart, Zap, Store, Smartphone, Banknote, Ticket } from 'lucide-react';
-import { MERCH_COUNTRIES, type Merchant, type MerchantCategory } from '@/lib/merchants';
+import { Badge } from '@/components/ui/badge';
+import { Gift, ArrowRight, MessageSquareHeart, Zap, Store, Smartphone, Banknote, Ticket, QrCode, Link2 } from 'lucide-react';
+import { MERCH_COUNTRIES } from '@/lib/merchants';
+
+/* ── Types ────────────────────────────────────────────────────── */
+
+interface GiftCardBrand {
+  id: string;
+  brandName: string;
+  slug: string;
+  logoUrl: string;
+  country: string;
+  countryCode: string;
+  category: string;
+  description: string | null;
+  isVerified: boolean;
+  minAmount: number;
+  maxAmount: number;
+}
 
 /* ── Occasion data ─────────────────────────────────────────────── */
 
@@ -26,24 +43,45 @@ const occasions = [
 const steps = [
   {
     icon: Gift,
-    title: 'Choose an occasion & amount',
-    description: 'Pick the perfect occasion, set your amount, and select a merchant.',
+    title: 'Choose a brand & amount',
+    description: 'Pick from 100+ verified African brands and set your gift amount.',
   },
   {
     icon: MessageSquareHeart,
-    title: 'Personalise your message',
-    description: 'Add a heartfelt note that makes your gift truly special.',
+    title: 'Add a personal message',
+    description: 'Include a heartfelt note that makes your gift truly special.',
   },
   {
     icon: Zap,
-    title: 'Delivered fast',
-    description: 'Your loved one receives a gift voucher via WhatsApp or email.',
+    title: 'Blockchain-backed delivery',
+    description: 'Your loved one receives a secure QR code gift card instantly.',
   },
 ];
 
-/* ── Category → colour mapping for initial badge fallback ──────── */
+/* ── Brand Logo Component ──────────────────────────────────── */
 
-const CATEGORY_BG: Record<MerchantCategory, string> = {
+function extractDomain(logoUrl: string): string {
+  try {
+    const url = new URL(logoUrl);
+    if (url.hostname === 'logo.clearbit.com') {
+      return url.pathname.replace(/^\/+/, '');
+    }
+    return url.hostname;
+  } catch {
+    return logoUrl.replace(/^https?:\/\//, '').split('/')[0];
+  }
+}
+
+function buildLogoSources(logoUrl: string): string[] {
+  const domain = extractDomain(logoUrl);
+  return [
+    logoUrl,
+    `https://cdn.brandfetch.io/${domain}?w=128&h=128&format=png`,
+    `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
+  ];
+}
+
+const CATEGORY_BG: Record<string, string> = {
   Supermarket: 'bg-emerald-600',
   Electronics: 'bg-slate-600',
   Fashion: 'bg-pink-500',
@@ -54,39 +92,15 @@ const CATEGORY_BG: Record<MerchantCategory, string> = {
   Entertainment: 'bg-violet-600',
   'E-Commerce': 'bg-emerald-600',
   Utilities: 'bg-gray-500',
+  General: 'bg-emerald-600',
 };
 
-function extractDomain(logoUrl: string): string {
-  try {
-    // Handle: https://logo.clearbit.com/naivas.co.ke
-    const url = new URL(logoUrl);
-    if (url.hostname === 'logo.clearbit.com') {
-      return url.pathname.replace(/^\/+/, '');
-    }
-    return url.hostname;
-  } catch {
-    // Fallback: treat the string as a domain
-    return logoUrl.replace(/^https?:\/\//, '').split('/')[0];
-  }
-}
-
-function buildLogoSources(logoUrl: string): string[] {
-  const domain = extractDomain(logoUrl);
-  return [
-    logoUrl, // Primary: clearbit
-    `https://cdn.brandfetch.io/${domain}?w=128&h=128&format=png`, // Fallback 1
-    `https://www.google.com/s2/favicons?domain=${domain}&sz=128`, // Fallback 2
-  ];
-}
-
-/* ── Merchant logo component with multi-source fallback ─────────── */
-
-function MerchantLogo({ merchant, size = 'md' }: { merchant: Merchant; size?: 'sm' | 'md' | 'lg' }) {
+function BrandLogo({ brand, size = 'md' }: { brand: GiftCardBrand; size?: 'sm' | 'md' | 'lg' }) {
   const [currentSourceIdx, setCurrentSourceIdx] = useState(0);
   const [failed, setFailed] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const sources = useMemo(() => buildLogoSources(merchant.logoUrl), [merchant.logoUrl]);
+  const sources = useMemo(() => buildLogoSources(brand.logoUrl), [brand.logoUrl]);
 
   const sizeClasses = {
     sm: 'h-8 w-8 rounded-lg text-xs',
@@ -104,14 +118,14 @@ function MerchantLogo({ merchant, size = 'md' }: { merchant: Merchant; size?: 's
     lg: 'h-16 w-16 rounded-2xl',
   };
 
-  const initials = merchant.name
+  const initials = brand.brandName
     .split(/\s+/)
     .map(w => w[0])
     .slice(0, 2)
     .join('')
     .toUpperCase();
 
-  const fallbackBg = CATEGORY_BG[merchant.category] ?? 'bg-emerald-600';
+  const fallbackBg = CATEGORY_BG[brand.category] ?? 'bg-emerald-600';
 
   const handleImgError = () => {
     const nextIdx = currentSourceIdx + 1;
@@ -123,12 +137,11 @@ function MerchantLogo({ merchant, size = 'md' }: { merchant: Merchant; size?: 's
     }
   };
 
-  // Show styled initials when all sources fail
   if (failed) {
     return (
       <div
         className={`${skeletonSize[size]} ${fallbackBg} flex items-center justify-center text-white font-bold ${sizeClasses[size].split(' ').pop()} shadow-sm`}
-        aria-label={merchant.name}
+        aria-label={brand.brandName}
       >
         {initials}
       </div>
@@ -143,7 +156,7 @@ function MerchantLogo({ merchant, size = 'md' }: { merchant: Merchant; size?: 's
       <img
         key={sources[currentSourceIdx]}
         src={sources[currentSourceIdx]}
-        alt={merchant.name}
+        alt={brand.brandName}
         className={imgSize[size]}
         onLoad={() => setLoading(false)}
         onError={handleImgError}
@@ -157,53 +170,64 @@ function MerchantLogo({ merchant, size = 'md' }: { merchant: Merchant; size?: 's
 export default function GiftsHubPage() {
   const navigate = useAppStore((s) => s.navigate);
   const [selectedCountry, setSelectedCountry] = useState<string>('all');
-  const [merchants, setMerchants] = useState<Merchant[]>([]);
+  const [brands, setBrands] = useState<GiftCardBrand[]>([]);
   const [loading, setLoading] = useState(true);
+  const [seeded, setSeeded] = useState(false);
 
-  const fetchMerchants = useCallback(async () => {
+  const fetchBrands = useCallback(async () => {
     setLoading(true);
     try {
       const params = selectedCountry !== 'all' ? `?country=${selectedCountry}` : '';
-      const res = await fetch(`/api/merchants${params}`);
-      if (!res.ok) throw new Error('Failed to fetch merchants');
+      const res = await fetch(`/api/gift-cards/brands${params}`);
+      if (!res.ok) throw new Error('Failed to fetch brands');
       const data = await res.json();
-      setMerchants(data.merchants ?? []);
+      setBrands(data.brands ?? []);
     } catch {
-      setMerchants([]);
+      setBrands([]);
     } finally {
       setLoading(false);
     }
   }, [selectedCountry]);
 
   useEffect(() => {
-    fetchMerchants();
-  }, [fetchMerchants]);
+    fetchBrands();
+  }, [fetchBrands]);
 
-  // Limit displayed merchants for "all" view
-  const displayedMerchants = useMemo(() => {
-    if (selectedCountry === 'all') return merchants.slice(0, 12);
-    return merchants;
-  }, [merchants, selectedCountry]);
+  // Auto-seed brands if none exist
+  useEffect(() => {
+    if (!seeded && brands.length === 0 && !loading) {
+      fetch('/api/gift-cards/seed-brands', { method: 'POST' })
+        .then(r => r.json())
+        .then(() => {
+          setSeeded(true);
+          fetchBrands();
+        })
+        .catch(() => {});
+    }
+  }, [brands.length, loading, seeded]);
 
-  const totalMerchantCount = merchants.length;
+  const displayedBrands = useMemo(() => {
+    if (selectedCountry === 'all') return brands.slice(0, 18);
+    return brands;
+  }, [brands, selectedCountry]);
+
+  const totalBrandCount = brands.length;
 
   return (
     <main className="min-h-screen" style={{ backgroundColor: '#FAFAF8' }}>
       {/* ── Hero Section ───────────────────────────────────────── */}
       <section className="relative overflow-hidden">
-        {/* Multi-layer gradient background */}
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-800 via-emerald-700 to-teal-800" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(16,185,129,0.2)_0%,_transparent_50%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_rgba(20,184,166,0.12)_0%,_transparent_50%)]" />
-        {/* Decorative elements */}
         <div className="absolute top-6 right-8 text-5xl opacity-20 select-none hidden sm:block" aria-hidden="true">🎁</div>
         <div className="absolute bottom-10 left-6 text-4xl opacity-15 select-none hidden md:block" aria-hidden="true">✨</div>
         <div className="absolute top-20 left-1/4 text-3xl opacity-10 select-none hidden lg:block" aria-hidden="true">🌟</div>
 
         <div className="relative mx-auto max-w-3xl px-5 pt-16 pb-14 sm:pt-24 sm:pb-20 text-center">
           <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/20 border border-emerald-400/30 px-4 py-1.5 text-xs font-semibold text-emerald-200 mb-6 backdrop-blur-sm">
-            <Gift className="size-3.5" />
-            AfriSpine Gifts
+            <QrCode className="size-3.5" />
+            Blockchain-Backed Gift Cards
           </div>
 
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white leading-[1.1]">
@@ -214,8 +238,8 @@ export default function GiftsHubPage() {
           </h1>
 
           <p className="mt-5 text-base sm:text-lg text-emerald-100/80 max-w-xl mx-auto leading-relaxed">
-            Fast digital gift delivery to Kenya, Nigeria, Ghana and more.
-            Airtime, mobile money &amp; vouchers — delivered in seconds.
+            Send secure gift cards to 100+ verified African brands. Each card
+            is backed by a smart contract for tamper-proof verification.
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -227,7 +251,7 @@ export default function GiftsHubPage() {
                 navigate('gifts-send', { occasion: first.id });
               }}
             >
-              Send a gift
+              Send a Gift Card
               <ArrowRight className="size-4 ml-1" />
             </Button>
             <Button
@@ -236,7 +260,7 @@ export default function GiftsHubPage() {
               className="rounded-full px-6 h-12 border-white/20 text-white hover:bg-white/10 backdrop-blur-sm"
               onClick={() => navigate('gifts-redeem')}
             >
-              Redeem a voucher
+              Redeem a Card
             </Button>
           </div>
         </div>
@@ -248,24 +272,24 @@ export default function GiftsHubPage() {
           {[
             {
               icon: Smartphone,
-              title: 'Airtime Top-Up',
-              description: 'Top up Safaricom, MTN, Airtel and other networks across Africa right away. From $5.',
+              title: 'Airtime & Mobile Money',
+              description: 'Top up Safaricom, MTN, Airtel and other networks across Africa.',
               action: 'Send Airtime',
               gradient: 'from-emerald-500 to-teal-500',
             },
             {
               icon: Banknote,
-              title: 'Mobile Money',
-              description: 'Send directly to M-Pesa, MTN MoMo, Airtel Money wallets. Your loved ones get funds in minutes.',
-              action: 'Send Mobile Money',
+              title: 'Shopping Vouchers',
+              description: 'Redeemable at supermarkets, restaurants, fashion stores and more.',
+              action: 'Browse Brands',
               gradient: 'from-amber-500 to-orange-500',
             },
             {
               icon: Ticket,
-              title: 'Gift Vouchers',
-              description: 'Redeemable at 100+ African brands — supermarkets, restaurants, fashion and more.',
-              action: 'Browse Vouchers',
-              gradient: 'from-cyan-500 to-blue-500',
+              title: 'Entertainment',
+              description: 'Gift cards for streaming, movies, gaming and more.',
+              action: 'Send Entertainment',
+              gradient: 'from-cyan-500 to-emerald-500',
             },
           ].map((cat) => (
             <Card
@@ -292,7 +316,7 @@ export default function GiftsHubPage() {
         </div>
       </section>
 
-      {/* ── Occasion Selection Grid (Step 1) ────────────────────── */}
+      {/* ── Occasion Selection Grid ─────────────────────────────── */}
       <section className="mx-auto max-w-4xl px-5 py-14 sm:py-20">
         <div className="text-center mb-10">
           <p className="text-sm font-semibold text-amber-600 uppercase tracking-wider mb-2">
@@ -332,7 +356,7 @@ export default function GiftsHubPage() {
             How it works
           </h2>
           <p className="mt-2 text-gray-500 text-sm sm:text-base">
-            Three simple steps to brighten someone&apos;s day.
+            Three simple steps to send a blockchain-backed gift card.
           </p>
         </div>
 
@@ -341,15 +365,12 @@ export default function GiftsHubPage() {
             const Icon = step.icon;
             return (
               <div key={i} className="relative flex flex-col items-center text-center">
-                {/* Connector line (desktop only) */}
                 {i < steps.length - 1 && (
                   <div
                     className="hidden sm:block absolute top-7 left-[calc(50%+32px)] w-[calc(100%-64px)] h-px border-t-2 border-dashed border-amber-200"
                     aria-hidden="true"
                   />
                 )}
-
-                {/* Step number badge */}
                 <div className="relative z-10 flex items-center justify-center size-14 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/25">
                   <Icon className="size-6" />
                 </div>
@@ -368,14 +389,18 @@ export default function GiftsHubPage() {
         </div>
       </section>
 
-      {/* ── Featured Merchants ──────────────────────────────────── */}
+      {/* ── Featured Gift Card Brands ───────────────────────────── */}
       <section className="mx-auto max-w-5xl px-5 py-14 sm:py-20">
         <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100 border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700 mb-4">
+            <Link2 className="size-3" />
+            Verified Brands
+          </div>
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            Redeem at top African brands
+            Gift Cards from Top African Brands
           </h2>
           <p className="mt-2 text-gray-500 text-sm sm:text-base">
-            Gift vouchers accepted at {totalMerchantCount}+ stores across {MERCH_COUNTRIES.length} countries.
+            {totalBrandCount}+ verified brands with smart contract backing across {MERCH_COUNTRIES.length} countries.
           </p>
         </div>
 
@@ -385,8 +410,8 @@ export default function GiftsHubPage() {
             onClick={() => setSelectedCountry('all')}
             className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${
               selectedCountry === 'all'
-                ? 'bg-amber-600 text-white shadow-sm'
-                : 'bg-amber-50 text-amber-700 hover:bg-amber-100'
+                ? 'bg-emerald-600 text-white shadow-sm'
+                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
             }`}
           >
             All Countries
@@ -397,8 +422,8 @@ export default function GiftsHubPage() {
               onClick={() => setSelectedCountry(c.code)}
               className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${
                 selectedCountry === c.code
-                  ? 'bg-amber-600 text-white shadow-sm'
-                  : 'bg-amber-50 text-amber-700 hover:bg-amber-100'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
               }`}
             >
               {c.flag} {c.name}
@@ -406,7 +431,7 @@ export default function GiftsHubPage() {
           ))}
         </div>
 
-        {/* Merchant grid */}
+        {/* Brand grid */}
         {loading ? (
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4 sm:gap-6">
             {Array.from({ length: 12 }).map((_, i) => (
@@ -419,36 +444,36 @@ export default function GiftsHubPage() {
           </div>
         ) : (
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4 sm:gap-6">
-            {displayedMerchants.map((m) => (
-              <div
-                key={m.id}
-                className="flex flex-col items-center gap-2 group cursor-default"
+            {displayedBrands.map((b) => (
+              <button
+                key={b.id}
+                className="flex flex-col items-center gap-2 group cursor-pointer"
+                onClick={() => navigate('gifts-send', { brand: b.id })}
               >
                 <div className="transition-transform duration-200 group-hover:scale-105">
-                  <MerchantLogo merchant={m} size="md" />
+                  <BrandLogo brand={b} size="md" />
                 </div>
                 <div className="text-center">
                   <p className="text-xs font-semibold text-gray-800 leading-tight line-clamp-2">
-                    {m.name}
+                    {b.brandName}
                   </p>
                   <p className="text-[10px] text-gray-400 mt-0.5">
-                    {MERCH_COUNTRIES.find((c) => c.code === m.countryCode)?.flag} {m.country}
+                    {MERCH_COUNTRIES.find((c) => c.code === b.countryCode)?.flag} {b.country}
                   </p>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         )}
 
         <p className="mt-8 text-center text-sm text-gray-400">
-          &amp; {totalMerchantCount}+ merchants across Kenya, Nigeria, Ghana, South Africa, Uganda, Tanzania&hellip;
+          &amp; {totalBrandCount}+ verified brands across Kenya, Nigeria, Ghana, South Africa, Uganda, Tanzania&hellip;
         </p>
       </section>
 
       {/* ── Become a Merchant CTA ───────────────────────────────── */}
       <section className="mx-auto max-w-4xl px-5 py-14 sm:py-20">
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-600 via-orange-500 to-amber-700 px-6 py-12 sm:px-12 sm:py-16 text-center shadow-xl shadow-amber-600/15">
-          {/* Decorative circles */}
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-600 via-teal-500 to-emerald-700 px-6 py-12 sm:px-12 sm:py-16 text-center shadow-xl shadow-emerald-600/15">
           <div className="absolute -top-10 -right-10 size-40 rounded-full bg-white/10" aria-hidden="true" />
           <div className="absolute -bottom-8 -left-8 size-32 rounded-full bg-white/5" aria-hidden="true" />
 
@@ -458,26 +483,25 @@ export default function GiftsHubPage() {
             </div>
 
             <h2 className="text-2xl sm:text-3xl font-bold text-white leading-tight">
-              List your business on<br className="hidden sm:block" /> AfriSpine Gifts
+              List your business on<br className="hidden sm:block" /> AfriSpine Gift Cards
             </h2>
-            <p className="mt-3 text-amber-100 text-sm sm:text-base max-w-md mx-auto leading-relaxed">
-              Join hundreds of African merchants already accepting AfriSpine gift vouchers.
-              Grow your customer base today.
+            <p className="mt-3 text-emerald-100 text-sm sm:text-base max-w-md mx-auto leading-relaxed">
+              Join verified African merchants accepting blockchain-backed gift cards.
+              Smart contract escrow protects every transaction.
             </p>
 
             <Button
               size="lg"
-              className="mt-8 bg-white text-amber-700 hover:bg-amber-50 shadow-lg rounded-full px-8 h-12 text-base font-semibold"
+              className="mt-8 bg-white text-emerald-700 hover:bg-emerald-50 shadow-lg rounded-full px-8 h-12 text-base font-semibold"
               onClick={() => navigate('gifts-merchant')}
             >
-              Register as a merchant
+              Register as a Brand
               <ArrowRight className="size-4 ml-1" />
             </Button>
           </div>
         </div>
       </section>
 
-      {/* Bottom spacing */}
       <div className="h-8" />
     </main>
   );

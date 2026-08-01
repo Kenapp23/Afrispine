@@ -160,3 +160,125 @@ Stage Summary:
 - 'Pay securely', 'invest in', 'your money' replaced with regulator-safe alternatives
 - PartnerDisclosure added/adjusted near all major CTAs
 - Lint passes clean
+
+---
+Task ID: 2-giftcards
+Agent: main
+Task: Implement Gift Cards Full Feature — DB schema, API routes, frontend pages, admin management
+
+Work Log:
+PART 1 — Database Schema:
+- Added GiftCardBrand, GiftCard, GiftCardTransaction models to prisma/schema.prisma
+- Added corresponding DDL (CREATE TABLE IF NOT EXISTS) to src/lib/ensure-db.ts with indexes
+- Ran bun run db:push — schema synced successfully
+
+PART 2 — Merchants Update:
+- Added MyStocks Africa (Kenya, E-Commerce) to merchants.ts
+- Added Africa's Talking (Kenya, Utilities) to merchants.ts
+- Both use clearbit logo URL pattern
+
+PART 3 — Seed Endpoint:
+- Created /api/gift-cards/seed-brands POST endpoint
+- Reads from MERCHANTS array, upserts into GiftCardBrand table
+- Sets kycStatus='verified', isVerified=true for all seeded brands
+- Generates mock smartContractHash (SHA-256) and smartContractAddress (0x + 40 hex)
+
+PART 4 — Public API Routes (6 endpoints):
+- /api/gift-cards/brands GET — list verified/active brands, filter by country
+- /api/gift-cards/purchase POST — authenticated sender purchases gift card (requires auth)
+  - Generates unique AFG-XXXXXXXXXXXX code
+  - Generates QR code data JSON with blockchain contract ref
+  - Creates GiftCard + GiftCardTransaction, sets 12-month expiry
+- /api/gift-cards/redeem POST — redeem gift card (code, redeemerName, redeemerPhone)
+  - Validates active status and expiry
+  - Creates redeem transaction
+- /api/gift-cards/[code] GET — public gift card lookup by code
+- /api/gift-cards/my GET — sender's purchased gift cards (requires auth)
+- /api/gift-cards/brand/onboard POST — brand self-onboarding with KYC
+
+PART 5 — Admin API Routes (5 endpoints):
+- /api/admin/gift-cards/brands GET — list all brands with KYC status
+- /api/admin/gift-cards/brands/[id]/verify POST — verify/reject brand KYC
+- /api/admin/gift-cards/brands/[id]/contract POST — generate smart contract document
+- /api/admin/gift-cards GET — list all gift cards with filters
+- /api/admin/gift-cards/stats GET — statistics (total sold, redeemed, active, revenue, top brands)
+
+PART 6 — Frontend Updates:
+- Rewrote gifts-hub-page.tsx: fetches from /api/gift-cards/brands, auto-seeds if empty, shows verified brand logos, country filter, blockchain messaging
+- Rewrote gifts-send-page.tsx: 4-step purchase flow (Select Brand → Card Details → Review & Confirm → Success with QR code)
+- Rewrote gifts-redeem-page.tsx: lookup by code, QR code visual display, redeem form with name/phone, status display
+- Rewrote merchant-onboarding-page.tsx: brand registration form with country, category, KYC doc URLs, submission confirmation
+
+PART 7 — Visual QR Code Component:
+- Deterministic QR-like SVG pattern based on gift card code hash
+- Finder patterns in three corners, pseudo-random fill elsewhere
+- Brand initial displayed in center green square
+- Used in both send (success) and redeem pages
+
+PART 8 — Admin Gift Cards Page:
+- Created admin-gift-cards-page.tsx with 3 tabs: Brands, Gift Cards, Statistics
+- Brands tab: table with logo, name, country, KYC badge, verify/reject/contract actions
+- Gift Cards tab: table with code, brand, amount, status, date; filter by status
+- Statistics tab: stat cards (Total Sold, Active, Redeemed, Revenue), top brands bar chart, 30-day counter
+
+PART 9 — App Wiring:
+- Added 'admin-gift-cards' to ViewName type in stores/app.ts
+- Added '/admin/gift-cards' → 'admin-gift-cards' URL mapping in page.tsx
+- Added 'admin-gift-cards' to ADMIN_VIEWS array
+- Added admin link with Gift icon to adminLinks in layout.tsx
+- Added renderAdminPage case for 'admin-gift-cards'
+- Added 'admin.giftCards' i18n key in English and French sections
+
+Stage Summary:
+- Files created: 12 API routes, 1 admin page
+- Files rewritten: 4 gift frontend pages
+- Files modified: prisma/schema.prisma, ensure-db.ts, merchants.ts, stores/app.ts, page.tsx, layout.tsx, i18n.ts
+- Lint passes clean
+- All brands display logos via clearbit → brandfetch → google favicon fallback chain
+- Each gift card has blockchain QR code visual and smart contract reference
+
+---
+Task ID: 9-testing-dashboard
+Agent: main
+Task: Admin Testing Dashboard — NSE Exchange Integration Simulation Engine
+
+Work Log:
+PART 1 — Database Schema:
+- Added EquityOrder, DiasporaNseLedger, FeeMatrix models to prisma/schema.prisma
+- Added corresponding CREATE TABLE IF NOT EXISTS DDL to src/lib/ensure-db.ts
+- Ran bun run db:push — schema synced successfully
+
+PART 2 — API Routes (3 endpoints):
+- Created /api/admin/v1/test/inject-scenario (POST) — admin-only, 4 test scenarios:
+  1. happy-path: $1,000 deposit → DANGOTE buy → 3s webhook → Secured, fee splits (1.5% platform, 0.5% exchange, chama)
+  2. replay-attack: first request 202, duplicate idempotency key 250ms later → 409 with cached response
+  3. timeout-dropout: 15s hang → 504 Gateway Timeout, escrow locked, ledger status 'Failed: Connection Interrupted'
+  4. oversubscription: 1,000 shares @ ₦300, 40% partial fill, HMAC-SHA256 webhook, 60% pro-rata refund
+- Created /api/admin/v1/test/ledger (GET) — returns recent DiasporaNseLedger + FeeMatrix entries
+- Created /api/admin/v1/test/clear (POST) — clears all test-generated data, returns counts
+- All endpoints use requireAdmin auth, Node.js crypto for HMAC-SHA256
+
+PART 3 — Frontend Component:
+- Created src/components/afrispine/admin/admin-testing-dashboard.tsx
+- Header: title, SANDBOX MODE badge, subtitle
+- Scenario selector: dropdown with 4 options, description cards, large emerald 'Inject' button
+- Live ledger monitor: 2-column layout (left: scenario+results, right: ledger), tabs for NSE Ledger / Fee Matrix
+- Auto-polling every 2s while test is running, flash animation on new entries
+- Terminal console: dark bg, green text, monospace, color-coded (red for errors, amber for warnings)
+- Webhook payload display with HMAC verification badge
+- Replay attack: side-by-side original (202) vs duplicate (409) response panels
+- Oversubscription: pro-rata refund calculation breakdown table
+- Clear test data button
+
+PART 4 — App Wiring:
+- Added 'admin-testing' to ViewName type in stores/app.ts
+- Added '/admin/testing' → 'admin-testing' URL mapping in page.tsx
+- Added 'admin-testing' to ADMIN_VIEWS array
+- Added admin sidebar link with FlaskConical icon to layout.tsx
+- Added renderAdminPage case for 'admin-testing'
+- Added 'admin.testing' i18n key in English and French sections
+
+Stage Summary:
+- Files created: 3 API routes, 1 admin component
+- Files modified: prisma/schema.prisma, ensure-db.ts, stores/app.ts, page.tsx, layout.tsx, i18n.ts
+- Lint passes clean

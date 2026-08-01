@@ -68,7 +68,7 @@ import { WealthActivationPage } from '@/components/afrispine/wealth/wealth-activ
 import GiftsHubPage from '@/components/afrispine/gifts/gifts-hub-page';
 import GiftsSendPage from '@/components/afrispine/gifts/gifts-send-page';
 import GiftsRedeemPage from '@/components/afrispine/gifts/gifts-redeem-page';
-import { MerchantOnboardingPage } from '@/components/afrispine/gifts/merchant-onboarding-page';
+import MerchantOnboardingPage from '@/components/afrispine/gifts/merchant-onboarding-page';
 
 // ─── Digest Pages ───────────────────────────────────────────
 import { DigestCurrentIssuePage } from '@/components/afrispine/digest/digest-current-issue-page';
@@ -92,6 +92,8 @@ import { AdminBusinessPage } from '@/components/afrispine/admin/admin-business-p
 import { AdminWealthPage } from '@/components/afrispine/admin/admin-wealth-page';
 import { AdminDigestPage } from '@/components/afrispine/admin/admin-digest-page';
 import { AdminGiftProvidersPage } from '@/components/afrispine/admin/admin-gift-providers-page';
+import AdminGiftCardsPage from '@/components/afrispine/admin/admin-gift-cards-page';
+import { AdminTestingDashboard } from '@/components/afrispine/admin/admin-testing-dashboard';
 
 // ─── URL-to-View mapping ─────────────────────────────────────
 const URL_VIEW_MAP: Record<string, ViewName> = {
@@ -165,12 +167,14 @@ const URL_VIEW_MAP: Record<string, ViewName> = {
   '/admin/wealth': 'admin-wealth',
   '/admin/digest': 'admin-digest',
   '/admin/gift-providers': 'admin-gift-providers',
+  '/admin/gift-cards': 'admin-gift-cards',
+  '/admin/testing': 'admin-testing',
 };
 
 const ADMIN_VIEWS: ViewName[] = [
   'admin-dashboard', 'admin-transactions', 'admin-senders', 'admin-providers',
   'admin-revenue', 'admin-billing', 'admin-settlement', 'admin-compliance',
-  'admin-settings', 'admin-business', 'admin-wealth', 'admin-digest', 'admin-gift-providers',
+  'admin-settings', 'admin-business', 'admin-wealth', 'admin-digest', 'admin-gift-providers', 'admin-gift-cards', 'admin-testing',
 ];
 
 const SENDER_VIEWS: ViewName[] = [
@@ -264,6 +268,8 @@ function renderAdminPage(view: ViewName): React.ReactNode {
     case 'admin-wealth': return <AdminWealthPage />;
     case 'admin-digest': return <AdminDigestPage />;
     case 'admin-gift-providers': return <AdminGiftProvidersPage />;
+    case 'admin-gift-cards': return <AdminGiftCardsPage />;
+    case 'admin-testing': return <AdminTestingDashboard />;
     default: return null;
   }
 }
@@ -280,6 +286,33 @@ export default function Home() {
     () => true,
     () => false,
   );
+
+  // Restore session from httpOnly cookie on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/auth/me');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.success && data.type === 'sender' && data.sender) {
+          // Restore sender state WITHOUT navigating away from current view
+          useAppStore.setState({
+            sender: data.sender,
+            sessionToken: 'restored',
+            admin: null,
+            adminSessionToken: null,
+          });
+        } else if (data.success && data.type === 'admin' && data.admin) {
+          useAppStore.setState({
+            admin: data.admin,
+            adminSessionToken: 'restored',
+            sender: null,
+            sessionToken: null,
+          });
+        }
+      } catch {}
+    })();
+  }, []);
 
   // Sync URL/hash → Zustand view on mount & popstate
   useEffect(() => {

@@ -569,6 +569,135 @@ model AchievementCard {
   createdAt   DateTime @default(now())
 }
 
+// ─── Gift Card Models ──────────────────────────────────────────
+
+model GiftCardBrand {
+  id                    String   @id @default(cuid())
+  brandName             String
+  slug                  String   @unique
+  logoUrl               String
+  country               String
+  countryCode           String
+  category              String   @default("General")
+  description           String?
+  website               String?
+  kycStatus             String   @default("pending")   // pending, submitted, verified, rejected
+  kycDocuments          String?
+  contactEmail          String?
+  contactPhone          String?
+  smartContractHash     String?
+  smartContractAddress  String?
+  isVerified            Boolean  @default(false)
+  isActive              Boolean  @default(true)
+  minAmount             Float    @default(5)
+  maxAmount             Float    @default(500)
+  supportedCurrencies   String   @default("[\"KES\",\"NGN\",\"GHS\",\"ZAR\",\"UGX\",\"TZS\"]")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  giftCards             GiftCard[]
+}
+
+model GiftCard {
+  id                    String   @id @default(cuid())
+  code                  String   @unique
+  brandId               String
+  senderId              String?
+  recipientName         String?
+  recipientEmail        String?
+  recipientPhone        String?
+  amount                Float
+  currency              String
+  status                String   @default("active")     // active, redeemed, expired, cancelled
+  qrCodeData            String
+  blockchainTxHash      String?
+  smartContractRef      String?
+  message               String?
+  occasion              String?
+  purchasedAt           DateTime @default(now())
+  redeemedAt            DateTime?
+  redeemedBy            String?
+  expiresAt             DateTime?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  brand                 GiftCardBrand  @relation(fields: [brandId], references: [id])
+  transactions          GiftCardTransaction[]
+
+  @@index([brandId])
+  @@index([senderId])
+  @@index([status])
+  @@index([code])
+}
+
+model GiftCardTransaction {
+  id                    String   @id @default(cuid())
+  giftCardId            String
+  type                  String                         // purchase, redeem, refund, partial_redeem
+  amount                Float
+  currency              String
+  status                String   @default("completed")  // completed, pending, failed
+  performedBy           String?
+  performedByRole       String?
+  blockchainTxHash      String?
+  smartContractEvent    String?
+  metadata              String?
+  createdAt             DateTime @default(now())
+
+  giftCard              GiftCard  @relation(fields: [giftCardId], references: [id], onDelete: Cascade)
+
+  @@index([giftCardId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// ─── Equity / NSE Testing Models ────────────────────────────────
+
+model EquityOrder {
+  id              String   @id @default(cuid())
+  senderId        String?
+  ticker          String?
+  side            String?
+  quantity        Float?
+  pricePerShare   Float?
+  totalAmount     Float?
+  currency        String?
+  status          String?
+  idempotencyKey  String?
+  metadata        String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model DiasporaNseLedger {
+  id            String   @id @default(cuid())
+  orderId       String?
+  ticker        String?
+  side          String?
+  quantity      Float?
+  price         Float?
+  totalValue    Float?
+  status        String?
+  fee           Float?
+  currency      String?
+  exchange      String?
+  metadata      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model FeeMatrix {
+  id            String   @id @default(cuid())
+  orderId       String?
+  type          String?
+  description   String?
+  amount        Float?
+  currency      String?
+  recipient     String?
+  status        String?
+  createdAt     DateTime @default(now())
+}
+
 // Keep legacy User/Post for scaffold compatibility
 model User {
   id        String   @id @default(cuid())

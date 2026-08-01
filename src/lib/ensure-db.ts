@@ -497,6 +497,111 @@ CREATE TABLE "AchievementCard" (
     "icon" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+CREATE TABLE IF NOT EXISTS "GiftCardBrand" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "brandName" TEXT NOT NULL,
+    "slug" TEXT NOT NULL,
+    "logoUrl" TEXT NOT NULL,
+    "country" TEXT NOT NULL,
+    "countryCode" TEXT NOT NULL,
+    "category" TEXT NOT NULL DEFAULT 'General',
+    "description" TEXT,
+    "website" TEXT,
+    "kycStatus" TEXT NOT NULL DEFAULT 'pending',
+    "kycDocuments" TEXT,
+    "contactEmail" TEXT,
+    "contactPhone" TEXT,
+    "smartContractHash" TEXT,
+    "smartContractAddress" TEXT,
+    "isVerified" BOOLEAN NOT NULL DEFAULT false,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "minAmount" REAL NOT NULL DEFAULT 5,
+    "maxAmount" REAL NOT NULL DEFAULT 500,
+    "supportedCurrencies" TEXT NOT NULL DEFAULT '["KES","NGN","GHS","ZAR","UGX","TZS"]',
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL
+);
+CREATE TABLE IF NOT EXISTS "GiftCard" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "code" TEXT NOT NULL,
+    "brandId" TEXT NOT NULL,
+    "senderId" TEXT,
+    "recipientName" TEXT,
+    "recipientEmail" TEXT,
+    "recipientPhone" TEXT,
+    "amount" REAL NOT NULL,
+    "currency" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'active',
+    "qrCodeData" TEXT NOT NULL,
+    "blockchainTxHash" TEXT,
+    "smartContractRef" TEXT,
+    "message" TEXT,
+    "occasion" TEXT,
+    "purchasedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "redeemedAt" DATETIME,
+    "redeemedBy" TEXT,
+    "expiresAt" DATETIME,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "GiftCard_brandId_fkey" FOREIGN KEY ("brandId") REFERENCES "GiftCardBrand" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+CREATE TABLE IF NOT EXISTS "GiftCardTransaction" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "giftCardId" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "amount" REAL NOT NULL,
+    "currency" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'completed',
+    "performedBy" TEXT,
+    "performedByRole" TEXT,
+    "blockchainTxHash" TEXT,
+    "smartContractEvent" TEXT,
+    "metadata" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "GiftCardTransaction_giftCardId_fkey" FOREIGN KEY ("giftCardId") REFERENCES "GiftCard" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+CREATE TABLE IF NOT EXISTS "EquityOrder" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "senderId" TEXT,
+    "ticker" TEXT,
+    "side" TEXT,
+    "quantity" REAL,
+    "pricePerShare" REAL,
+    "totalAmount" REAL,
+    "currency" TEXT,
+    "status" TEXT,
+    "idempotencyKey" TEXT,
+    "metadata" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL
+);
+CREATE TABLE IF NOT EXISTS "DiasporaNseLedger" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "orderId" TEXT,
+    "ticker" TEXT,
+    "side" TEXT,
+    "quantity" REAL,
+    "price" REAL,
+    "totalValue" REAL,
+    "status" TEXT,
+    "fee" REAL,
+    "currency" TEXT,
+    "exchange" TEXT,
+    "metadata" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL
+);
+CREATE TABLE IF NOT EXISTS "FeeMatrix" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "orderId" TEXT,
+    "type" TEXT,
+    "description" TEXT,
+    "amount" REAL,
+    "currency" TEXT,
+    "recipient" TEXT,
+    "status" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 CREATE TABLE "User" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "email" TEXT NOT NULL,
@@ -533,6 +638,14 @@ CREATE INDEX "PepCheck_status_idx" ON "PepCheck"("status");
 CREATE INDEX "PepCheck_createdAt_idx" ON "PepCheck"("createdAt");
 CREATE UNIQUE INDEX "PlatformConfig_key_key" ON "PlatformConfig"("key");
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+CREATE UNIQUE INDEX "GiftCardBrand_slug_key" ON "GiftCardBrand"("slug");
+CREATE UNIQUE INDEX "GiftCard_code_key" ON "GiftCard"("code");
+CREATE INDEX "GiftCard_brandId_idx" ON "GiftCard"("brandId");
+CREATE INDEX "GiftCard_senderId_idx" ON "GiftCard"("senderId");
+CREATE INDEX "GiftCard_status_idx" ON "GiftCard"("status");
+CREATE INDEX "GiftCardTransaction_giftCardId_idx" ON "GiftCardTransaction"("giftCardId");
+CREATE INDEX "GiftCardTransaction_type_idx" ON "GiftCardTransaction"("type");
+CREATE INDEX "GiftCardTransaction_createdAt_idx" ON "GiftCardTransaction"("createdAt");
 `
 
 async function createSchema() {
