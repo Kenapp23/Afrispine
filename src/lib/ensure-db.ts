@@ -17,7 +17,7 @@ let adminEnsured = false
 // Generated via: npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script
 // DO NOT edit manually — regenerate from schema.prisma if models change.
 const SCHEMA_SQL = `
-CREATE TABLE "Sender" (
+CREATE TABLE IF NOT EXISTS "Sender" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "firstName" TEXT,
     "lastName" TEXT,
@@ -30,7 +30,7 @@ CREATE TABLE "Sender" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
-CREATE TABLE "AdminUser" (
+CREATE TABLE IF NOT EXISTS "AdminUser" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "email" TEXT NOT NULL,
     "fullName" TEXT,
@@ -41,7 +41,7 @@ CREATE TABLE "AdminUser" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
-CREATE TABLE "Transaction" (
+CREATE TABLE IF NOT EXISTS "Transaction" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "reference" TEXT NOT NULL,
     "senderId" TEXT NOT NULL,
@@ -66,7 +66,7 @@ CREATE TABLE "Transaction" (
     "updatedAt" DATETIME NOT NULL,
     CONSTRAINT "Transaction_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "Sender" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
-CREATE TABLE "TransactionEvent" (
+CREATE TABLE IF NOT EXISTS "TransactionEvent" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "transactionId" TEXT NOT NULL,
     "type" TEXT NOT NULL,
@@ -76,7 +76,7 @@ CREATE TABLE "TransactionEvent" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "TransactionEvent_transactionId_fkey" FOREIGN KEY ("transactionId") REFERENCES "Transaction" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
-CREATE TABLE "Recipient" (
+CREATE TABLE IF NOT EXISTS "Recipient" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "senderId" TEXT NOT NULL,
     "name" TEXT,
@@ -89,7 +89,7 @@ CREATE TABLE "Recipient" (
     "updatedAt" DATETIME NOT NULL,
     CONSTRAINT "Recipient_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "Sender" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
-CREATE TABLE "Provider" (
+CREATE TABLE IF NOT EXISTS "Provider" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
     "displayName" TEXT,
@@ -112,7 +112,7 @@ CREATE TABLE "Provider" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
-CREATE TABLE "ProviderLog" (
+CREATE TABLE IF NOT EXISTS "ProviderLog" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "providerId" TEXT,
     "direction" TEXT,
@@ -124,7 +124,7 @@ CREATE TABLE "ProviderLog" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "ProviderLog_providerId_fkey" FOREIGN KEY ("providerId") REFERENCES "Provider" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
-CREATE TABLE "NotificationTemplate" (
+CREATE TABLE IF NOT EXISTS "NotificationTemplate" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "trigger" TEXT NOT NULL,
     "channel" TEXT NOT NULL DEFAULT 'email',
@@ -133,7 +133,7 @@ CREATE TABLE "NotificationTemplate" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
-CREATE TABLE "SettlementConfig" (
+CREATE TABLE IF NOT EXISTS "SettlementConfig" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "companyName" TEXT,
     "registeredAddress" TEXT,
@@ -149,14 +149,14 @@ CREATE TABLE "SettlementConfig" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
-CREATE TABLE "FxMarginOverride" (
+CREATE TABLE IF NOT EXISTS "FxMarginOverride" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "corridor" TEXT NOT NULL,
     "marginPct" REAL NOT NULL,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
-CREATE TABLE "Corridor" (
+CREATE TABLE IF NOT EXISTS "Corridor" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "sendCountry" TEXT,
     "receiveCountry" TEXT,
@@ -166,7 +166,7 @@ CREATE TABLE "Corridor" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
-CREATE TABLE "RevenueRecord" (
+CREATE TABLE IF NOT EXISTS "RevenueRecord" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "type" TEXT,
     "amount" REAL,
@@ -176,7 +176,7 @@ CREATE TABLE "RevenueRecord" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
-CREATE TABLE "Invoice" (
+CREATE TABLE IF NOT EXISTS "Invoice" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "providerId" TEXT,
     "providerName" TEXT,
@@ -188,7 +188,7 @@ CREATE TABLE "Invoice" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
-CREATE TABLE "SplitRule" (
+CREATE TABLE IF NOT EXISTS "SplitRule" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT,
     "description" TEXT,
@@ -198,13 +198,13 @@ CREATE TABLE "SplitRule" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
-CREATE TABLE "PlatformSetting" (
+CREATE TABLE IF NOT EXISTS "PlatformSetting" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "key" TEXT NOT NULL,
     "value" TEXT,
     "updatedAt" DATETIME NOT NULL
 );
-CREATE TABLE "RateAlert" (
+CREATE TABLE IF NOT EXISTS "RateAlert" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "senderId" TEXT,
     "corridor" TEXT,
@@ -214,7 +214,7 @@ CREATE TABLE "RateAlert" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
-CREATE TABLE "RecurringSend" (
+CREATE TABLE IF NOT EXISTS "RecurringSend" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "senderId" TEXT,
     "recipientId" TEXT,
@@ -227,7 +227,7 @@ CREATE TABLE "RecurringSend" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
-CREATE TABLE "Referral" (
+CREATE TABLE IF NOT EXISTS "Referral" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "referrerId" TEXT,
     "referredId" TEXT,
@@ -236,7 +236,7 @@ CREATE TABLE "Referral" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
-CREATE TABLE "Quote" (
+CREATE TABLE IF NOT EXISTS "Quote" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "senderId" TEXT,
     "sendCurrency" TEXT,
@@ -249,7 +249,7 @@ CREATE TABLE "Quote" (
     "expiresAt" DATETIME,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-CREATE TABLE "GroupSend" (
+CREATE TABLE IF NOT EXISTS "GroupSend" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT,
     "creatorId" TEXT,
@@ -259,7 +259,7 @@ CREATE TABLE "GroupSend" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
-CREATE TABLE "GroupSendContribution" (
+CREATE TABLE IF NOT EXISTS "GroupSendContribution" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "groupSendId" TEXT,
     "senderId" TEXT,
@@ -267,7 +267,7 @@ CREATE TABLE "GroupSendContribution" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "GroupSendContribution_groupSendId_fkey" FOREIGN KEY ("groupSendId") REFERENCES "GroupSend" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
-CREATE TABLE "GiftVoucher" (
+CREATE TABLE IF NOT EXISTS "GiftVoucher" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "code" TEXT NOT NULL,
     "senderId" TEXT,
@@ -280,7 +280,7 @@ CREATE TABLE "GiftVoucher" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
-CREATE TABLE "FamilyPool" (
+CREATE TABLE IF NOT EXISTS "FamilyPool" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT,
     "creatorId" TEXT,
@@ -290,7 +290,7 @@ CREATE TABLE "FamilyPool" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
-CREATE TABLE "BillPayment" (
+CREATE TABLE IF NOT EXISTS "BillPayment" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "senderId" TEXT,
     "provider" TEXT,
@@ -303,7 +303,7 @@ CREATE TABLE "BillPayment" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
-CREATE TABLE "Wallet" (
+CREATE TABLE IF NOT EXISTS "Wallet" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "ownerId" TEXT,
     "ownerType" TEXT,
@@ -312,7 +312,7 @@ CREATE TABLE "Wallet" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
-CREATE TABLE "AmlFlag" (
+CREATE TABLE IF NOT EXISTS "AmlFlag" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "transactionId" TEXT,
     "senderId" TEXT,
@@ -323,34 +323,34 @@ CREATE TABLE "AmlFlag" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
-CREATE TABLE "SenderNote" (
+CREATE TABLE IF NOT EXISTS "SenderNote" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "senderId" TEXT,
     "authorId" TEXT,
     "content" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-CREATE TABLE "WhatsAppOptIn" (
+CREATE TABLE IF NOT EXISTS "WhatsAppOptIn" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "senderId" TEXT,
     "phone" TEXT,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-CREATE TABLE "SenderSubscription" (
+CREATE TABLE IF NOT EXISTS "SenderSubscription" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "senderId" TEXT,
     "type" TEXT,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-CREATE TABLE "SenderPaystackAuth" (
+CREATE TABLE IF NOT EXISTS "SenderPaystackAuth" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "senderId" TEXT,
     "authCode" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-CREATE TABLE "PepCheck" (
+CREATE TABLE IF NOT EXISTS "PepCheck" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "senderId" TEXT,
     "firstName" TEXT NOT NULL,
@@ -366,7 +366,7 @@ CREATE TABLE "PepCheck" (
     "checkedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-CREATE TABLE "BusinessAccount" (
+CREATE TABLE IF NOT EXISTS "BusinessAccount" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "companyName" TEXT,
     "registrationNumber" TEXT,
@@ -376,7 +376,7 @@ CREATE TABLE "BusinessAccount" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
-CREATE TABLE "BusinessTransaction" (
+CREATE TABLE IF NOT EXISTS "BusinessTransaction" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "businessId" TEXT,
     "sellCurrency" TEXT,
@@ -388,7 +388,7 @@ CREATE TABLE "BusinessTransaction" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
-CREATE TABLE "DigestIssue" (
+CREATE TABLE IF NOT EXISTS "DigestIssue" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "title" TEXT,
     "slug" TEXT,
@@ -397,20 +397,20 @@ CREATE TABLE "DigestIssue" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
-CREATE TABLE "DigestSubscription" (
+CREATE TABLE IF NOT EXISTS "DigestSubscription" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "email" TEXT,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-CREATE TABLE "InvestmentAccount" (
+CREATE TABLE IF NOT EXISTS "InvestmentAccount" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "senderId" TEXT,
     "status" TEXT NOT NULL DEFAULT 'pending',
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
-CREATE TABLE "InvestmentOrder" (
+CREATE TABLE IF NOT EXISTS "InvestmentOrder" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "accountId" TEXT,
     "type" TEXT,
@@ -422,7 +422,7 @@ CREATE TABLE "InvestmentOrder" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
-CREATE TABLE "FxOrder" (
+CREATE TABLE IF NOT EXISTS "FxOrder" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "senderId" TEXT,
     "sellCurrency" TEXT,
@@ -434,7 +434,7 @@ CREATE TABLE "FxOrder" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
-CREATE TABLE "DividendPayment" (
+CREATE TABLE IF NOT EXISTS "DividendPayment" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "accountId" TEXT,
     "amount" REAL,
@@ -444,7 +444,7 @@ CREATE TABLE "DividendPayment" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
-CREATE TABLE "AumFeeCharge" (
+CREATE TABLE IF NOT EXISTS "AumFeeCharge" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "accountId" TEXT,
     "amount" REAL,
@@ -453,7 +453,7 @@ CREATE TABLE "AumFeeCharge" (
     "periodEnd" DATETIME,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-CREATE TABLE "ChinaCorridorPayment" (
+CREATE TABLE IF NOT EXISTS "ChinaCorridorPayment" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "senderId" TEXT,
     "sendAmount" REAL,
@@ -464,13 +464,13 @@ CREATE TABLE "ChinaCorridorPayment" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
-CREATE TABLE "PapssSession" (
+CREATE TABLE IF NOT EXISTS "PapssSession" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "sessionId" TEXT,
     "status" TEXT NOT NULL DEFAULT 'initiated',
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-CREATE TABLE "RippleSettlement" (
+CREATE TABLE IF NOT EXISTS "RippleSettlement" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "transactionId" TEXT,
     "amount" REAL,
@@ -478,19 +478,19 @@ CREATE TABLE "RippleSettlement" (
     "status" TEXT NOT NULL DEFAULT 'pending',
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-CREATE TABLE "LiquidityProvider" (
+CREATE TABLE IF NOT EXISTS "LiquidityProvider" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT,
     "type" TEXT,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-CREATE TABLE "PlatformConfig" (
+CREATE TABLE IF NOT EXISTS "PlatformConfig" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "key" TEXT NOT NULL,
     "value" TEXT
 );
-CREATE TABLE "AchievementCard" (
+CREATE TABLE IF NOT EXISTS "AchievementCard" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "title" TEXT,
     "description" TEXT,
@@ -657,14 +657,14 @@ CREATE TABLE IF NOT EXISTS "CompanyConfig" (
     "configJson" TEXT NOT NULL,
     "updatedAt" DATETIME NOT NULL
 );
-CREATE TABLE "User" (
+CREATE TABLE IF NOT EXISTS "User" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "email" TEXT NOT NULL,
     "name" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
-CREATE TABLE "Post" (
+CREATE TABLE IF NOT EXISTS "Post" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "title" TEXT NOT NULL,
     "content" TEXT,
@@ -673,40 +673,40 @@ CREATE TABLE "Post" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL
 );
-CREATE UNIQUE INDEX "Sender_email_key" ON "Sender"("email");
-CREATE UNIQUE INDEX "AdminUser_email_key" ON "AdminUser"("email");
-CREATE UNIQUE INDEX "Transaction_reference_key" ON "Transaction"("reference");
-CREATE INDEX "Transaction_senderId_idx" ON "Transaction"("senderId");
-CREATE INDEX "Transaction_status_idx" ON "Transaction"("status");
-CREATE INDEX "Transaction_createdAt_idx" ON "Transaction"("createdAt");
-CREATE INDEX "TransactionEvent_transactionId_idx" ON "TransactionEvent"("transactionId");
-CREATE INDEX "Recipient_senderId_idx" ON "Recipient"("senderId");
-CREATE UNIQUE INDEX "Provider_slug_key" ON "Provider"("slug");
-CREATE INDEX "ProviderLog_providerId_idx" ON "ProviderLog"("providerId");
-CREATE INDEX "ProviderLog_createdAt_idx" ON "ProviderLog"("createdAt");
-CREATE UNIQUE INDEX "NotificationTemplate_trigger_key" ON "NotificationTemplate"("trigger");
-CREATE UNIQUE INDEX "FxMarginOverride_corridor_key" ON "FxMarginOverride"("corridor");
-CREATE UNIQUE INDEX "PlatformSetting_key_key" ON "PlatformSetting"("key");
-CREATE UNIQUE INDEX "GiftVoucher_code_key" ON "GiftVoucher"("code");
-CREATE INDEX "PepCheck_senderId_idx" ON "PepCheck"("senderId");
-CREATE INDEX "PepCheck_status_idx" ON "PepCheck"("status");
-CREATE INDEX "PepCheck_createdAt_idx" ON "PepCheck"("createdAt");
-CREATE UNIQUE INDEX "PlatformConfig_key_key" ON "PlatformConfig"("key");
-CREATE UNIQUE INDEX "PartnerConfig_partnerId_key" ON "PartnerConfig"("partnerId");
-CREATE UNIQUE INDEX "SettlementTransaction_reference_key" ON "SettlementTransaction"("reference");
-CREATE UNIQUE INDEX "CompanyConfig_configKey_key" ON "CompanyConfig"("configKey");
-CREATE INDEX "SettlementTransaction_senderId_idx" ON "SettlementTransaction"("senderId");
-CREATE INDEX "SettlementTransaction_status_idx" ON "SettlementTransaction"("status");
-CREATE INDEX "SettlementTransaction_createdAt_idx" ON "SettlementTransaction"("createdAt");
-CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
-CREATE UNIQUE INDEX "GiftCardBrand_slug_key" ON "GiftCardBrand"("slug");
-CREATE UNIQUE INDEX "GiftCard_code_key" ON "GiftCard"("code");
-CREATE INDEX "GiftCard_brandId_idx" ON "GiftCard"("brandId");
-CREATE INDEX "GiftCard_senderId_idx" ON "GiftCard"("senderId");
-CREATE INDEX "GiftCard_status_idx" ON "GiftCard"("status");
-CREATE INDEX "GiftCardTransaction_giftCardId_idx" ON "GiftCardTransaction"("giftCardId");
-CREATE INDEX "GiftCardTransaction_type_idx" ON "GiftCardTransaction"("type");
-CREATE INDEX "GiftCardTransaction_createdAt_idx" ON "GiftCardTransaction"("createdAt");
+CREATE UNIQUE INDEX IF NOT EXISTS "Sender_email_key" ON "Sender"("email");
+CREATE UNIQUE INDEX IF NOT EXISTS "AdminUser_email_key" ON "AdminUser"("email");
+CREATE UNIQUE INDEX IF NOT EXISTS "Transaction_reference_key" ON "Transaction"("reference");
+CREATE INDEX IF NOT EXISTS "Transaction_senderId_idx" ON "Transaction"("senderId");
+CREATE INDEX IF NOT EXISTS "Transaction_status_idx" ON "Transaction"("status");
+CREATE INDEX IF NOT EXISTS "Transaction_createdAt_idx" ON "Transaction"("createdAt");
+CREATE INDEX IF NOT EXISTS "TransactionEvent_transactionId_idx" ON "TransactionEvent"("transactionId");
+CREATE INDEX IF NOT EXISTS "Recipient_senderId_idx" ON "Recipient"("senderId");
+CREATE UNIQUE INDEX IF NOT EXISTS "Provider_slug_key" ON "Provider"("slug");
+CREATE INDEX IF NOT EXISTS "ProviderLog_providerId_idx" ON "ProviderLog"("providerId");
+CREATE INDEX IF NOT EXISTS "ProviderLog_createdAt_idx" ON "ProviderLog"("createdAt");
+CREATE UNIQUE INDEX IF NOT EXISTS "NotificationTemplate_trigger_key" ON "NotificationTemplate"("trigger");
+CREATE UNIQUE INDEX IF NOT EXISTS "FxMarginOverride_corridor_key" ON "FxMarginOverride"("corridor");
+CREATE UNIQUE INDEX IF NOT EXISTS "PlatformSetting_key_key" ON "PlatformSetting"("key");
+CREATE UNIQUE INDEX IF NOT EXISTS "GiftVoucher_code_key" ON "GiftVoucher"("code");
+CREATE INDEX IF NOT EXISTS "PepCheck_senderId_idx" ON "PepCheck"("senderId");
+CREATE INDEX IF NOT EXISTS "PepCheck_status_idx" ON "PepCheck"("status");
+CREATE INDEX IF NOT EXISTS "PepCheck_createdAt_idx" ON "PepCheck"("createdAt");
+CREATE UNIQUE INDEX IF NOT EXISTS "PlatformConfig_key_key" ON "PlatformConfig"("key");
+CREATE UNIQUE INDEX IF NOT EXISTS "PartnerConfig_partnerId_key" ON "PartnerConfig"("partnerId");
+CREATE UNIQUE INDEX IF NOT EXISTS "SettlementTransaction_reference_key" ON "SettlementTransaction"("reference");
+CREATE UNIQUE INDEX IF NOT EXISTS "CompanyConfig_configKey_key" ON "CompanyConfig"("configKey");
+CREATE INDEX IF NOT EXISTS "SettlementTransaction_senderId_idx" ON "SettlementTransaction"("senderId");
+CREATE INDEX IF NOT EXISTS "SettlementTransaction_status_idx" ON "SettlementTransaction"("status");
+CREATE INDEX IF NOT EXISTS "SettlementTransaction_createdAt_idx" ON "SettlementTransaction"("createdAt");
+CREATE UNIQUE INDEX IF NOT EXISTS "User_email_key" ON "User"("email");
+CREATE UNIQUE INDEX IF NOT EXISTS "GiftCardBrand_slug_key" ON "GiftCardBrand"("slug");
+CREATE UNIQUE INDEX IF NOT EXISTS "GiftCard_code_key" ON "GiftCard"("code");
+CREATE INDEX IF NOT EXISTS "GiftCard_brandId_idx" ON "GiftCard"("brandId");
+CREATE INDEX IF NOT EXISTS "GiftCard_senderId_idx" ON "GiftCard"("senderId");
+CREATE INDEX IF NOT EXISTS "GiftCard_status_idx" ON "GiftCard"("status");
+CREATE INDEX IF NOT EXISTS "GiftCardTransaction_giftCardId_idx" ON "GiftCardTransaction"("giftCardId");
+CREATE INDEX IF NOT EXISTS "GiftCardTransaction_type_idx" ON "GiftCardTransaction"("type");
+CREATE INDEX IF NOT EXISTS "GiftCardTransaction_createdAt_idx" ON "GiftCardTransaction"("createdAt");
 `
 
 async function createSchema() {

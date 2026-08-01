@@ -31,6 +31,10 @@ import {
   AlertTriangle,
   TrendingUp,
   Plus,
+  Download,
+  FileArchive,
+  Database,
+  Package,
 } from 'lucide-react';
 import { useAppStore } from '@/stores/app';
 import { toast } from 'sonner';
@@ -729,6 +733,89 @@ export function AdminSettingsPage() {
           Configure global transfer fees, base charge currency, and per-corridor overrides for the platform.
         </p>
         <FeeStructureCard />
+      </div>
+
+      {/* Source Code & Data Backup */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 mb-2">
+          <Database className="h-5 w-5 text-muted-foreground" />
+          <h2 className="text-lg font-semibold text-gray-900">Source Code &amp; Backup</h2>
+        </div>
+        <p className="text-sm text-muted-foreground mb-4">
+          Download the complete AfriSpine source code (v1.2.0) including all components, API routes, database schema, and important materials. Store this locally to prevent any code loss.
+        </p>
+        <Card className="border-emerald-200 bg-emerald-50/50">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100">
+                  <Package className="h-5 w-5 text-emerald-700" />
+                </div>
+                <div>
+                  <CardTitle className="text-base">AfriSpine Full Source Code v1.2.0</CardTitle>
+                  <CardDescription className="text-xs">
+                    312 files &bull; ~11 MB &bull; Includes DB schema, API routes, 122 gift card brands, settlement engine, admin panel
+                  </CardDescription>
+                </div>
+              </div>
+              <Badge variant="outline" className="bg-emerald-100 text-emerald-800 border-emerald-300">v1.2.0</Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <FileArchive className="h-3.5 w-3.5" />
+                  <span>Full source + UI components</span>
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Database className="h-3.5 w-3.5" />
+                  <span>SQLite database (custom.db)</span>
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Shield className="h-3.5 w-3.5" />
+                  <span>Important materials doc</span>
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button
+                  onClick={() => {
+                    const a = document.createElement('a');
+                    a.href = '/api/download-source';
+                    a.download = 'afrispine-full-source-v1.2.0.zip';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    toast.success('Download started!', { description: 'afrispine-full-source-v1.2.0.zip' });
+                  }}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Download Full Source Code (ZIP)
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const a = document.createElement('a');
+                    a.href = '/AFRISPINE-IMPORTANT-MATERIALS.md';
+                    a.download = 'AFRISPINE-IMPORTANT-MATERIALS.md';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    toast.success('Materials doc downloading', {});
+                  }}
+                >
+                  <FileArchive className="mr-2 h-4 w-4" />
+                  Important Materials (Markdown)
+                </Button>
+              </div>
+              <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-2">
+                <AlertTriangle className="inline h-3 w-3 mr-1" />
+                <strong>Important:</strong> Store the downloaded ZIP locally. This contains the complete codebase, database, and all documentation needed to restore the platform.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
