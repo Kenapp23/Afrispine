@@ -12,6 +12,7 @@ import {
   CreditCard,
   Save,
   Shield,
+  ShieldCheck,
   RefreshCw,
   Key,
   Eye,
@@ -35,6 +36,7 @@ import {
   FileArchive,
   Database,
   Package,
+  UserCircle,
 } from 'lucide-react';
 import { useAppStore } from '@/stores/app';
 import { toast } from 'sonner';
@@ -701,12 +703,122 @@ function FeeStructureCard() {
 
 // ─── Main Settings Page ──────────────────────────────────────────────────────
 
+// ─── My Account / Change Password Card ────────────────────────────────
+function MyAccountCard() {
+  const admin = useAppStore((s) => s.admin);
+  const adminToken = useAppStore((s) => s.adminSessionToken);
+  const [cpCurrent, setCpCurrent] = useState('');
+  const [cpNew, setCpNew] = useState('');
+  const [cpConfirm, setCpConfirm] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+
+  async function changePassword() {
+    if (!cpCurrent || !cpNew || !cpConfirm) {
+      toast.error('All fields are required');
+      return;
+    }
+    if (cpNew !== cpConfirm) {
+      toast.error('New passwords do not match');
+      return;
+    }
+    if (cpNew.length < 8) {
+      toast.error('Password must be at least 8 characters');
+      return;
+    }
+    if (!admin?.id) {
+      toast.error('Admin session not found. Please log in again.');
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/admin/settings/admins/${admin.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (adminToken || '') },
+        body: JSON.stringify({ currentPassword: cpCurrent, newPassword: cpNew }),
+      });
+      if (res.ok) {
+        toast.success('Password updated successfully');
+        setCpCurrent(''); setCpNew(''); setCpConfirm('');
+      } else {
+        const err = await res.json();
+        toast.error(err.error || 'Failed to change password');
+      }
+    } catch {
+      toast.error('Network error');
+    }
+    setSaving(false);
+  }
+
+  return (
+    <Card className="border-gray-200">
+      <CardHeader className="pb-3">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100">
+            <UserCircle className="h-5 w-5 text-gray-600" />
+          </div>
+          <div>
+            <CardTitle className="text-base">My Account</CardTitle>
+            <CardDescription className="text-xs">
+              {admin?.email || 'Not logged in'} &bull; {admin?.role === 'superadmin' ? 'Super Admin' : (admin?.role || 'Admin')}
+              {admin?.lastLoginAt && (
+                <> &bull; Last login: {new Date(admin.lastLoginAt).toLocaleString()}</>
+              )}
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm text-muted-foreground">Change your admin password</p>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Current password</Label>
+            <div className="relative">
+              <Input type={showCurrent ? 'text' : 'password'} value={cpCurrent} onChange={(e) => setCpCurrent(e.target.value)} placeholder="••••••••" className="pr-9" />
+              <button type="button" onClick={() => setShowCurrent(!showCurrent)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-gray-700">
+                {showCurrent ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+              </button>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">New password (min 8 chars)</Label>
+            <div className="relative">
+              <Input type={showNew ? 'text' : 'password'} value={cpNew} onChange={(e) => setCpNew(e.target.value)} placeholder="••••••••" className="pr-9" />
+              <button type="button" onClick={() => setShowNew(!showNew)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-gray-700">
+                {showNew ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+              </button>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Confirm new password</Label>
+            <Input type="password" value={cpConfirm} onChange={(e) => setCpConfirm(e.target.value)} placeholder="••••••••" />
+          </div>
+        </div>
+        <Button onClick={changePassword} disabled={saving || !cpCurrent || !cpNew || !cpConfirm} size="sm" className="bg-gray-900 hover:bg-gray-800 text-white">
+          {saving ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="mr-2 h-3.5 w-3.5" />}
+          Update Password
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function AdminSettingsPage() {
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
         <p className="text-muted-foreground">Platform configuration, partner API keys, and integration management</p>
+      </div>
+
+      {/* My Account */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 mb-2">
+          <Shield className="h-5 w-5 text-muted-foreground" />
+          <h2 className="text-lg font-semibold text-gray-900">Account</h2>
+        </div>
+        <MyAccountCard />
       </div>
 
       {/* Partner Integration Cards */}
