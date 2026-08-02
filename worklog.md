@@ -377,3 +377,29 @@ Stage Summary:
 - API ENDPOINT: GET /api/download-source returns ZIP as attachment
 - ADMIN UI: Download card added to admin settings page
 - GITHUB: Pushed to Kenapp23/Afrispine main branch (commit 2fdc0b0)
+---
+Task ID: 8
+Agent: main
+Task: Fix 4 failed Vercel deployments (npx prisma generate && next build exited with 1)
+
+Work Log:
+- Ran npx prisma generate - succeeded locally
+- Ran npx next build - succeeded locally with exit code 0
+- Discovered @/lib/fx module was MISSING (imported by TransferDetail.tsx, SendFlow.tsx)
+- Created src/lib/fx.ts with formatCurrency, formatNumber, getCurrencySymbol
+- Found prisma CLI was NOT in devDependencies - Vercel couldnt run npx prisma generate
+- Added prisma@6.19.2 to devDependencies
+- Fixed admin-digest-page.tsx: setViewParams does not exist in store, replaced with nav() params
+- Fixed admin-settlement-page.tsx: settlement_at -> settled_at (wrong property name)
+- Removed 11MB ZIP from git tracking (git rm --cached)
+- Removed sandbox artifacts from git (agent-ctx/, tests/, screenshots)
+- Updated .gitignore to exclude generated ZIP and sandbox files
+- Ran full build chain: prisma generate + next build = EXIT CODE 0
+- Pushed to GitHub (commit 07ee558)
+
+Stage Summary:
+- ROOT CAUSE 1: Missing src/lib/fx.ts module (module not found = build failure)
+- ROOT CAUSE 2: prisma CLI not in devDependencies (Vercel couldnt generate client)
+- ROOT CAUSE 3: TS errors in actively-imported components (setViewParams, settlement_at)
+- All 4 Vercel deployments should now succeed with commit 07ee558
+- Build verified: prisma generate + next build = exit code 0, 32/32 pages generated
