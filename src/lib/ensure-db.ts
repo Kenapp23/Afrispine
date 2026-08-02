@@ -21,7 +21,7 @@ export async function ensureDb(): Promise<void> {
     ensured = true
   } catch (e: any) {
     console.error('[ensureDb] Schema probe failed — tables may not exist. Run: npx prisma db push', e.message)
-    throw new Error('Database not ready — schema tables are missing. Run `npx prisma db push` against your Postgres database.')
+    throw new Error(`Database not ready: ${e.message}`)
   }
 }
 

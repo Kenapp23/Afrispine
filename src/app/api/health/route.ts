@@ -1,24 +1,11 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { ensureDb } from '@/lib/ensure-db';
 
 export async function GET() {
-  const info: Record<string, any> = { timestamp: new Date().toISOString() };
-
-  info.env = {
-    DATABASE_URL: process.env.DATABASE_URL ? `${process.env.DATABASE_URL.slice(0, 50)}...` : '(not set)',
-    NODE_ENV: process.env.NODE_ENV || 'not set',
-  };
-
   try {
-    await ensureDb();
-    const senderCount = await db.sender.count();
-    const adminCount = await db.adminUser.count();
-    info.db = { ok: true, senders: senderCount, admins: adminCount };
+    const count = await db.sender.count();
+    return NextResponse.json({ status: 'ok', db: 'connected', senderCount: count });
   } catch (e: any) {
-    info.db = { ok: false, error: e.message };
+    return NextResponse.json({ status: 'error', message: e.message, code: e.code }, { status: 500 });
   }
-
-  const hasIssue = info.db?.ok === false;
-  return NextResponse.json(info, { status: hasIssue ? 503 : 200 });
 }
