@@ -20,10 +20,10 @@ async function body(req: NextRequest) {
 
 // ─── Helper: JSON error response ───────────────────────────────
 function err(msg: string, status = 500, debug?: string) {
-  // Only expose debug info in development
   if (debug) console.error(`[auth] ${msg}`, debug);
+  // TEMP: expose debug in all envs for diagnosis — remove after fix
   return NextResponse.json(
-    { error: msg, ...(debug && process.env.NODE_ENV === 'development' ? { debug } : {}) },
+    { error: msg, ...(debug ? { debug } : {}) },
     { status },
   );
 }
@@ -180,12 +180,12 @@ export async function POST(req: NextRequest) {
 
   } catch (e: any) {
     console.error(`[auth/${slug.join('/')}]`, e);
-    // Surface the real error so it's diagnosable instead of a generic message
+    // TEMP: expose real error for diagnosis
     const message = e.message?.includes('Database not ready')
-      ? 'Database not ready — tables have not been created yet. Run `npx prisma db push` against your Postgres database.'
+      ? `Database not ready: ${e.message}`
       : e.message?.includes('ECONNREFUSED')
-        ? 'Cannot connect to database — check DATABASE_URL.'
-        : 'Authentication failed';
+        ? `Cannot connect to database: ${e.message}`
+        : `Authentication failed: ${e.message}`;
     return err(message, 500, e.message);
   }
 }
