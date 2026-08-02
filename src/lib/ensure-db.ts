@@ -1,9 +1,10 @@
 /**
- * Ensures the SQLite database schema exists for the current serverless function instance.
- * On Vercel, each function has its own ephemeral filesystem, so the database
- * must be initialized on first use within each instance.
+ * Ensures the database schema exists.
  *
- * IMPORTANT: The SQL schema is embedded directly in this file (not read from disk)
+ * With Turso/libSQL (TURSO_DATABASE_URL set): schema is persistent across cold starts.
+ * With local SQLite: schema is re-created on each serverless cold start (ephemeral).
+ *
+ * The SQL schema is embedded directly in this file (not read from disk)
  * because Vercel serverless functions may not include arbitrary files from the
  * repo in the runtime bundle.
  */

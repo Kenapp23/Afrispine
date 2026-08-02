@@ -1,39 +1,67 @@
+/**
+ * Database client — supports two backends:
+ *
+ * 1. **Turso / libSQL** (production on Vercel)
+ *    Set TURSO_DATABASE_URL (+ optionally TURSO_AUTH_TOKEN) in Vercel env vars.
+ *    This gives a persistent SQLite-compatible database that survives serverless cold starts.
+ *
+ * 2. **Local SQLite** (development / no Turso configured)
+ *    Uses DATABASE_URL (must start with "file:").
+ *    Falls back to file:/tmp/prisma.db if unset — this is EPHEMERAL on Vercel.
+ */
 import { PrismaClient } from '@prisma/client'
+import { PrismaLibSQL } from '@prisma/adapter-libsql'
+import { createClient } from '@libsql/client'
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
-// Resolve the actual database URL:
-// 1. If DATABASE_URL starts with "file:" → use it (correct for SQLite)
-// 2. If DATABASE_URL is set but NOT a file: URL → the Prisma schema uses
-//    provider = "sqlite" which requires file: protocol. Override to /tmp/prisma.db
-//    for Vercel serverless compatibility.
-// 3. If DATABASE_URL is not set at all → fall back to /tmp/prisma.db
-let databaseUrl: string
-if (process.env.DATABASE_URL?.startsWith('file:')) {
-  databaseUrl = process.env.DATABASE_URL
-} else {
-  if (process.env.DATABASE_URL) {
-    console.warn(
-      `[db] DATABASE_URL is set but does not start with "file:" (got: ${process.env.DATABASE_URL.slice(0, 30)}...). ` +
-      'Prisma provider is "sqlite" which requires file: protocol. Overriding to file:/tmp/prisma.db.'
-    )
-  } else {
-    console.warn(
-      '[db] DATABASE_URL not set — using default: file:/tmp/prisma.db. ' +
-      'For production on Vercel, set DATABASE_URL to a persistent database URL (e.g. Turso/libSQL).'
-    )
-  }
-  databaseUrl = 'file:/tmp/prisma.db'
-}
+// ─── Determine backend ───────────────────────────────────────
+const tursoUrl = process.env.TURSO_DATABASE_URL
+const tursoAuth = process.env.TURSO_AUTH_TOKEN
 
-export const db =
-  globalForPrisma.prisma ??
-  new PrismaClient({
+function createPrismaClient(): PrismaClient {
+  // ── Turso / libSQL: persistent SQLite on Vercel ───────────
+  if (tursoUrl) {
+    console.log(`[db] Using Turso/libSQL: ${tursoUrl.replace(/:[^/@]+@/, ':***@')}`)
+    const libsql = createClient({
+      url: tursoUrl,
+      authToken: tursoAuth || undefined,
+    })
+    const adapter = new PrismaLibSQL(libsql)
+    return new PrismaClient({
+      adapter,
+      log: ['error'],
+    })
+  }
+
+  // ── Local SQLite (development) ─────────────────────────────
+  let databaseUrl: string
+  if (process.env.DATABASE_URL?.startsWith('file:')) {
+    databaseUrl = process.env.DATABASE_URL
+  } else {
+    if (process.env.DATABASE_URL) {
+      console.warn(
+        `[db] DATABASE_URL does not start with "file:" — falling back to /tmp/prisma.db. ` +
+        'Set TURSO_DATABASE_URL for persistent storage on Vercel.'
+      )
+    } else {
+      console.warn(
+        '[db] No DATABASE_URL set — using file:/tmp/prisma.db (ephemeral on Vercel). ' +
+        'For production, set TURSO_DATABASE_URL.'
+      )
+    }
+    databaseUrl = 'file:/tmp/prisma.db'
+  }
+
+  return new PrismaClient({
     datasourceUrl: databaseUrl,
     log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
   })
+}
 
-// In development, reuse the Prisma Client across hot reloads
+export const db = globalForPrisma.prisma ?? createPrismaClient()
+
+// Reuse Prisma Client across hot reloads in development
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
