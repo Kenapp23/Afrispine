@@ -180,6 +180,12 @@ export async function POST(req: NextRequest) {
 
   } catch (e: any) {
     console.error(`[auth/${slug.join('/')}]`, e);
-    return err('Authentication failed', 500, e.message);
+    // Surface the real error so it's diagnosable instead of a generic message
+    const message = e.message?.includes('Database not ready')
+      ? 'Database not ready — tables have not been created yet. Run `npx prisma db push` against your Postgres database.'
+      : e.message?.includes('ECONNREFUSED')
+        ? 'Cannot connect to database — check DATABASE_URL.'
+        : 'Authentication failed';
+    return err(message, 500, e.message);
   }
 }
