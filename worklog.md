@@ -431,3 +431,25 @@ Stage Summary:
 - Files modified: admin-partners-page.tsx, admin/[...slug]/route.ts, auth/[...slug]/route.ts
 - Commit: 8814e6f pushed to main
 - All partner CRUD, password management, and persistence verified end-to-end
+
+---
+Task ID: 10
+Agent: main
+Task: Fix admin login + PlatformSetting table error on Vercel/fresh DB
+
+Work Log:
+- Root cause 1: Admin password was changed to Admin@Secure2024! during local testing — user could not log in
+- Root cause 2: /api/admin/[...slug]/route.ts only did side-effect import of ensure-db (import '@/lib/ensure-db') which loads the module but NEVER calls ensureDb(). On fresh DB instances (Vercel cold start), PlatformSetting table didn't exist yet, causing prisma.platformSetting.upsert() to fail
+- Root cause 3: /api/digest/[...slug]/route.ts had same side-effect import issue
+- Fixed: Changed import to explicit `import { ensureDb } from '@/lib/ensure-db'` and added `await ensureDb()` to all 4 handlers (GET/POST/PATCH/DELETE) in catch-all route
+- Fixed: Same for digest catch-all route
+- Reset admin password in local DB to default Admin@2024
+- Verified: Admin login with Admin@2024 works
+- Verified: Save partner keys for Mystocks Africa — apiKey, partnerId, settlementEndpoint all stored
+- Verified: Save partner keys for Africa's Talking — username, apiKey all stored
+- Verified: Keys read back correctly from DB after save
+
+Stage Summary:
+- Files modified: admin/[...slug]/route.ts, digest/[...slug]/route.ts
+- Commit: c9eb8a2 pushed to main
+- Admin login credentials: admin@afrispine.com / Admin@2024
