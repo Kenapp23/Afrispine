@@ -806,7 +806,7 @@ export function AdminSettlementPage() {
                           className="border-b border-border/50 last:border-0 hover:bg-muted/50 transition-colors"
                         >
                           <td className="px-4 py-3 whitespace-nowrap font-medium">
-                            {formatDate(s.settlement_at)}
+                            {formatDate(s.settled_at)}
                           </td>
                           <td className="px-4 py-3 text-right font-semibold">
                             {usdFmt(amount)}

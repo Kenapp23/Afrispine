@@ -43,7 +43,6 @@ function Spinner() {
 
 export function AdminDigestPage() {
   const nav = useAppStore(s => s.navigate);
-  const setViewParams = useAppStore(s => s.setViewParams);
   const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>('issues');
   const [stats, setStats] = useState<any>(null);
@@ -147,7 +146,7 @@ export function AdminDigestPage() {
                         <td className="p-3 text-center">{iss.storyCount ?? iss.storiesCount ?? iss.stories?.length ?? '—'}</td>
                         <td className="p-3"><Badge className={STATUS_STYLE[iss.status] ?? ''}>{iss.status ?? 'draft'}</Badge></td>
                         <td className="p-3">
-                          <Button size="sm" variant="ghost" onClick={() => { setViewParams({ slug: iss.slug }); nav('digest-issue'); }}>View</Button>
+                          <Button size="sm" variant="ghost" onClick={() => nav('digest-issue', { slug: iss.slug })}>View</Button>
                         </td>
                       </tr>
                     ))}
@@ -185,7 +184,7 @@ export function AdminDigestPage() {
                         <td className="p-3 text-gray-500 hidden sm:table-cell">{st.readTime ?? st.readMinutes ? `${st.readTime ?? st.readMinutes}m` : '—'}</td>
                         <td className="p-3 text-gray-500 hidden md:table-cell max-w-[120px] truncate">{st.author ?? '—'}</td>
                         <td className="p-3">
-                          <Button size="sm" variant="ghost" onClick={() => { setViewParams({ slug: st.slug, issueSlug: st.issueSlug }); nav('digest-story'); }}>View</Button>
+                          <Button size="sm" variant="ghost" onClick={() => nav('digest-story', { slug: st.slug, issueSlug: st.issueSlug })}>View</Button>
                         </td>
                       </tr>
                     ))}
