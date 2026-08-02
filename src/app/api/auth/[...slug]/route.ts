@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { hashPassword, verifyPassword, signSenderToken, signAdminToken } from '@/lib/auth';
 import { ensureDb, ensureAdminSeeded } from '@/lib/ensure-db';
-import bcrypt from 'bcryptjs';
 
 // ─── Helper: parse the slug from the URL ───────────────────────
 function parseSlug(request: NextRequest): string[] {
@@ -18,14 +17,9 @@ async function body(req: NextRequest) {
   return req.json();
 }
 
-// ─── Helper: JSON error response ───────────────────────────────
-function err(msg: string, status = 500, debug?: string) {
-  if (debug) console.error(`[auth] ${msg}`, debug);
-  // TEMP: expose debug in all envs for diagnosis — remove after fix
-  return NextResponse.json(
-    { error: msg, ...(debug ? { debug } : {}) },
-    { status },
-  );
+// ─── Helper: JSON error response (no internal details leaked) ──
+function err(msg: string, status = 500) {
+  return NextResponse.json({ error: msg }, { status });
 }
 
 // ─── Unified POST handler ─────────────────────────────────────
@@ -50,9 +44,9 @@ export async function POST(req: NextRequest) {
       const existing = await db.sender.findUnique({ where: { email: normalizedEmail } });
       if (existing) return err('An account with this email already exists', 409);
 
-      const parts2 = fullName.trim().split(/\s+/);
-      const firstName = parts2[0] || '';
-      const lastName = parts2.slice(1).join(' ') || '';
+      const nameParts = fullName.trim().split(/\s+/);
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
 
       const passwordHash = await hashPassword(password);
 
@@ -118,11 +112,7 @@ export async function POST(req: NextRequest) {
 
     // ── /api/auth/admin/login ──────────────────────────────────
     if (slug[0] === 'admin' && slug[1] === 'login' && slug.length === 2) {
-      try {
-        await ensureAdminSeeded();
-      } catch (seedErr: any) {
-        return err('Admin database initialization failed', 500, seedErr.message);
-      }
+      await ensureAdminSeeded();
 
       const { email, password } = await body(req);
 
@@ -130,31 +120,14 @@ export async function POST(req: NextRequest) {
         return err('Email and password are required', 400);
 
       const normalizedEmail = email.trim().toLowerCase();
-      let admin: any;
-      try {
-        admin = await db.adminUser.findUnique({
-          where: { email: normalizedEmail },
-        });
-      } catch (dbErr: any) {
-        return err('Database error during admin lookup', 500, dbErr.message);
-      }
-      if (!admin) {
-        console.error(`[auth] No admin found for '${normalizedEmail}'`);
-        return err('Invalid credentials', 401);
-      }
-
+      const admin = await db.adminUser.findUnique({
+        where: { email: normalizedEmail },
+      });
+      if (!admin) return err('Invalid credentials', 401);
       if (!admin.isActive) return err('Account is not active', 403);
 
-      let valid: boolean;
-      try {
-        valid = await verifyPassword(password, admin.passwordHash);
-      } catch (pwErr: any) {
-        return err('Password verification error', 500, pwErr.message);
-      }
-      if (!valid) {
-        console.error(`[auth] Password mismatch for admin '${normalizedEmail}'`);
-        return err('Invalid credentials', 401);
-      }
+      const valid = await verifyPassword(password, admin.passwordHash);
+      if (!valid) return err('Invalid credentials', 401);
 
       await db.adminUser.update({
         where: { id: admin.id },
@@ -180,12 +153,6 @@ export async function POST(req: NextRequest) {
 
   } catch (e: any) {
     console.error(`[auth/${slug.join('/')}]`, e);
-    // TEMP: expose real error for diagnosis
-    const message = e.message?.includes('Database not ready')
-      ? `Database not ready: ${e.message}`
-      : e.message?.includes('ECONNREFUSED')
-        ? `Cannot connect to database: ${e.message}`
-        : `Authentication failed: ${e.message}`;
-    return err(message, 500, e.message);
+    return err('Authentication failed', 500);
   }
 }
