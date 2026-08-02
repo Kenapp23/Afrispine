@@ -453,3 +453,20 @@ Stage Summary:
 - Files modified: admin/[...slug]/route.ts, digest/[...slug]/route.ts
 - Commit: c9eb8a2 pushed to main
 - Admin login credentials: admin@afrispine.com / Admin@2024
+
+---
+Task ID: 11
+Agent: main
+Task: Add Change Password to the actual admin Settings page
+
+Work Log:
+- Discovered that page.tsx imports AdminSettingsPage from admin-settings-page.tsx, NOT admin-settings.tsx
+- admin-settings.tsx had the password change UI but was never rendered (dead code)
+- admin-settings-page.tsx (the rendered page) only had Partner Integrations, Fee Structure, and Backup sections
+- Added MyAccountCard component with: admin email/role/last login display, 3-field password form with show/hide toggles, client-side validation, disabled button until all fields filled
+- Placed as first section ('Account') at top of Settings page
+
+Stage Summary:
+- File modified: admin-settings-page.tsx (+112 lines)
+- Commit: bfc5546 pushed to main
+- Password change now visible at Settings page → Account section
