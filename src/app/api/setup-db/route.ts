@@ -686,6 +686,20 @@ const TABLES: string[] = [
     CONSTRAINT "DiasporaNseLedger_pkey" PRIMARY KEY ("id")
   )`,
 
+  `CREATE TABLE IF NOT EXISTS "IpoRegistration" (
+    "id" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "fullName" TEXT,
+    "country" TEXT,
+    "phone" TEXT,
+    "interestAmountUsd" DOUBLE PRECISION,
+    "ipoSlug" TEXT NOT NULL DEFAULT 'dangote-refinery',
+    "status" TEXT NOT NULL DEFAULT 'waitlisted',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    CONSTRAINT "IpoRegistration_pkey" PRIMARY KEY ("id")
+  )`,
+
   `CREATE TABLE IF NOT EXISTS "FeeMatrix" (
     "id" TEXT NOT NULL,
     "orderId" TEXT,
