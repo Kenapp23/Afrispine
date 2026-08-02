@@ -8,7 +8,7 @@
  * because Vercel serverless functions may not include arbitrary files from the
  * repo in the runtime bundle.
  */
-import { db } from './db'
+import { db, initTurso } from './db'
 import bcrypt from 'bcryptjs'
 
 let ensured = false
@@ -732,6 +732,8 @@ async function createSchema() {
 }
 
 export async function ensureDb(): Promise<void> {
+  // Must initialise Turso BEFORE any database access
+  await initTurso()
   if (ensured) return
   try {
     // Quick probe: if this succeeds, the schema exists
