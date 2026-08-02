@@ -72,6 +72,42 @@ export async function PUT(
       },
     });
 
+    // Sync key values to PlatformSetting for unified reads across the platform
+    try {
+      const syncMap: Record<string, string> = {
+        fincra: 'fincra',
+        mystocks_africa: 'mystocks_africa',
+        africas_talking: 'africas_talking',
+        resend: 'resend',
+      };
+      const fieldToSetting: Record<string, Record<string, string>> = {
+        fincra: { publicKey: 'fincra_public_key', secretKey: 'fincra_secret_key' },
+        mystocks_africa: { apiKey: 'mystocks_api_key', partnerId: 'mystocks_partner_id' },
+        africas_talking: { apiKey: 'at_api_key', username: 'at_username' },
+        resend: { apiKey: 'resend_api_key' },
+      };
+      const partner = await db.partnerConfig.findUnique({ where: { id } });
+      if (partner) {
+        const config = JSON.parse(partner.configJson || '{}');
+        const mappings = fieldToSetting[partner.partnerId];
+        if (mappings) {
+          for (const [field, settingKey] of Object.entries(mappings)) {
+            const val = config[field];
+            if (val && typeof val === 'string' && val.length > 0 && !val.includes('••••')) {
+              await db.platformSetting.upsert({
+                where: { key: settingKey },
+                update: { value: val },
+                create: { key: settingKey, value: val },
+              });
+            }
+          }
+        }
+      }
+      console.log(`[partners/${id}] Config synced to PlatformSetting`);
+    } catch (syncErr: any) {
+      console.warn(`[partners/${id}] PlatformSetting sync failed:`, syncErr.message);
+    }
+
     // Read-after-write verification
     const verified = await db.partnerConfig.findUnique({ where: { id } });
     console.log(`[partners/${id}] Config updated by ${admin?.email}. Verified in DB.`);

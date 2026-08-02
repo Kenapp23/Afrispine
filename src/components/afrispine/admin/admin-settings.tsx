@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import {
   Plus,
@@ -331,6 +332,11 @@ export function AdminSettingsPage() {
   const [cpConfirm, setCpConfirm] = useState('');
   const [savingPassword, setSavingPassword] = useState(false);
 
+  // Change email
+  const [ceCurrentPw, setCeCurrentPw] = useState('');
+  const [ceNewEmail, setCeNewEmail] = useState('');
+  const [savingEmail, setSavingEmail] = useState(false);
+
   // Integrations
   const [savingIntegration, setSavingIntegration] = useState(false);
 
@@ -430,6 +436,8 @@ export function AdminSettingsPage() {
     } catch { toast.error('Network error'); }
   }
 
+  const logoutAdmin = useAppStore((s) => s.logoutAdmin);
+
   async function changePassword() {
     if (!cpCurrent || !cpNew || !cpConfirm) {
       toast.error('All fields are required');
@@ -437,6 +445,10 @@ export function AdminSettingsPage() {
     }
     if (cpNew !== cpConfirm) {
       toast.error('New passwords do not match');
+      return;
+    }
+    if (cpNew.length < 8) {
+      toast.error('Password must be at least 8 characters');
       return;
     }
     if (!admin) return;
@@ -448,16 +460,52 @@ export function AdminSettingsPage() {
         body: JSON.stringify({ currentPassword: cpCurrent, newPassword: cpNew }),
       });
       if (res.ok) {
-        toast.success('Password changed');
+        toast.success('Password changed. You will be logged out.');
         setCpCurrent('');
         setCpNew('');
         setCpConfirm('');
+        // Auto-logout after 1.5s so user sees the success toast
+        setTimeout(() => {
+          logoutAdmin();
+        }, 1500);
       } else {
         const err = await res.json();
         toast.error(err.error || 'Failed to change password');
       }
     } catch { toast.error('Network error'); }
     finally { setSavingPassword(false); }
+  }
+
+  async function changeEmail() {
+    if (!ceCurrentPw || !ceNewEmail) {
+      toast.error('Password and new email are required');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ceNewEmail.trim())) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+    if (!admin) return;
+    setSavingEmail(true);
+    try {
+      const res = await fetch('/api/admin/settings/admins/' + admin.id, {
+        method: 'POST',
+        headers: headers(),
+        body: JSON.stringify({ currentPassword: ceCurrentPw, newEmail: ceNewEmail.trim() }),
+      });
+      if (res.ok) {
+        toast.success('Email changed. You will be logged out.');
+        setCeCurrentPw('');
+        setCeNewEmail('');
+        setTimeout(() => {
+          logoutAdmin();
+        }, 1500);
+      } else {
+        const err = await res.json();
+        toast.error(err.error || 'Failed to change email');
+      }
+    } catch { toast.error('Network error'); }
+    finally { setSavingEmail(false); }
   }
 
   // ─── Blocked countries ───
@@ -1004,31 +1052,66 @@ export function AdminSettingsPage() {
                 </CardContent>
               </Card>
 
-              {/* My Account - Change password */}
+              {/* My Account - Password & Email */}
               <Card>
                 <CardHeader>
                   <CardTitle className="text-base">My Account</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-sm text-muted-foreground">Change your admin password</p>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                    <div className="space-y-1.5">
-                      <Label>Current password</Label>
-                      <Input type="password" value={cpCurrent} onChange={(e) => setCpCurrent(e.target.value)} />
+                <CardContent className="space-y-6">
+                  {/* Current email display */}
+                  <div className="flex items-center justify-between rounded-lg border p-3">
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground">Current email</p>
+                      <p className="text-sm font-medium text-gray-900">{admin?.email || '-'}</p>
                     </div>
-                    <div className="space-y-1.5">
-                      <Label>New password</Label>
-                      <Input type="password" value={cpNew} onChange={(e) => setCpNew(e.target.value)} />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label>Confirm new password</Label>
-                      <Input type="password" value={cpConfirm} onChange={(e) => setCpConfirm(e.target.value)} />
-                    </div>
+                    <Badge className={admin?.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}>
+                      {admin?.isActive ? 'Active' : 'Inactive'}
+                    </Badge>
                   </div>
-                  <Button onClick={changePassword} disabled={savingPassword} size="sm" className="bg-emerald-600 text-white hover:bg-emerald-700">
-                    {savingPassword ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="mr-2 h-3.5 w-3.5" />}
-                    Update password
-                  </Button>
+
+                  {/* Change email */}
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium text-gray-900">Change email address</p>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div className="space-y-1.5">
+                        <Label>New email</Label>
+                        <Input type="email" value={ceNewEmail} onChange={(e) => setCeNewEmail(e.target.value)} placeholder="new@email.com" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>Confirm with password</Label>
+                        <Input type="password" value={ceCurrentPw} onChange={(e) => setCeCurrentPw(e.target.value)} placeholder="Current password" />
+                      </div>
+                    </div>
+                    <Button onClick={changeEmail} disabled={savingEmail} size="sm" variant="outline">
+                      {savingEmail ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Pencil className="mr-2 h-3.5 w-3.5" />}
+                      Update email
+                    </Button>
+                  </div>
+
+                  <Separator />
+
+                  {/* Change password */}
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium text-gray-900">Change password</p>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                      <div className="space-y-1.5">
+                        <Label>Current password</Label>
+                        <Input type="password" value={cpCurrent} onChange={(e) => setCpCurrent(e.target.value)} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>New password</Label>
+                        <Input type="password" value={cpNew} onChange={(e) => setCpNew(e.target.value)} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>Confirm new password</Label>
+                        <Input type="password" value={cpConfirm} onChange={(e) => setCpConfirm(e.target.value)} />
+                      </div>
+                    </div>
+                    <Button onClick={changePassword} disabled={savingPassword} size="sm" className="bg-emerald-600 text-white hover:bg-emerald-700">
+                      {savingPassword ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="mr-2 h-3.5 w-3.5" />}
+                      Update password
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
 

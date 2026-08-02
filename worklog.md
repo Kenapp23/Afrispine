@@ -470,3 +470,43 @@ Stage Summary:
 - File modified: admin-settings-page.tsx (+112 lines)
 - Commit: bfc5546 pushed to main
 - Password change now visible at Settings page → Account section
+
+---
+Task ID: 12
+Agent: main
+Task: Fix password persistence, add email change, fix partner key persistence (bank-grade)
+
+Work Log:
+
+PART 1 — Password Change Persistence Fix:
+- Root cause: After password change, the JWT session cookie remained valid (JWT is stateless). The /api/auth/me endpoint auto-restored the session from the still-valid cookie, so the user was never actually logged out.
+- Fix: Backend now clears the afrispine_admin_session cookie (maxAge: 0) in the password change response. Frontend shows 'Password changed. You will be logged out.' and calls logoutAdmin() after 1.5s delay.
+- File: src/app/api/admin/[...slug]/route.ts (POST handler for settings/admins/[id])
+
+PART 2 — Admin Email Change:
+- Added new email change API handler in the same POST endpoint (detects body.newEmail + body.currentPassword)
+- Validates email format, checks uniqueness, requires current password, updates DB, invalidates session
+- Added email change UI to MyAccountCard in the actual rendered settings page
+- File: src/app/api/admin/[...slug]/route.ts + src/components/afrispine/admin/admin-settings-page.tsx
+
+PART 3 — Partner Key Persistence (Dual-Sync Architecture):
+- Root cause: Partner keys saved via Partners page went to PartnerConfig table, but the status check (GET /api/admin/partner-status) read from PlatformSetting table which was EMPTY. Two disconnected storage systems.
+- Added getPartnerKey() helper that reads from PartnerConfig (source of truth)
+- Updated GET /api/admin/partner-status to read from PartnerConfig first, with PlatformSetting fallback
+- Updated GET /api/admin/paystack-keys (getPaymentKeysStatus) to read from PartnerConfig first
+- Updated POST /api/admin/paystack-keys to dual-save to BOTH PartnerConfig AND PlatformSetting
+- Updated PUT /api/admin/partners/[id] to sync saved keys to PlatformSetting after update
+- Ran one-time sync script to copy existing keys from PartnerConfig → PlatformSetting (6 keys synced)
+- Files: src/app/api/admin/[...slug]/route.ts, src/app/api/admin/partners/[id]/route.ts
+
+PART 4 — Fixed Wrong File Discovery:
+- Discovered page.tsx imports AdminSettingsPage from src/components/afrispine/admin/admin-settings-page.tsx (NOT admin-settings.tsx or pages/admin-settings-page.tsx)
+- Updated the CORRECT rendered file with all password/email changes
+- Also fixed src/components/pages/admin-settings-page.tsx auth (was using localStorage, now uses Zustand store)
+
+Stage Summary:
+- Password change now forces re-login with new password (cookie invalidated)
+- Email change: full UI + API, also forces re-login
+- Partner keys: dual-sync between PartnerConfig + PlatformSetting ensures reads are always consistent
+- All existing partner keys synced to PlatformSetting
+- Lint passes clean

@@ -27,6 +27,28 @@ async function setSetting(key: string, value: string) {
   });
 }
 
+/** Helper: read a partner config value from PartnerConfig table (source of truth) */
+async function getPartnerKey(partnerId: string, field: string): Promise<string | null> {
+  try {
+    const config = await db.partnerConfig.findUnique({ where: { partnerId } });
+    if (!config) return null;
+    const parsed = JSON.parse(config.configJson || '{}');
+    const val = parsed[field];
+    return (val && typeof val === 'string' && val.length > 0 && !val.includes('••••')) ? val : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Helper: sync a partner config value into PlatformSetting for backward compat */
+async function syncPartnerKeyToSetting(partnerId: string, field: string, settingKey: string) {
+  const val = await getPartnerKey(partnerId, field);
+  if (val) {
+    await setSetting(settingKey, val);
+  }
+  return val;
+}
+
 /** Helper: get or create default SettlementConfig */
 async function getOrCreateSettlementConfig() {
   let config = await db.settlementConfig.findFirst();
@@ -45,8 +67,11 @@ async function getOrCreateSettlementConfig() {
 
 /** Helper: check if payment processor keys are configured */
 async function getPaymentKeysStatus() {
-  const publicKey = await getSetting('fincra_public_key');
-  const secretKey = await getSetting('fincra_secret_key');
+  // Read from PartnerConfig (source of truth), with PlatformSetting fallback
+  let publicKey = await getPartnerKey('fincra', 'publicKey');
+  let secretKey = await getPartnerKey('fincra', 'secretKey');
+  if (!publicKey) publicKey = await getSetting('fincra_public_key');
+  if (!secretKey) secretKey = await getSetting('fincra_secret_key');
 
   // Also check legacy paystack keys for backward compat
   const psPublicKey = await getSetting('paystack_public_key');
@@ -123,14 +148,16 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
     }
 
     // ─── /api/admin/partner-status ───
+    // Reads from PartnerConfig (source of truth) with PlatformSetting fallback
     if (path === 'partner-status') {
-      const fincraPub = await getSetting('fincra_public_key');
-      const fincraSec = await getSetting('fincra_secret_key');
-      const mystocksKey = await getSetting('mystocks_api_key');
-      const mystocksId = await getSetting('mystocks_partner_id');
-      const atKey = await getSetting('at_api_key');
-      const atUser = await getSetting('at_username');
-      const resendKey = await getSetting('resend_api_key');
+      // Read from PartnerConfig first, then fall back to PlatformSetting
+      const fincraPub = await getPartnerKey('fincra', 'publicKey') || await getSetting('fincra_public_key');
+      const fincraSec = await getPartnerKey('fincra', 'secretKey') || await getSetting('fincra_secret_key');
+      const mystocksKey = await getPartnerKey('mystocks_africa', 'apiKey') || await getSetting('mystocks_api_key');
+      const mystocksId = await getPartnerKey('mystocks_africa', 'partnerId') || await getSetting('mystocks_partner_id');
+      const atKey = await getPartnerKey('africas_talking', 'apiKey') || await getSetting('at_api_key');
+      const atUser = await getPartnerKey('africas_talking', 'username') || await getSetting('at_username');
+      const resendKey = await getPartnerKey('resend', 'apiKey') || await getSetting('resend_api_key');
 
       const hasKey = (k: string | null) => !!k && k.length > 5;
 
@@ -600,64 +627,55 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
 
   try {
     // ─── /api/admin/paystack-keys ───
+    // Saves to BOTH PlatformSetting and PartnerConfig for unified persistence
     if (path === 'paystack-keys') {
       const body = await req.json();
 
-      // Save Fincra keys (primary payment processor)
-      if (body.fincraPublicKey) {
-        await setSetting('fincra_public_key', body.fincraPublicKey);
-      }
-      if (body.fincraSecretKey) {
-        await setSetting('fincra_secret_key', body.fincraSecretKey);
-      }
+      // Helper: sync a key to both PlatformSetting and PartnerConfig
+      const dualSave = async (settingKey: string, partnerId: string, partnerField: string, value: string) => {
+        if (!value || value.length === 0) return;
+        await setSetting(settingKey, value);
+        // Update PartnerConfig if it exists
+        try {
+          const existing = await db.partnerConfig.findUnique({ where: { partnerId } });
+          if (existing) {
+            const config = JSON.parse(existing.configJson || '{}');
+            config[partnerField] = value;
+            await db.partnerConfig.update({
+              where: { partnerId },
+              data: { configJson: JSON.stringify(config), lastVerifiedAt: new Date() },
+            });
+          }
+        } catch (syncErr: any) {
+          console.warn(`[paystack-keys] Failed to sync ${settingKey} to PartnerConfig:`, syncErr.message);
+        }
+      };
 
-      // Save legacy paystack keys if provided
-      if (body.publicKey) {
-        await setSetting('paystack_public_key', body.publicKey);
-      }
-      if (body.secretKey) {
-        await setSetting('paystack_secret_key', body.secretKey);
-      }
+      // Save Fincra keys (primary payment processor)
+      if (body.fincraPublicKey) await dualSave('fincra_public_key', 'fincra', 'publicKey', body.fincraPublicKey);
+      if (body.fincraSecretKey) await dualSave('fincra_secret_key', 'fincra', 'secretKey', body.fincraSecretKey);
 
       // Also support direct key names
-      if (body.fincra_public_key) {
-        await setSetting('fincra_public_key', body.fincra_public_key);
-      }
-      if (body.fincra_secret_key) {
-        await setSetting('fincra_secret_key', body.fincra_secret_key);
-      }
-      if (body.paystack_public_key) {
-        await setSetting('paystack_public_key', body.paystack_public_key);
-      }
-      if (body.paystack_secret_key) {
-        await setSetting('paystack_secret_key', body.paystack_secret_key);
-      }
+      if (body.fincra_public_key) await dualSave('fincra_public_key', 'fincra', 'publicKey', body.fincra_public_key);
+      if (body.fincra_secret_key) await dualSave('fincra_secret_key', 'fincra', 'secretKey', body.fincra_secret_key);
 
-      // Save partner keys
-      if (body.mystocks_api_key) {
-        await setSetting('mystocks_api_key', body.mystocks_api_key);
-      }
-      if (body.mystocks_partner_id) {
-        await setSetting('mystocks_partner_id', body.mystocks_partner_id);
-      }
-      if (body.smile_id_api_key) {
-        await setSetting('smile_id_api_key', body.smile_id_api_key);
-      }
-      if (body.smile_id_partner_id) {
-        await setSetting('smile_id_partner_id', body.smile_id_partner_id);
-      }
-      if (body.pepchecker_api_key) {
-        await setSetting('pepchecker_api_key', body.pepchecker_api_key);
-      }
-      if (body.at_api_key) {
-        await setSetting('at_api_key', body.at_api_key);
-      }
-      if (body.at_username) {
-        await setSetting('at_username', body.at_username);
-      }
-      if (body.resend_api_key) {
-        await setSetting('resend_api_key', body.resend_api_key);
-      }
+      // Legacy paystack keys
+      if (body.publicKey) await setSetting('paystack_public_key', body.publicKey);
+      if (body.secretKey) await setSetting('paystack_secret_key', body.secretKey);
+      if (body.paystack_public_key) await setSetting('paystack_public_key', body.paystack_public_key);
+      if (body.paystack_secret_key) await setSetting('paystack_secret_key', body.paystack_secret_key);
+
+      // Save partner keys (sync to both stores)
+      if (body.mystocks_api_key) await dualSave('mystocks_api_key', 'mystocks_africa', 'apiKey', body.mystocks_api_key);
+      if (body.mystocks_partner_id) await dualSave('mystocks_partner_id', 'mystocks_africa', 'partnerId', body.mystocks_partner_id);
+      if (body.at_api_key) await dualSave('at_api_key', 'africas_talking', 'apiKey', body.at_api_key);
+      if (body.at_username) await dualSave('at_username', 'africas_talking', 'username', body.at_username);
+      if (body.resend_api_key) await dualSave('resend_api_key', 'resend', 'apiKey', body.resend_api_key);
+
+      // Other keys (PlatformSetting only)
+      if (body.smile_id_api_key) await setSetting('smile_id_api_key', body.smile_id_api_key);
+      if (body.smile_id_partner_id) await setSetting('smile_id_partner_id', body.smile_id_partner_id);
+      if (body.pepchecker_api_key) await setSetting('pepchecker_api_key', body.pepchecker_api_key);
 
       return NextResponse.json({ success: true, message: 'Keys saved successfully' });
     }
@@ -691,17 +709,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
       return NextResponse.json({ success: true, admin: { id: admin.id, email: admin.email, fullName: admin.fullName, role: admin.role } });
     }
 
-    // ─── /api/admin/settings/admins/[id] (change password) ───
+    // ─── /api/admin/settings/admins/[id] (change password / change email) ───
     if (path.startsWith('settings/admins/')) {
       const adminId = path.replace('settings/admins/', '');
       const body = await req.json();
 
+      // ── Password change ──
       if (body.currentPassword && body.newPassword) {
         if (body.newPassword.length < 8) {
           return NextResponse.json({ error: 'Password must be at least 8 characters' }, { status: 400 });
         }
 
-        // Change password flow
+        // Verify current password against DB
         const adminUser = await db.adminUser.findUnique({ where: { id: adminId } });
         if (!adminUser) {
           return NextResponse.json({ error: 'Admin not found' }, { status: 404 });
@@ -714,7 +733,43 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
 
         const newHash = await hashPassword(body.newPassword);
         await db.adminUser.update({ where: { id: adminId }, data: { passwordHash: newHash } });
-        return NextResponse.json({ success: true });
+
+        // Invalidate the session cookie so the user MUST re-login with the new password.
+        // JWTs are stateless — the old token would remain valid for up to 8h without this.
+        const res = NextResponse.json({ success: true, message: 'Password changed. Please log in again.' });
+        res.cookies.set('afrispine_admin_session', '', { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', maxAge: 0, path: '/' });
+        return res;
+      }
+
+      // ── Email change ──
+      if (body.newEmail && body.currentPassword) {
+        const trimmed = body.newEmail.trim().toLowerCase();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+          return NextResponse.json({ error: 'Invalid email address' }, { status: 400 });
+        }
+
+        const adminUser = await db.adminUser.findUnique({ where: { id: adminId } });
+        if (!adminUser) {
+          return NextResponse.json({ error: 'Admin not found' }, { status: 404 });
+        }
+
+        const valid = await verifyPassword(body.currentPassword, adminUser.passwordHash);
+        if (!valid) {
+          return NextResponse.json({ error: 'Current password is incorrect' }, { status: 403 });
+        }
+
+        // Check uniqueness
+        const existing = await db.adminUser.findUnique({ where: { email: trimmed } });
+        if (existing && existing.id !== adminId) {
+          return NextResponse.json({ error: 'Another admin with this email already exists' }, { status: 409 });
+        }
+
+        await db.adminUser.update({ where: { id: adminId }, data: { email: trimmed } });
+
+        // Invalidate session — new email means new JWT claims
+        const res = NextResponse.json({ success: true, message: 'Email changed. Please log in again.' });
+        res.cookies.set('afrispine_admin_session', '', { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', maxAge: 0, path: '/' });
+        return res;
       }
 
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 });

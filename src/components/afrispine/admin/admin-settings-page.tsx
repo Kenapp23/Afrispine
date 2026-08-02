@@ -37,6 +37,7 @@ import {
   Database,
   Package,
   UserCircle,
+  Pencil,
 } from 'lucide-react';
 import { useAppStore } from '@/stores/app';
 import { toast } from 'sonner';
@@ -707,12 +708,17 @@ function FeeStructureCard() {
 function MyAccountCard() {
   const admin = useAppStore((s) => s.admin);
   const adminToken = useAppStore((s) => s.adminSessionToken);
+  const logoutAdmin = useAppStore((s) => s.logoutAdmin);
   const [cpCurrent, setCpCurrent] = useState('');
   const [cpNew, setCpNew] = useState('');
   const [cpConfirm, setCpConfirm] = useState('');
   const [saving, setSaving] = useState(false);
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
+  // Email change state
+  const [ceEmail, setCeEmail] = useState('');
+  const [cePassword, setCePassword] = useState('');
+  const [savingEmail, setSavingEmail] = useState(false);
 
   async function changePassword() {
     if (!cpCurrent || !cpNew || !cpConfirm) {
@@ -739,8 +745,9 @@ function MyAccountCard() {
         body: JSON.stringify({ currentPassword: cpCurrent, newPassword: cpNew }),
       });
       if (res.ok) {
-        toast.success('Password updated successfully');
+        toast.success('Password changed. You will be logged out.');
         setCpCurrent(''); setCpNew(''); setCpConfirm('');
+        setTimeout(() => logoutAdmin(), 1500);
       } else {
         const err = await res.json();
         toast.error(err.error || 'Failed to change password');
@@ -749,6 +756,40 @@ function MyAccountCard() {
       toast.error('Network error');
     }
     setSaving(false);
+  }
+
+  async function changeEmail() {
+    if (!ceEmail || !cePassword) {
+      toast.error('New email and current password are required');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ceEmail.trim())) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+    if (!admin?.id) {
+      toast.error('Admin session not found. Please log in again.');
+      return;
+    }
+    setSavingEmail(true);
+    try {
+      const res = await fetch(`/api/admin/settings/admins/${admin.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (adminToken || '') },
+        body: JSON.stringify({ currentPassword: cePassword, newEmail: ceEmail.trim() }),
+      });
+      if (res.ok) {
+        toast.success('Email changed. You will be logged out.');
+        setCeEmail(''); setCePassword('');
+        setTimeout(() => logoutAdmin(), 1500);
+      } else {
+        const err = await res.json();
+        toast.error(err.error || 'Failed to change email');
+      }
+    } catch {
+      toast.error('Network error');
+    }
+    setSavingEmail(false);
   }
 
   return (
@@ -769,8 +810,29 @@ function MyAccountCard() {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground">Change your admin password</p>
+      <CardContent className="space-y-5">
+        {/* Change Email */}
+        <div className="space-y-3">
+          <p className="text-sm font-medium text-gray-900">Change email address</p>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs">New email</Label>
+              <Input type="email" value={ceEmail} onChange={(e) => setCeEmail(e.target.value)} placeholder="new@email.com" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Confirm with password</Label>
+              <Input type="password" value={cePassword} onChange={(e) => setCePassword(e.target.value)} placeholder="Current password" />
+            </div>
+          </div>
+          <Button onClick={changeEmail} disabled={savingEmail || !ceEmail || !cePassword} size="sm" variant="outline">
+            {savingEmail ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Mail className="mr-2 h-3.5 w-3.5" />}
+            Update Email
+          </Button>
+        </div>
+
+        <Separator />
+
+        {/* Change Password */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <div className="space-y-1.5">
             <Label className="text-xs">Current password</Label>
