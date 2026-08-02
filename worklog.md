@@ -403,3 +403,31 @@ Stage Summary:
 - ROOT CAUSE 3: TS errors in actively-imported components (setViewParams, settlement_at)
 - All 4 Vercel deployments should now succeed with commit 07ee558
 - Build verified: prisma generate + next build = exit code 0, 32/32 pages generated
+---
+Task ID: 9
+Agent: main
+Task: Fix partner save bug, password validation, auth debug leak + end-to-end verification
+
+Work Log:
+- Found critical bug: PartnerCard onSave/updatePartnerField/saving used p.partnerId ("fincra") but fullPartners is keyed by p.id (CUID) — save button was a silent no-op
+- Fixed admin-partners-page.tsx lines 408-411: changed savePartner(p.id), updatePartnerField(p.id, ...), saving === p.id
+- Added minimum 8-char password validation to POST /api/admin/settings/admins/[id] handler
+- Fixed auth route debug info leak: admin emails, DB counts, password mismatch details now only logged to console, never returned in production responses
+- Ran comprehensive API test suite (all PASS):
+  1. Admin login with default password Admin@2024 → success
+  2. Password change to Admin@Secure2024! → success
+  3. Login with new password → success
+  4. Login with old password → correctly rejected
+  5. Short password (<8 chars) → validation error
+  6. Partner seed → 5 partners created
+  7. Save Fincra keys (publicKey, secretKey, webhookSecret) → stored
+  8. Save MyStocks keys (apiKey, partnerId, settlementEndpoint) → stored
+  9. Read-back unmasked keys → match what was saved
+  10. List endpoint masking → secrets show •••• in list view
+  11. DB persistence after server kill + restart → all keys intact
+  12. Environment switch (production → test) → success
+
+Stage Summary:
+- Files modified: admin-partners-page.tsx, admin/[...slug]/route.ts, auth/[...slug]/route.ts
+- Commit: 8814e6f pushed to main
+- All partner CRUD, password management, and persistence verified end-to-end
