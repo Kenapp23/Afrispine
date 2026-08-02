@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getAdminFromRequest } from '@/lib/auth';
-
-// Ensure DB schema exists (idempotent)
-import '@/lib/ensure-db';
+import { ensureDb } from '@/lib/ensure-db';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string[] }> }) {
+  await ensureDb();
   const { slug } = await params;
   const path = slug.join('/');
 

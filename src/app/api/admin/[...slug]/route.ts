@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getAdminFromRequest, hashPassword, verifyPassword } from '@/lib/auth';
-
-// Ensure DB schema exists (idempotent)
-import '@/lib/ensure-db';
+import { ensureDb } from '@/lib/ensure-db';
 
 /** Helper: get admin or return 401 */
 async function requireAdmin(req: NextRequest) {
@@ -91,6 +89,7 @@ async function getPaymentKeysStatus() {
 // ─── Route handler ─────────────────────────────────────────────────
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string[] }> }) {
+  await ensureDb();
   const { slug } = await params;
   const path = slug.join('/');
 
@@ -592,6 +591,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ slug
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ slug: string[] }> }) {
+  await ensureDb();
   const { slug } = await params;
   const path = slug.join('/');
 
@@ -728,6 +728,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ slug: string[] }> }) {
+  await ensureDb();
   const { slug } = await params;
   const path = slug.join('/');
 
@@ -757,6 +758,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ sl
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ slug: string[] }> }) {
+  await ensureDb();
   const { slug } = await params;
   const path = slug.join('/');
 
