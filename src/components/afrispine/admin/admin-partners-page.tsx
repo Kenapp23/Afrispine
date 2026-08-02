@@ -405,10 +405,10 @@ export function AdminPartnersPage() {
               partner={p}
               fullPartner={fullPartners[p.id]}
               onLoadFull={() => loadFullPartner(p.id)}
-              onSave={() => savePartner(p.partnerId)}
+              onSave={() => savePartner(p.id)}
               onSwitchEnv={(env) => switchEnv(p.partnerId, env)}
-              onUpdateField={(key, val) => updatePartnerField(p.partnerId, key, val)}
-              saving={saving === p.partnerId}
+              onUpdateField={(key, val) => updatePartnerField(p.id, key, val)}
+              saving={saving === p.id}
             />
           ))}
         </TabsContent>

@@ -20,8 +20,10 @@ async function body(req: NextRequest) {
 
 // ─── Helper: JSON error response ───────────────────────────────
 function err(msg: string, status = 500, debug?: string) {
+  // Only expose debug info in development
+  if (debug) console.error(`[auth] ${msg}`, debug);
   return NextResponse.json(
-    { error: msg, ...(debug ? { debug } : {}) },
+    { error: msg, ...(debug && process.env.NODE_ENV === 'development' ? { debug } : {}) },
     { status },
   );
 }
@@ -137,15 +139,8 @@ export async function POST(req: NextRequest) {
         return err('Database error during admin lookup', 500, dbErr.message);
       }
       if (!admin) {
-        // List existing admins for debugging (never expose passwords)
-        let adminCount = 0;
-        let adminEmails: string[] = [];
-        try {
-          const allAdmins = await db.adminUser.findMany({ select: { email: true, isActive: true } });
-          adminCount = allAdmins.length;
-          adminEmails = allAdmins.map((a: any) => `${a.email} (active: ${a.isActive})`);
-        } catch {}
-        return err('Invalid credentials', 401, `No admin found for '${normalizedEmail}'. DB has ${adminCount} admin(s): [${adminEmails.join(', ')}]`);
+        console.error(`[auth] No admin found for '${normalizedEmail}'`);
+        return err('Invalid credentials', 401);
       }
 
       if (!admin.isActive) return err('Account is not active', 403);
@@ -156,7 +151,10 @@ export async function POST(req: NextRequest) {
       } catch (pwErr: any) {
         return err('Password verification error', 500, pwErr.message);
       }
-      if (!valid) return err('Invalid credentials', 401, `Password mismatch for admin '${normalizedEmail}'`);
+      if (!valid) {
+        console.error(`[auth] Password mismatch for admin '${normalizedEmail}'`);
+        return err('Invalid credentials', 401);
+      }
 
       await db.adminUser.update({
         where: { id: admin.id },

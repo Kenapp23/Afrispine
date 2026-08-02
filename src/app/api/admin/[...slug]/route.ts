@@ -697,6 +697,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
       const body = await req.json();
 
       if (body.currentPassword && body.newPassword) {
+        if (body.newPassword.length < 8) {
+          return NextResponse.json({ error: 'Password must be at least 8 characters' }, { status: 400 });
+        }
+
         // Change password flow
         const adminUser = await db.adminUser.findUnique({ where: { id: adminId } });
         if (!adminUser) {
