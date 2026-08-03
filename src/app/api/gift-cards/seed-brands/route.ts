@@ -4,6 +4,20 @@ import { ensureDb } from '@/lib/ensure-db';
 import { requireAdmin } from '@/lib/auth';
 import { MERCHANTS } from '@/lib/merchants';
 
+const CATEGORY_DEFAULT_COLORS: Record<string, string> = {
+  Supermarket: '#059669',
+  Electronics: '#475569',
+  Fashion: '#db2777',
+  'Airtime/Telecom': '#ea580c',
+  Travel: '#0284c7',
+  'Food & Dining': '#e11d48',
+  Healthcare: '#0d9488',
+  Entertainment: '#7c3aed',
+  'E-Commerce': '#059669',
+  Utilities: '#6b7280',
+  General: '#059669',
+};
+
 async function sha256(str: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(str);
@@ -48,6 +62,7 @@ export async function POST(req: NextRequest) {
           kycStatus: 'verified',
           isVerified: true,
           isActive: true,
+          brandColor: CATEGORY_DEFAULT_COLORS[m.category] || '#059669',
           smartContractHash: contractHash,
           smartContractAddress: contractAddr,
         },
