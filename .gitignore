@@ -75,3 +75,9 @@ download/
 
 # Caddy
 Caddyfile
+
+# Never serve source archives or internal docs from the public web root
+public/*.zip
+public/AFRISPINE-IMPORTANT-MATERIALS.md
+*full-source*.zip
+*verified-baseline*.zip

@@ -29,7 +29,11 @@ export async function POST(req: NextRequest) {
   try {
     // ── /api/auth/signup ───────────────────────────────────────
     if (slug[0] === 'signup' && slug.length === 1) {
-      await ensureDb();
+      try {
+        await ensureDb();
+      } catch {
+        return err('Signup is temporarily unavailable — database not ready', 503);
+      }
 
       const { fullName, email, phone, password } = await body(req);
 
@@ -78,7 +82,11 @@ export async function POST(req: NextRequest) {
 
     // ── /api/auth/login ────────────────────────────────────────
     if (slug[0] === 'login' && slug.length === 1) {
-      await ensureDb();
+      try {
+        await ensureDb();
+      } catch {
+        return err('Login is temporarily unavailable — database not ready', 503);
+      }
 
       const { email, password } = await body(req);
 
@@ -112,7 +120,11 @@ export async function POST(req: NextRequest) {
 
     // ── /api/auth/admin/login ──────────────────────────────────
     if (slug[0] === 'admin' && slug[1] === 'login' && slug.length === 2) {
-      await ensureAdminSeeded();
+      try {
+        await ensureAdminSeeded();
+      } catch {
+        return err('Admin database initialization failed', 503);
+      }
 
       const { email, password } = await body(req);
 

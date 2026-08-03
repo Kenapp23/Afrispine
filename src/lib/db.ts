@@ -6,6 +6,13 @@
  */
 import { PrismaClient } from '@prisma/client'
 
+if (!process.env.DATABASE_URL) {
+  console.warn(
+    '[db] DATABASE_URL is not set. The app requires a persistent Postgres connection ' +
+    '(e.g. Supabase). Set DATABASE_URL in your environment before starting the server.'
+  )
+}
+
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }

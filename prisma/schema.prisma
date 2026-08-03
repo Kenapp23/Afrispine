@@ -687,6 +687,19 @@ model DiasporaNseLedger {
   updatedAt     DateTime @updatedAt
 }
 
+model IpoRegistration {
+  id                String   @id @default(cuid())
+  email             String
+  fullName          String?
+  country           String?
+  phone             String?
+  interestAmountUsd Float?
+  ipoSlug           String   @default("dangote-refinery")
+  status            String   @default("waitlisted") // waitlisted | contacted | subscribed | closed
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
 model FeeMatrix {
   id            String   @id @default(cuid())
   orderId       String?
