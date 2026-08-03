@@ -116,3 +116,38 @@ Stage Summary:
 - SECURITY: JWT secrets fail loudly instead of using exposed hardcoded defaults
 - REGULATORY: All Kenyan CMA/CDS/Kestrel language replaced with correct Nigerian SEC/CSCS terms
 - IMPORTANT: User MUST set JWT_SENDER_SECRET and JWT_ADMIN_SECRET in Vercel env vars before deploying
+
+---
+Task ID: 4
+Agent: main
+Task: Redesign Choose Brand gift card screen with activation gating and live card preview
+
+Work Log:
+- Added `brandColor String?` field to GiftCardBrand Prisma model and regenerated Prisma client
+- Rewrote /api/gift-cards/brands/route.ts to return ALL verified brands (not just active ones):
+  - Checks PlatformConfig table for admin disabled/deleted overrides
+  - Returns effective `isActive` boolean (false if admin disabled via PlatformConfig)
+  - Returns `brandColor` from DB or category-based default fallback
+- Updated /api/gift-cards/seed-brands/route.ts to set category-based default brand colors on seed
+- Complete rewrite of gifts-send-page.tsx:
+  - STEP 1 (Brand Picker): Dense logo-forward grid (3 cols mobile, 4-6 desktop)
+  - Category filter chips alongside existing country filter chips
+  - Live count: "X brands available, Y coming soon" driven by actual isActive counts
+  - Inactive brands shown at 50% opacity with amber "Coming soon" badge
+  - Clicking inactive brand shows toast: "This brand is being activated — check back shortly"
+  - Active brands advance to step 2 as before
+  - Removed auto-seed call (endpoint now requires admin auth)
+  - STEP 2 (Card Details): Split layout with form on left, live card preview on right
+  - CardPreview component: logo + brandColor accent + amount + recipient name
+  - Preview updates in real-time as user types (no AI generation, just form state)
+  - STEP 3 (Review): Uses brandColor gradient instead of hardcoded emerald
+  - BrandLogo component: Uses LOCAL_LOGO_MAP for local SVG logos first
+- Lint passes clean, page compiles successfully
+- Pushed to GitHub (e1cedf5)
+
+Stage Summary:
+- 4 files changed: schema.prisma, brands/route.ts, seed-brands/route.ts, gifts-send-page.tsx
+- Activation gating wired: admin toggle in PlatformConfig reflects on customer brand picker
+- Dense grid with category filters and live counts
+- Real-time card preview using brandColor field
+- Database schema change (brandColor) requires prisma db push on Vercel
