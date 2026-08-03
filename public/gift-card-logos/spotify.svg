@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <rect width="120" height="120" rx="16" ry="16" fill="#1DB954"/>
+  <rect x="4" y="4" width="112" height="112" rx="13" ry="13" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+  <text x="60" y="60" font-family="Arial, Helvetica, sans-serif" font-weight="bold" font-size="18" fill="white" text-anchor="middle" dominant-baseline="central">Spotify</text>
+</svg>
