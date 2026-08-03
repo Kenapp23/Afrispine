@@ -52,6 +52,19 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // Fire WhatsApp confirmation (fire-and-forget)
+    try {
+      const { sendWhatsAppAsync } = await import('@/lib/whatsapp');
+      if (phone?.trim() && fullName?.trim()) {
+        sendWhatsAppAsync(phone.trim(), 'ipo_confirmation', {
+          name: fullName.trim(),
+          ipoName: 'Dangote Refinery',
+        });
+      }
+    } catch (waErr) {
+      console.warn('[dangote-ipo/register] WhatsApp failed:', waErr);
+    }
+
     return NextResponse.json({
       success: true,
       id: registration.id,

@@ -38,6 +38,7 @@ import {
   Pencil,
   X,
   Check,
+  MessageCircle,
 } from 'lucide-react';
 
 interface SenderData {
@@ -94,6 +95,8 @@ export function ProfilePage() {
     countryOfResidence: '',
   });
   const [saving, setSaving] = useState(false);
+  const [whatsappOptedIn, setWhatsappOptedIn] = useState(true);
+  const [whatsappLoading, setWhatsappLoading] = useState(false);
 
   const fetchProfile = useCallback(async () => {
     setLoading(true);
@@ -132,7 +135,43 @@ export function ProfilePage() {
   useEffect(() => {
     fetchProfile();
     fetchRecipients();
+    fetchWhatsAppStatus();
   }, [fetchProfile, fetchRecipients]);
+
+  const fetchWhatsAppStatus = async () => {
+    try {
+      const res = await fetch('/api/whatsapp/opt-in');
+      if (res.ok) {
+        const data = await res.json();
+        setWhatsappOptedIn(data.optedIn);
+      }
+    } catch {
+      // Default to opted in
+    }
+  };
+
+  const toggleWhatsAppOptIn = async () => {
+    setWhatsappLoading(true);
+    try {
+      const res = await fetch('/api/whatsapp/opt-in', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enable: !whatsappOptedIn }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setWhatsappOptedIn(data.optedIn);
+        toast.success(data.optedIn ? 'WhatsApp notifications enabled' : 'WhatsApp notifications disabled');
+      } else {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.error || 'Failed to update preference');
+      }
+    } catch {
+      toast.error('Network error');
+    } finally {
+      setWhatsappLoading(false);
+    }
+  };
 
   const handleSaveProfile = async () => {
     if (!editForm.firstName.trim()) {
@@ -326,6 +365,56 @@ export function ProfilePage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* WhatsApp Notifications */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <MessageCircle className="h-4 w-4 text-green-600" />
+            WhatsApp notifications
+          </CardTitle>
+          <CardDescription>
+            Receive transfer confirmations, IPO updates, and referral alerts via WhatsApp
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <p className="text-sm font-medium">
+                {whatsappOptedIn ? 'Enabled' : 'Disabled'}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {!phone
+                  ? 'Add a phone number in your profile to enable'
+                  : whatsappOptedIn
+                    ? 'You will receive important updates on WhatsApp'
+                    : 'Enable to get real-time notifications'}
+              </p>
+            </div>
+            <button
+              onClick={toggleWhatsAppOptIn}
+              disabled={!phone || whatsappLoading}
+              className={`
+                relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out
+                ${whatsappOptedIn ? 'bg-emerald-600' : 'bg-gray-200'}
+                ${(!phone || whatsappLoading) ? 'opacity-50 cursor-not-allowed' : ''}
+              `}
+              role="switch"
+              aria-checked={whatsappOptedIn}
+            >
+              <span
+                className={`
+                  pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out
+                  ${whatsappOptedIn ? 'translate-x-5' : 'translate-x-0'}
+                `}
+              />
+            </button>
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Reply STOP in WhatsApp to unsubscribe at any time. Reply START to re-subscribe.
+          </p>
+        </CardContent>
+      </Card>
 
       {/* Saved recipients */}
       <Card>

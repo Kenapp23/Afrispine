@@ -101,6 +101,35 @@ export async function POST(req: NextRequest) {
       const token = signSenderToken({ id: sender.id, email: sender.email, role: 'sender' });
       const { passwordHash: _, ...safe } = sender;
 
+      // Fire WhatsApp notifications (fire-and-forget, don't block response)
+      try {
+        const { sendWhatsAppAsync } = await import('@/lib/whatsapp');
+        const firstNameOrFull = firstName || fullName.trim();
+
+        // 1. Welcome message to the new user (if they provided a phone)
+        if (phone?.trim()) {
+          sendWhatsAppAsync(phone.trim(), 'welcome', { name: firstNameOrFull });
+        }
+
+        // 2. Referral notification to the referrer
+        if (validReferralCode) {
+          const referrer = await db.sender.findUnique({
+            where: { referralCode: validReferralCode },
+            select: { firstName: true, phone: true },
+          });
+          if (referrer?.phone) {
+            const referrerName = referrer.firstName || 'there';
+            sendWhatsAppAsync(referrer.phone, 'referral_notification', {
+              referrerName,
+              newUserName: firstNameOrFull,
+            });
+          }
+        }
+      } catch (waErr) {
+        // WhatsApp failures should never block signup
+        console.warn('[signup] WhatsApp notification failed:', waErr);
+      }
+
       const res = NextResponse.json({ success: true, sender: safe, token });
       res.cookies.set('afrispine_session', token, {
         httpOnly: true,

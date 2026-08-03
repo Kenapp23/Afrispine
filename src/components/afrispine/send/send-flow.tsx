@@ -1081,6 +1081,21 @@ function StepReviewPay() {
   const [saveCard, setSaveCard] = useState(false);
 
   const handlePay = async () => {
+    // TODO: When payment processor is integrated, send WhatsApp confirmation:
+    //   const res = await fetch('/api/whatsapp/send', {
+    //     method: 'POST',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify({
+    //       templateKey: 'transaction_confirmation',
+    //       templateParams: {
+    //         name: store.sender?.fullName || 'User',
+    //         amount: store.sendAmount.toFixed(2),
+    //         currency: store.sendCurrency,
+    //         recipientName: store.recipientName || 'Recipient',
+    //         reference: transactionRef,
+    //       },
+    //     }),
+    //   });
     toast.info('Payments are coming soon! We are integrating our payment processor. Please check back shortly.');
   };
 
