@@ -72,3 +72,25 @@ Stage Summary:
 - SUPABASE PROJECT REF: db.izsujqglgxjihbwcasqq.supabase.co (from yesterday's migration)
 - BLOCKED: Need real Supabase DATABASE_URL and DIRECT_URL from Kennedy to complete local testing
 - The migration from yesterday IS permanent and solid — today's issue was an accidental revert, not an architecture flaw
+
+---
+Task ID: 3 (continued)
+Agent: Main Agent
+Task: Restore Supabase connection, fix prepared statement issue, verify login/signup
+
+Work Log:
+- Found shell env var DATABASE_URL=file:... was overriding .env — this was the root cause of today's errors
+- Updated .env with real Supabase URLs (provided by Kennedy)
+- Added ?pgbouncer=true to pooled DATABASE_URL (fixes Supabase PgBouncer prepared statement error 42P05)
+- Supabase DB was missing referralCode and referredByCode columns — added via ALTER TABLE
+- Verified signup creates user in real Supabase (got 200 with JWT token)
+- Verified login returns correct 401 for non-existent user
+- Cleaned up temporary fix-schema.mjs
+
+Stage Summary:
+- .env updated with correct Supabase URLs + pgbouncer=true
+- MISSING COLUMNS FIXED in live Supabase: Sender.referralCode, Sender.referredByCode
+- VERIFIED: signup 200, login 401 (correct) — both hitting real Supabase
+- IMPORTANT: Kennedy must add ?pgbouncer=true to DATABASE_URL in Vercel env vars if not already present
+- IMPORTANT: Kennedy should run prisma db push from a machine that can reach port 5432 to fully sync schema
+- No application code was changed — only .env and live DB columns
