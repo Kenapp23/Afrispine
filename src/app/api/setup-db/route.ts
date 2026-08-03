@@ -19,6 +19,8 @@ const TABLES: string[] = [
     "email" TEXT NOT NULL,
     "phone" TEXT,
     "passwordHash" TEXT NOT NULL,
+    "referralCode" TEXT NOT NULL DEFAULT '',
+    "referredByCode" TEXT,
     "kycStatus" TEXT NOT NULL DEFAULT 'pending',
     "accountStatus" TEXT NOT NULL DEFAULT 'active',
     "dailyLimitGbp" DOUBLE PRECISION NOT NULL DEFAULT 1000,
@@ -802,6 +804,7 @@ const TABLES: string[] = [
 // ─── All UNIQUE and regular indexes (with IF NOT EXISTS) ───────
 const INDEXES: string[] = [
   `CREATE UNIQUE INDEX IF NOT EXISTS "Sender_email_key" ON "Sender"("email")`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS "Sender_referralCode_key" ON "Sender"("referralCode")`,
   `CREATE UNIQUE INDEX IF NOT EXISTS "AdminUser_email_key" ON "AdminUser"("email")`,
   `CREATE UNIQUE INDEX IF NOT EXISTS "Transaction_reference_key" ON "Transaction"("reference")`,
   `CREATE INDEX IF NOT EXISTS "Transaction_senderId_idx" ON "Transaction"("senderId")`,

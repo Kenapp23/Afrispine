@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
         return err('Signup is temporarily unavailable — database not ready', 503);
       }
 
-      const { fullName, email, phone, password } = await body(req);
+      const { fullName, email, phone, password, referralCode } = await body(req);
 
       if (!fullName || !email || !password)
         return err('Full name, email, and password are required', 400);
@@ -54,17 +54,37 @@ export async function POST(req: NextRequest) {
 
       const passwordHash = await hashPassword(password);
 
-      const sender = await db.sender.create({
-        data: {
-          email: normalizedEmail,
-          firstName,
-          lastName,
-          phone: phone?.trim() || null,
-          passwordHash,
-          kycStatus: 'pending',
-          accountStatus: 'active',
-        },
-      });
+      // Generate a short, readable referral code (retry on collision)
+      function generateCode(): string {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let code = '';
+        for (let i = 0; i < 7; i++) code += chars[Math.floor(Math.random() * chars.length)];
+        return code;
+      }
+
+      let sender;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        try {
+          sender = await db.sender.create({
+            data: {
+              email: normalizedEmail,
+              firstName,
+              lastName,
+              phone: phone?.trim() || null,
+              passwordHash,
+              referralCode: generateCode(),
+              referredByCode: referralCode?.trim() || null,
+              kycStatus: 'pending',
+              accountStatus: 'active',
+            },
+          });
+          break;
+        } catch (createErr: any) {
+          // If unique constraint on referralCode, retry. Otherwise throw.
+          if (createErr.code === 'P2002' && attempt < 4) continue;
+          throw createErr;
+        }
+      }
 
       const token = signSenderToken({ id: sender.id, email: sender.email, role: 'sender' });
       const { passwordHash: _, ...safe } = sender;

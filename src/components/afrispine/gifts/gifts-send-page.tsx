@@ -27,6 +27,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { MERCH_COUNTRIES, MERCH_CATEGORIES, LOCAL_LOGO_MAP } from '@/lib/merchants';
+import { ReferralShareButtons } from '@/components/afrispine/common/referral-share';
 
 /* ── Types ──────────────────────────────────────────────────────── */
 
@@ -785,6 +786,7 @@ export default function GiftsSendPage() {
                     Done
                   </Button>
                 </div>
+                <ReferralShareButtons referralCode={sender?.referralCode || ''} compact className="mt-4" />
               </div>
             </div>
           </div>

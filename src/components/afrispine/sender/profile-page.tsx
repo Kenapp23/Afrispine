@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ReferralShareButtons } from '@/components/afrispine/common/referral-share';
 
 import { toast } from 'sonner';
 import {
@@ -51,6 +52,7 @@ interface SenderData {
   kycIdType: string | null;
   kycCompletedAt: string | null;
   dailyLimitGbp: number;
+  referralCode: string;
   emailVerified: boolean;
   createdAt: string;
 }
@@ -365,6 +367,11 @@ export function ProfilePage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Refer a friend */}
+      {profileData?.referralCode && (
+        <ReferralShareButtons referralCode={profileData.referralCode} />
+      )}
 
       {/* Edit Profile Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>

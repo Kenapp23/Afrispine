@@ -52,11 +52,23 @@ function Signup() {
   const [f, setF] = useState({ firstName: '', lastName: '', email: '', password: '' });
   const [err, setErr] = useState('');
   const [loading, setLoading] = useState(false);
+  const [refCode, setRefCode] = useState('');
   function set(k: string, v: string) { setF(p => ({ ...p, [k]: v })); }
+
+  // Capture referral code from URL on mount
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    if (ref) setRefCode(ref);
+  }, []);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setErr(''); setLoading(true);
-    const r = await fetch('/api/auth/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(f) });
+    const r = await fetch('/api/auth/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...f, referralCode: refCode || undefined }),
+    });
     const d = await r.json(); setLoading(false);
     if (!r.ok) { setErr(d.error); return; }
     setSender(d); nav('onboarding');

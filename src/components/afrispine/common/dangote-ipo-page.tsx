@@ -29,9 +29,11 @@ import {
 } from 'lucide-react';
 import { getIpoRegistrationStats } from '@/lib/wealth-data';
 import { WealthDisclaimer } from '@/components/afrispine/wealth/wealth-disclaimer';
+import { IpoReferralShare } from '@/components/afrispine/common/referral-share';
 
 export function DangoteIpoPage() {
   const navigate = useAppStore((s) => s.navigate);
+  const sender = useAppStore((s) => s.sender);
   const [email, setEmail] = React.useState('');
   const [fullName, setFullName] = React.useState('');
   const [country, setCountry] = React.useState('');
@@ -115,6 +117,9 @@ export function DangoteIpoPage() {
             visible={showAchievement}
             onClose={() => setShowAchievement(false)}
           />
+          <div className="mt-6">
+            <IpoReferralShare referralCode={sender?.referralCode || ''} />
+          </div>
         </div>
       </div>
     );

@@ -17,6 +17,8 @@ model Sender {
   email           String   @unique
   phone           String?
   passwordHash    String
+  referralCode    String   @unique
+  referredByCode  String?
   kycStatus       String   @default("pending")
   accountStatus   String   @default("active")
   dailyLimitGbp   Float    @default(1000)

@@ -1281,7 +1281,7 @@ function StepConfirmation() {
         </div>
       )}
 
-      <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
         {txn && (
           <Button
             variant="outline"
@@ -1314,7 +1314,18 @@ function StepConfirmation() {
         visible={showAchievement}
         onClose={() => setShowAchievement(false)}
       />
-    </div>
+      </div>
+      <div className="mt-4 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm">
+        <span className="text-emerald-800 flex-1">Know someone else sending money home?</span>
+        <a
+          href={"https://wa.me/?text="Join%20me%20on%20AfriSpine%20%E2%80%94%20the%20easiest%20way%20to%20send%20money%20home%3A%3A%20" + encodeURIComponent('https://' + (typeof window !== 'undefined' ? window.location.origin : '') + '/signup?ref=' + (store.sender?.referralCode || '')}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-full bg-green-600 text-white text-xs font-semibold px-4 py-1.5 hover:bg-green-700 transition-colors"
+        >
+          Share via WhatsApp
+        </a>
+      </div>
   );
 }
 
