@@ -31,9 +31,25 @@ export async function GET(request: Request) {
       where.countryCode = country.toUpperCase();
     }
 
+    /* Only select columns that definitely exist in the DB.
+       brandColor is optional and may not be migrated yet. */
     const brands = await db.giftCardBrand.findMany({
       where,
       orderBy: { brandName: 'asc' },
+      select: {
+        id: true,
+        brandName: true,
+        slug: true,
+        logoUrl: true,
+        country: true,
+        countryCode: true,
+        category: true,
+        description: true,
+        isActive: true,
+        minAmount: true,
+        maxAmount: true,
+        smartContractAddress: true,
+      },
     });
 
     /* Check PlatformConfig for admin overrides (disabled / deleted merchants) */
@@ -81,7 +97,7 @@ export async function GET(request: Request) {
         minAmount: b.minAmount,
         maxAmount: b.maxAmount,
         smartContractAddress: b.smartContractAddress,
-        brandColor: b.brandColor || CATEGORY_DEFAULT_COLORS[b.category] || '#059669',
+        brandColor: CATEGORY_DEFAULT_COLORS[b.category] || '#059669',
         isActive: b.isActive && !disabledSlugs.has(b.slug),
       }));
 
