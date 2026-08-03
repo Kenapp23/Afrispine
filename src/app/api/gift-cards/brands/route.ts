@@ -31,8 +31,7 @@ export async function GET(request: Request) {
       where.countryCode = country.toUpperCase();
     }
 
-    /* Only select columns that definitely exist in the DB.
-       brandColor is optional and may not be migrated yet. */
+    /* Only select columns that definitely exist in the DB. */
     const brands = await db.giftCardBrand.findMany({
       where,
       orderBy: { brandName: 'asc' },
@@ -52,37 +51,40 @@ export async function GET(request: Request) {
       },
     });
 
-    /* Check PlatformConfig for admin overrides (disabled / deleted merchants) */
-    const overrides = await db.platformConfig.findMany({
-      where: {
-        OR: [
-          { key: { startsWith: 'merchant_disabled_' } },
-          { key: { startsWith: 'merchant_deleted_' } },
-        ],
-      },
-    });
-
-    const disabledSlugs = new Set<string>();
-    const deletedSlugs = new Set<string>();
-
-    for (const o of overrides) {
-      let merchantId = '';
-      if (o.key.startsWith('merchant_disabled_')) {
-        merchantId = o.key.replace('merchant_disabled_', '');
-        if (o.value === 'true') {
-          const m = MERCHANTS.find((x) => x.id === merchantId);
-          if (m) disabledSlugs.add(m.slug);
-        }
-      } else if (o.key.startsWith('merchant_deleted_')) {
-        merchantId = o.key.replace('merchant_deleted_', '');
-        if (o.value === 'true') {
-          const m = MERCHANTS.find((x) => x.id === merchantId);
-          if (m) deletedSlugs.add(m.slug);
+    /* Check PlatformConfig for admin overrides. If this fails,
+       just show all brands as active — don't crash the whole page. */
+    let disabledSlugs = new Set<string>();
+    let deletedSlugs = new Set<string>();
+    try {
+      const overrides = await db.platformConfig.findMany({
+        where: {
+          OR: [
+            { key: { startsWith: 'merchant_disabled_' } },
+            { key: { startsWith: 'merchant_deleted_' } },
+          ],
+        },
+      });
+      for (const o of overrides) {
+        let merchantId = '';
+        if (o.key.startsWith('merchant_disabled_')) {
+          merchantId = o.key.replace('merchant_disabled_', '');
+          if (o.value === 'true') {
+            const m = MERCHANTS.find((x) => x.id === merchantId);
+            if (m) disabledSlugs.add(m.slug);
+          }
+        } else if (o.key.startsWith('merchant_deleted_')) {
+          merchantId = o.key.replace('merchant_deleted_', '');
+          if (o.value === 'true') {
+            const m = MERCHANTS.find((x) => x.id === merchantId);
+            if (m) deletedSlugs.add(m.slug);
+          }
         }
       }
+    } catch (e) {
+      console.warn('[gift-cards/brands] PlatformConfig check failed, showing all brands as active:', e);
     }
 
-    /* Build response: hide deleted, mark disabled as inactive */
+    /* Build response */
     const result = brands
       .filter((b) => !deletedSlugs.has(b.slug))
       .map((b) => ({
