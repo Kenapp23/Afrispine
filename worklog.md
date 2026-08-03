@@ -47,3 +47,18 @@ Stage Summary:
 - Endpoint is fully idempotent — running it again is safe
 - User must: push to git → wait for Vercel deploy → visit /api/setup-db in browser
 - This is the SOLE remaining blocker for login/signup to work
+---
+Task ID: 1
+Agent: main
+Task: Remove backup zip and fix Fincra dashboard link
+
+Work Log:
+- Removed public/afrispine-source-backup.zip from the project
+- Found Fincra Dashboard link in admin-settlement-page.tsx at line 589 had href="#" (self-referencing anchor)
+- Changed href to "https://live.fincra.com" so it opens the real Fincra dashboard in a new tab
+- Verified dev server compiles without errors
+- Lint passes clean
+
+Stage Summary:
+- Backup zip removed from public folder (no longer publicly accessible)
+- Fincra Dashboard link now correctly opens https://live.fincra.com in a new browser tab instead of staying on the admin page
