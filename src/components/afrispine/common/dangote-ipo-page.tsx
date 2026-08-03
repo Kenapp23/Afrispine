@@ -197,7 +197,7 @@ export function DangoteIpoPage() {
               {
                 icon: DollarSign,
                 title: 'USD dividends',
-                desc: 'Dangote has confirmed that investors will access shares in naira but receive dividends in US dollars, backed by an estimated $6.4 billion in annual export revenues. True dollar-denominated returns from Nigerian operations.',
+                desc: "Dangote Group has indicated shareholders may receive dividends in US dollars. If and when dividends are declared, AfriSpine will convert and credit them to your account. Official terms will be confirmed before the IPO opens.",
               },
               {
                 icon: Building2,
@@ -212,12 +212,12 @@ export function DangoteIpoPage() {
               {
                 icon: Shield,
                 title: 'Regulated and secure',
-                desc: 'Shares held through a CMA-licensed broker partner in a pooled CDS account. Individual ownership recorded digitally. You remain the legal owner of every share you buy.',
+                desc: 'Shares held through a licensed Nigerian SEC-registered dealing member in a segregated CSCS nominee account. Individual ownership recorded digitally. You remain the legal owner of every share you buy.',
               },
               {
                 icon: Zap,
                 title: 'Zero friction, zero paperwork',
-                desc: 'No individual CDS application, no in-person verification, no Nigerian bank account. Register your email, fund from abroad, and we handle the rest. From London to Lagos in a few clicks.',
+                desc: 'No individual CSCS application, no in-person verification, no Nigerian bank account. Register your email, fund from abroad, and we handle the rest. From London to Lagos in a few clicks.',
               },
             ].map((item) => (
               <div key={item.title} className="rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-shadow">
@@ -256,9 +256,9 @@ export function DangoteIpoPage() {
               },
               {
                 icon: Receipt,
-                title: '$6.4B in annual export revenues',
+                title: '$6.4B estimated annual export revenues',
                 stat: '$6.4B',
-                sub: 'Backs the USD dividend commitment',
+                sub: 'Refinery export capacity projection',
               },
               {
                 icon: UserCheck,
@@ -363,13 +363,13 @@ export function DangoteIpoPage() {
                 {
                   step: '04',
                   title: 'AfriSpine buys on your behalf',
-                  desc: 'Your funds are converted to naira and routed to our licensed broker partner (Kestrel Capital or equivalent). Shares are held in a pooled CDS account with your ownership recorded digitally.',
+                  desc: "Your funds are converted to naira and routed to a licensed Nigerian dealing member via our MyStocks Africa partnership. Shares are held in a segregated CSCS nominee account with your ownership recorded digitally.",
                   cta: 'Coming soon',
                 },
                 {
                   step: '05',
                   title: 'Receive dividends in USD',
-                  desc: 'Dangote confirmed USD-denominated dividends. AfriSpine receives the naira dividend, converts it at market rate, and credits your AfriSpine wallet in USD. Withdraw anytime.',
+                  desc: "If and when dividends are declared, AfriSpine will convert and credit them to your account. Official dividend terms will be confirmed before the IPO opens.",
                   cta: 'Coming soon',
                 },
               ].map((item, idx) => (
@@ -420,7 +420,7 @@ export function DangoteIpoPage() {
                   },
                   {
                     problem: 'The CDS barrier',
-                    solution: 'Ziidi\'s pooled CDS model (M-PESA + Kestrel Capital) means investors no longer need individual CDS accounts. Shares are held in a single pooled account with digital ownership records.',
+                    solution: "AfriSpine's model via MyStocks Africa means investors no longer need individual CSCS accounts. Shares are held in a segregated CSCS nominee account with digital ownership records.",
                     icon: Lock,
                   },
                   {
@@ -684,7 +684,7 @@ export function DangoteIpoPage() {
               },
               {
                 q: 'How are my shares held?',
-                a: 'Shares are held in a pooled CDS account managed by our licensed broker partner (e.g., Kestrel Capital or AIB-AXYS Africa). Your individual ownership is recorded digitally in AfriSpine\'s database. You legally own every share you purchase.',
+                a: "Shares are held in a segregated CSCS nominee account, cleared through a licensed Nigerian SEC-registered dealing member. Your individual ownership is recorded digitally in AfriSpine's database. You legally own every share you purchase.",
               },
               {
                 q: 'What is the minimum investment amount?',
@@ -696,11 +696,11 @@ export function DangoteIpoPage() {
               },
               {
                 q: 'Will I receive dividends in USD?',
-                a: 'Yes. Dangote has confirmed that shareholders will receive dividends in US dollars, backed by the refinery\'s estimated $6.4 billion in annual export revenues. AfriSpine will convert and credit dividends to your account.',
+                a: "This has not been confirmed by Dangote Group as of this writing. If and when dividends are declared, AfriSpine will convert and credit them to your account in your home currency. We'll update this page once official terms are published.",
               },
               {
                 q: 'Is AfriSpine a registered broker?',
-                a: 'AfriSpine is a payments and FX platform, not a broker. We partner with CMA-licensed brokers who execute trades and hold shares. AfriSpine handles the FX conversion, payment rail, and user experience layer.',
+                a: 'AfriSpine is a payments and FX routing platform, not a broker. Trade execution and share custody are handled by licensed Nigerian SEC-registered dealing members via our MyStocks Africa partnership. AfriSpine handles the FX conversion, payment rail, and user experience layer.',
               },
               {
                 q: 'Can I explore other African stocks beyond Dangote?',

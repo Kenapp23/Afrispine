@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { ensureDb } from '@/lib/ensure-db';
+import { requireAdmin } from '@/lib/auth';
 import { MERCHANTS } from '@/lib/merchants';
 
 async function sha256(str: string): Promise<string> {
@@ -19,8 +20,11 @@ function randomHex40(): string {
   return result;
 }
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   try {
+    const { error, res } = await requireAdmin(req);
+    if (error) return res;
+
     await ensureDb();
 
     let upserted = 0;

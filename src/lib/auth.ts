@@ -9,8 +9,22 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   return bcrypt.compare(password, hash);
 }
 
-const JWT_SENDER_SECRET = () => process.env.JWT_SENDER_SECRET || 'afri_spine_sender_jwt_secret_2024_change_in_production';
-const JWT_ADMIN_SECRET = () => process.env.JWT_ADMIN_SECRET || 'afri_spine_admin_jwt_secret_2024_change_in_production';
+function requireSecret(envVar: string): string {
+  const value = process.env[envVar];
+  if (!value) {
+    // Deliberately no fallback here. A hardcoded fallback secret was previously
+    // exposed in this repo while it was briefly public on GitHub — anyone who saw
+    // it could forge valid tokens if the real env var isn’t set. Fail loudly instead.
+    throw new Error(
+      envVar + ' is not set. Set it to a long random string in your environment ' +
+      '(never reuse any secret that was ever committed to this repo).'
+    );
+  }
+  return value;
+}
+
+const JWT_SENDER_SECRET = () => requireSecret('JWT_SENDER_SECRET');
+const JWT_ADMIN_SECRET = () => requireSecret('JWT_ADMIN_SECRET');
 
 export interface SenderJwtPayload {
   id: string;

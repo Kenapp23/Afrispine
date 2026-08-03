@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import { ensureDb } from '@/lib/ensure-db';
+import { requireAdmin } from '@/lib/auth';
 
 export async function GET() {
   try {
@@ -13,8 +14,16 @@ export async function GET() {
   }
 }
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   try {
+    // Only allowed if no admin exists yet (bootstrap), or by an already-authenticated admin.
+    // This closes the hole where anyone could POST here to (re)seed default credentials.
+    const existingAdminCount = await db.adminUser.count().catch(() => 0);
+    if (existingAdminCount > 0) {
+      const { error, res } = await requireAdmin(req);
+      if (error) return res;
+    }
+
     await ensureDb();
     // 1. Create admin user
     const adminEmail = process.env.ADMIN_EMAIL || 'admin@afrispine.com';

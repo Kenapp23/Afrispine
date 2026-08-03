@@ -91,3 +91,28 @@ Stage Summary:
 - File: src/components/afrispine/gifts/gifts-hub-page.tsx (complete rewrite)
 - File: src/lib/merchants.ts (added LOCAL_LOGO_MAP export)
 - Files: public/gift-card-logos/*.svg (30 new files)
+---
+Task ID: 3
+Agent: main
+Task: Security and regulatory fixes from diff patch
+
+Work Log:
+- Secured POST /api/gift-cards/seed-brands with requireAdmin guard
+- Secured POST /api/seed with conditional requireAdmin (allows bootstrap when no admin exists, blocks after)
+- Removed hardcoded JWT secret fallbacks in auth.ts, replaced with requireSecret() that throws if env var missing
+- Fixed 8 regulatory accuracy issues in dangote-ipo-page.tsx:
+  - CMA-licensed → Nigerian SEC-registered dealing member (CMA is Kenyan, not Nigerian)
+  - Pooled CDS → Segregated CSCS nominee account (correct depository for NGX)
+  - Removed named Kenyan brokerages (Kestrel Capital, AIB-AXYS Africa)
+  - Replaced with MyStocks Africa partnership reference
+  - Softened unverified $6.4B dividend claim to not yet confirmed
+  - Fixed stat card sub-text to not imply confirmed dividend
+  - Ziidi/Kestrel references replaced with AfriSpine/MyStocks
+- Lint passes clean
+
+Stage Summary:
+- Files changed: seed-brands/route.ts, seed/route.ts, auth.ts, dangote-ipo-page.tsx
+- SECURITY: Two unauthenticated seed endpoints now require admin auth
+- SECURITY: JWT secrets fail loudly instead of using exposed hardcoded defaults
+- REGULATORY: All Kenyan CMA/CDS/Kestrel language replaced with correct Nigerian SEC/CSCS terms
+- IMPORTANT: User MUST set JWT_SENDER_SECRET and JWT_ADMIN_SECRET in Vercel env vars before deploying
