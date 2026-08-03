@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppStore } from '@/stores/app';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Loader2, Phone, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Phone, Eye, EyeOff, Users } from 'lucide-react';
 
 export function SignupPage() {
   const navigate = useAppStore((s) => s.navigate);
@@ -15,6 +15,7 @@ export function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [refCode, setRefCode] = useState<string | null>(null);
   const [form, setForm] = useState({
     fullName: '',
     email: '',
@@ -22,6 +23,15 @@ export function SignupPage() {
     password: '',
     confirmPassword: '',
   });
+
+  // Capture ?ref= from URL on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    if (ref && ref.trim().length > 0) {
+      setRefCode(ref.trim().toUpperCase());
+    }
+  }, []);
 
   const update = (key: string, value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -52,6 +62,7 @@ export function SignupPage() {
             email: form.email,
             phone: form.phone,
             password: form.password,
+            ...(refCode ? { referralCode: refCode } : {}),
           }),
         });
       } catch {
@@ -90,6 +101,12 @@ export function SignupPage() {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-emerald-600">AfriSpine</CardTitle>
           <CardDescription>Create your account to start sending money</CardDescription>
+          {refCode && (
+            <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-medium text-emerald-700">
+              <Users className="h-3 w-3" />
+              Referred by <span className="font-mono font-bold">{refCode}</span>
+            </div>
+          )}
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">

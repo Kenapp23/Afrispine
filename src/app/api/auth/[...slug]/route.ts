@@ -48,6 +48,18 @@ export async function POST(req: NextRequest) {
       const existing = await db.sender.findUnique({ where: { email: normalizedEmail } });
       if (existing) return err('An account with this email already exists', 409);
 
+      // Validate referral code if provided — silently ignore invalid codes
+      let validReferralCode: string | null = null;
+      if (referralCode && typeof referralCode === 'string' && referralCode.trim().length > 0) {
+        const trimmed = referralCode.trim().toUpperCase();
+        try {
+          const referrer = await db.sender.findUnique({ where: { referralCode: trimmed }, select: { id: true } });
+          if (referrer) validReferralCode = trimmed;
+        } catch {
+          // DB lookup failed — don't block signup, just skip the referral
+        }
+      }
+
       const nameParts = fullName.trim().split(/\s+/);
       const firstName = nameParts[0] || '';
       const lastName = nameParts.slice(1).join(' ') || '';
@@ -73,7 +85,7 @@ export async function POST(req: NextRequest) {
               phone: phone?.trim() || null,
               passwordHash,
               referralCode: generateCode(),
-              referredByCode: referralCode?.trim() || null,
+              referredByCode: validReferralCode,
               kycStatus: 'pending',
               accountStatus: 'active',
             },
