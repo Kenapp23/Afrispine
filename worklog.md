@@ -45,3 +45,30 @@ Stage Summary:
 - Vercel env vars needed: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_WHATSAPP_NUMBER
 - Twilio webhook URL to configure: https://www.afri-spine.com/api/whatsapp/webhook
 - For production: register message templates in Twilio Console (Messaging > Senders > WhatsApp Senders)
+---
+Task ID: 3
+Agent: Main Agent
+Task: Emergency — Reverted accidental SQLite regression, full DB stability audit, safety hardening
+
+Work Log:
+- Previous agent accidentally reverted prisma/schema.prisma from postgresql back to sqlite
+- Also reverted src/lib/db.ts back to SQLite version
+- Also overwrote .env with SQLite file: URL (losing JWT secrets)
+- Immediately reverted schema.prisma back to postgresql with directUrl
+- Reverted db.ts back to Supabase version
+- Added JWT_SENDER_SECRET and JWT_ADMIN_SECRET to .env
+- Ran full database persistence audit (10 checks + 4 bonus findings)
+- Audit result: ALL application code is clean — zero SQLite references, zero /tmp, zero fallbacks
+- Production (Vercel) was NEVER affected — Vercel uses its own env vars, not .env
+- The .env file on this machine still has old SQLite URL — needs Supabase credentials from Kennedy
+- Hardening: removed --accept-data-loss from db:push script (prevents accidental prod data wipe)
+- Hardening: removed db:reset script from package.json
+- Hardening: added auth guard to /api/setup-db (requires ?secret= query param matching SETUP_DB_SECRET env var)
+- Ran bun run lint — zero errors
+
+Stage Summary:
+- Files restored: prisma/schema.prisma, src/lib/db.ts, .env
+- Files hardened: package.json, src/app/api/setup-db/route.ts
+- SUPABASE PROJECT REF: db.izsujqglgxjihbwcasqq.supabase.co (from yesterday's migration)
+- BLOCKED: Need real Supabase DATABASE_URL and DIRECT_URL from Kennedy to complete local testing
+- The migration from yesterday IS permanent and solid — today's issue was an accidental revert, not an architecture flaw

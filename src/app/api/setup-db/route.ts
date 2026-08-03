@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
 /*
@@ -7,7 +7,17 @@ import { db } from '@/lib/db';
  * Creates EVERY table from prisma/schema.prisma in Supabase.
  * Idempotent — safe to call multiple times.
  * Uses Prisma $executeRawUnsafe through Supabase's connection pooler.
+ *
+ * SECURITY: Requires SETUP_DB_SECRET env var. Call with:
+ *   GET /api/setup-db?secret=YOUR_SECRET
  */
+
+function isAuthorized(req: NextRequest): boolean {
+  const secret = process.env.SETUP_DB_SECRET;
+  if (!secret) return false; // If no secret configured, deny all
+  const querySecret = new URL(req.url).searchParams.get('secret');
+  return querySecret === secret;
+}
 
 // ─── All CREATE TABLE statements (with IF NOT EXISTS) ──────────
 const TABLES: string[] = [
@@ -861,7 +871,11 @@ function extractName(sql: string): string {
   return 'unknown';
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  if (!isAuthorized(req)) {
+    return NextResponse.json({ error: 'Forbidden — provide ?secret= value' }, { status: 403 });
+  }
+
   const results: { statement: string; status: string; detail?: string }[] = [];
   let okCount = 0;
   let errCount = 0;
