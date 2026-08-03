@@ -70,7 +70,12 @@ interface PurchasedCard {
 
 function BrandLogo({ brand, size = 'md' }: { brand: { brandName: string; logoUrl: string; slug?: string; category?: string }; size?: 'sm' | 'md' | 'lg' | 'xl' }) {
   const localPath = brand.slug ? LOCAL_LOGO_MAP[brand.slug] : null;
-  const [useFallback, setUseFallback] = useState(false);
+  const hasDbLogo = !!brand.logoUrl && !brand.logoUrl.includes('clearbit.com');
+  const [source, setSource] = useState<'local' | 'db' | 'fallback'>(() => {
+    if (localPath) return 'local';
+    if (hasDbLogo) return 'db';
+    return 'fallback';
+  });
 
   const sizes: Record<string, { wrap: string; img: string }> = {
     sm: { wrap: 'h-8 w-8 rounded-lg', img: 'h-8 w-8 rounded-lg object-contain' },
@@ -88,7 +93,17 @@ function BrandLogo({ brand, size = 'md' }: { brand: { brandName: string; logoUrl
   };
   const fallbackBg = catColors[brand.category || 'General'] ?? 'bg-emerald-600';
 
-  if (useFallback || !localPath) {
+  const handleImgError = () => {
+    if (source === 'local' && hasDbLogo) {
+      setSource('db');
+    } else {
+      setSource('fallback');
+    }
+  };
+
+  const imgSrc = source === 'local' ? localPath! : brand.logoUrl;
+
+  if (source === 'fallback') {
     return (
       <div className={sizes[size].wrap + ' ' + fallbackBg + ' flex items-center justify-center text-white font-bold shadow-sm shrink-0'}>
         <span className={size === 'xl' ? 'text-2xl' : size === 'lg' ? 'text-lg' : 'text-xs'}>{initials}</span>
@@ -98,7 +113,7 @@ function BrandLogo({ brand, size = 'md' }: { brand: { brandName: string; logoUrl
 
   return (
     <div className={sizes[size].img + ' shrink-0'}>
-      <img src={localPath} alt={brand.brandName} className="h-full w-full object-contain" onError={() => setUseFallback(true)} />
+      <img src={imgSrc} alt={brand.brandName} className="h-full w-full object-contain" onError={handleImgError} />
     </div>
   );
 }

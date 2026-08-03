@@ -116,3 +116,37 @@ Stage Summary:
 - Brands with local SVGs (safaricom, mtn, naivas, jumia, etc.) will show real logos
 - Other brands show colored initials with first letters of brand name
 - No code changes to brand page, API, or components
+
+---
+Task ID: 5
+Agent: Main Agent
+Task: Admin brand logo upload (URL + device) and fix BrandLogo DB logoUrl rendering
+
+Work Log:
+- Investigated root cause of missing logos on brand page: BrandLogo component only checked LOCAL_LOGO_MAP (30 local SVGs) and completely ignored the logoUrl stored in the database
+- Fixed admin brands API returning 500: The `brandColor` column didn't exist in live Supabase DB. Changed `include` (all columns) to explicit `select` to avoid querying missing columns
+- Updated BrandLogo in gifts-send-page.tsx: Now checks local SVG → DB logoUrl → colored initials (with fallback chain on error)
+- Updated BrandLogo in admin-gift-cards-page.tsx: Same 3-tier fallback, plus uses LOCAL_LOGO_MAP from merchants.ts
+- Created PUT /api/admin/gift-cards/brands/[id]/logo API endpoint:
+  - Accepts JSON {logoUrl} for URL uploads
+  - Accepts multipart/form-data {file} for device uploads (converted to base64 data URL)
+  - Validates file type (PNG/JPG/WebP/SVG/GIF) and size (max 2MB)
+  - Admin auth required
+- Rebuilt admin-gift-cards-page.tsx with full logo upload feature:
+  - Every brand row shows a clickable "Logo" button
+  - Logo thumbnail itself is clickable to open upload dialog
+  - Amber dot indicator on brands missing real logos
+  - Header shows count of brands missing logos
+  - Logo upload dialog with two tabs: "From URL" (with preview eye icon) and "From Device" (file picker)
+  - Current logo preview section
+  - Save/Cancel actions with loading state
+- Ran bun run lint — zero errors
+- Verified with Agent Browser: admin login, brands list (122 brands), logo dialog both tabs working
+
+Stage Summary:
+- Files created: src/app/api/admin/gift-cards/brands/[id]/logo/route.ts
+- Files modified: src/app/api/admin/gift-cards/brands/route.ts, src/components/afrispine/admin/admin-gift-cards-page.tsx, src/components/afrispine/gifts/gifts-send-page.tsx
+- Admin can now upload logos for every brand from URL or device file
+- BrandLogo components now use 3-tier fallback: local SVG → DB logoUrl → colored initials
+- NOTE: brandColor column missing in Supabase (not critical — public API generates it client-side; admin API now uses explicit select)
+- NOTE: Kennedy should run `prisma db push` from a machine with direct DB access to fully sync schema

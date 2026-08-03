@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -27,7 +27,13 @@ import {
   Loader2,
   AlertTriangle,
   RefreshCw,
+  ImageIcon,
+  Upload,
+  Link,
+  Eye,
+  Save,
 } from 'lucide-react';
+import { LOCAL_LOGO_MAP } from '@/lib/merchants';
 
 /* ── Types ──────────────────────────────────────────────────────── */
 
@@ -68,33 +74,46 @@ interface StatsData {
   topBrands: { brandName: string; totalAmount: number; count: number }[];
 }
 
-/* ── Logo Component ────────────────────────────────────────────── */
+/* ── Admin Logo Component (checks local SVG → DB logoUrl → initials) ── */
 
-function extractDomain(logoUrl: string): string {
-  try {
-    const url = new URL(logoUrl);
-    if (url.hostname === 'logo.clearbit.com') return url.pathname.replace(/^\/+/, '');
-    return url.hostname;
-  } catch { return logoUrl.replace(/^https?:\/\//, '').split('/')[0]; }
-}
+function AdminBrandLogo({ name, logoUrl, slug, size = 'sm' }: { name: string; logoUrl: string; slug?: string; size?: 'sm' | 'md' | 'lg' }) {
+  const localPath = slug ? LOCAL_LOGO_MAP[slug] : null;
+  const hasDbLogo = !!logoUrl && !logoUrl.includes('clearbit.com');
+  const [source, setSource] = useState<'local' | 'db' | 'fallback'>(() => {
+    if (localPath) return 'local';
+    if (hasDbLogo) return 'db';
+    return 'fallback';
+  });
 
-function BrandLogo({ name, logoUrl, size = 'sm' }: { name: string; logoUrl: string; size?: 'sm' | 'md' }) {
-  const [currentSourceIdx, setCurrentSourceIdx] = useState(0);
-  const [failed, setFailed] = useState(false);
-  const domain = extractDomain(logoUrl);
-  const sources = [logoUrl, `https://cdn.brandfetch.io/${domain}?w=128&h=128&format=png`, `https://www.google.com/s2/favicons?domain=${domain}&sz=128`];
+  const sizes: Record<string, string> = {
+    sm: 'h-10 w-10 rounded-xl',
+    md: 'h-14 w-14 rounded-xl',
+    lg: 'h-20 w-20 rounded-2xl',
+  };
+
   const initials = name.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
-  const sz = size === 'sm' ? 'h-8 w-8 rounded-lg' : 'h-10 w-10 rounded-xl';
 
-  if (failed) return <div className={`${sz} bg-emerald-600 flex items-center justify-center text-white font-bold text-xs`}>{initials}</div>;
+  const handleImgError = () => {
+    if (source === 'local' && hasDbLogo) {
+      setSource('db');
+    } else {
+      setSource('fallback');
+    }
+  };
+
+  const imgSrc = source === 'local' ? localPath! : logoUrl;
+
+  if (source === 'fallback') {
+    return (
+      <div className={`${sizes[size]} bg-emerald-600 flex items-center justify-center text-white font-bold ${size === 'lg' ? 'text-xl' : 'text-xs'} shrink-0`}>
+        {initials}
+      </div>
+    );
+  }
 
   return (
-    <div className="relative">
-      <img key={sources[currentSourceIdx]} src={sources[currentSourceIdx]} alt={name}
-        className={`${sz} object-contain`}
-        onLoad={() => {}}
-        onError={() => { const next = currentSourceIdx + 1; if (next < sources.length) setCurrentSourceIdx(next); else setFailed(true); }}
-      />
+    <div className={`${sizes[size]} shrink-0 bg-gray-50 border border-gray-100 p-1`}>
+      <img src={imgSrc} alt={name} className="h-full w-full object-contain" onError={handleImgError} />
     </div>
   );
 }
@@ -112,6 +131,14 @@ function KycBadge({ status }: { status: string }) {
   return <Badge className={`${c.color} border-0`}>{c.label}</Badge>;
 }
 
+/* ── Has Real Logo Helper ──────────────────────────────────────── */
+
+function hasRealLogo(brand: BrandRow): boolean {
+  if (brand.slug && LOCAL_LOGO_MAP[brand.slug]) return true;
+  if (brand.logoUrl && !brand.logoUrl.includes('clearbit.com')) return true;
+  return false;
+}
+
 /* ── Main Component ────────────────────────────────────────────── */
 
 export default function AdminGiftCardsPage() {
@@ -126,6 +153,15 @@ export default function AdminGiftCardsPage() {
   const [reason, setReason] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   const [contractDialog, setContractDialog] = useState<{ open: boolean; contract: any | null }>({ open: false, contract: null });
+
+  /* ── Logo Upload State ── */
+  const [logoDialog, setLogoDialog] = useState<{ open: boolean; brand: BrandRow | null }>({ open: false, brand: null });
+  const [logoTab, setLogoTab] = useState<'url' | 'device'>('url');
+  const [logoUrlInput, setLogoUrlInput] = useState('');
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoSaving, setLogoSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchBrands = useCallback(async () => {
     try {
@@ -209,6 +245,97 @@ export default function AdminGiftCardsPage() {
     } catch { toast.error('Contract generation failed'); }
   };
 
+  /* ── Logo Upload Handlers ── */
+
+  const openLogoDialog = (brand: BrandRow) => {
+    setLogoDialog({ open: true, brand });
+    setLogoTab('url');
+    setLogoUrlInput('');
+    setLogoPreview(null);
+    setLogoFile(null);
+    /* If brand already has a DB logo (not clearbit), show it as preview */
+    if (brand.logoUrl && !brand.logoUrl.includes('clearbit.com') && !brand.logoUrl.startsWith('data:')) {
+      setLogoUrlInput(brand.logoUrl);
+      setLogoPreview(brand.logoUrl);
+    }
+  };
+
+  const handleUrlPreview = () => {
+    const url = logoUrlInput.trim();
+    if (!url) { setLogoPreview(null); return; }
+    try {
+      new URL(url);
+      setLogoPreview(url);
+    } catch {
+      toast.error('Please enter a valid URL');
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/svg+xml', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Invalid file type. Allowed: PNG, JPG, WebP, SVG, GIF');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('File too large. Maximum size is 2MB.');
+      return;
+    }
+    setLogoFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setLogoPreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleSaveLogo = async () => {
+    if (!logoDialog.brand) return;
+
+    if (logoTab === 'url') {
+      const url = logoUrlInput.trim();
+      if (!url) { toast.error('Please enter a logo URL'); return; }
+      try { new URL(url); } catch { toast.error('Invalid URL'); return; }
+
+      setLogoSaving(true);
+      try {
+        const res = await fetch(`/api/admin/gift-cards/brands/${logoDialog.brand.id}/logo`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ logoUrl: url }),
+        });
+        const data = await res.json();
+        if (!res.ok) { toast.error(data.error); return; }
+        toast.success(`Logo updated for ${logoDialog.brand.brandName}`);
+        setLogoDialog({ open: false, brand: null });
+        fetchBrands();
+      } catch { toast.error('Failed to update logo'); }
+      finally { setLogoSaving(false); }
+    } else {
+      /* Device upload */
+      if (!logoFile) { toast.error('Please select a file'); return; }
+
+      setLogoSaving(true);
+      try {
+        const formData = new FormData();
+        formData.append('file', logoFile);
+        const res = await fetch(`/api/admin/gift-cards/brands/${logoDialog.brand.id}/logo`, {
+          method: 'PUT',
+          body: formData,
+        });
+        const data = await res.json();
+        if (!res.ok) { toast.error(data.error); return; }
+        toast.success(`Logo uploaded for ${logoDialog.brand.brandName}`);
+        setLogoDialog({ open: false, brand: null });
+        fetchBrands();
+      } catch { toast.error('Failed to upload logo'); }
+      finally { setLogoSaving(false); }
+    }
+  };
+
+  /* Count brands missing logos */
+  const brandsWithoutLogo = useMemo(() => brands.filter(b => !hasRealLogo(b)).length, [brands]);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -217,7 +344,15 @@ export default function AdminGiftCardsPage() {
             <Gift className="h-6 w-6 text-emerald-600" />
             Gift Card Management
           </h1>
-          <p className="text-sm text-gray-500 mt-1">Manage brands, gift cards, and smart contracts</p>
+          <p className="text-sm text-gray-500 mt-1">
+            Manage brands, gift cards, and smart contracts
+            {brandsWithoutLogo > 0 && (
+              <span className="inline-flex items-center gap-1 ml-2 text-amber-600 font-medium">
+                <AlertTriangle className="h-3 w-3" />
+                {brandsWithoutLogo} brand{brandsWithoutLogo > 1 ? 's' : ''} missing logo
+              </span>
+            )}
+          </p>
         </div>
         <Button variant="outline" size="sm" onClick={() => { setLoading(true); Promise.all([fetchBrands(), fetchGiftCards(), fetchStats()]).finally(() => setLoading(false)); }}>
           <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
@@ -260,7 +395,23 @@ export default function AdminGiftCardsPage() {
             <div className="space-y-2 max-h-[60vh] overflow-y-auto">
               {filteredBrands.map(brand => (
                 <div key={brand.id} className="flex items-center gap-4 rounded-xl border bg-white p-4 hover:shadow-sm transition-shadow">
-                  <BrandLogo name={brand.brandName} logoUrl={brand.logoUrl} size="md" />
+                  {/* Logo with click-to-update */}
+                  <button
+                    className="relative group shrink-0"
+                    onClick={() => openLogoDialog(brand)}
+                    title="Click to update logo"
+                  >
+                    <AdminBrandLogo name={brand.brandName} logoUrl={brand.logoUrl} slug={brand.slug} size="md" />
+                    {!hasRealLogo(brand) && (
+                      <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-amber-400 flex items-center justify-center">
+                        <ImageIcon className="h-2.5 w-2.5 text-white" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 rounded-xl bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                      <ImageIcon className="h-4 w-4 text-white drop-shadow" />
+                    </div>
+                  </button>
+
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-gray-900 truncate">{brand.brandName}</p>
                     <div className="flex items-center gap-2 mt-1">
@@ -273,6 +424,10 @@ export default function AdminGiftCardsPage() {
                   </div>
                   <KycBadge status={brand.kycStatus} />
                   <div className="flex items-center gap-1.5 shrink-0">
+                    <Button size="sm" variant="outline" className="text-gray-600 border-gray-200 hover:bg-gray-50 h-8 px-2 text-xs"
+                      onClick={() => openLogoDialog(brand)}>
+                      <ImageIcon className="h-3.5 w-3.5 mr-1" /> Logo
+                    </Button>
                     {brand.kycStatus !== 'verified' && (
                       <Button size="sm" variant="outline" className="text-emerald-700 border-emerald-200 hover:bg-emerald-50 h-8 px-2 text-xs"
                         onClick={() => setVerifyDialog({ open: true, brand, action: 'verify' })}>
@@ -339,7 +494,7 @@ export default function AdminGiftCardsPage() {
                 };
                 return (
                   <div key={card.id} className="flex items-center gap-4 rounded-xl border bg-white p-4 hover:shadow-sm transition-shadow">
-                    <BrandLogo name={card.brand.brandName} logoUrl={card.brand.logoUrl} />
+                    <AdminBrandLogo name={card.brand.brandName} logoUrl={card.brand.logoUrl} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <code className="font-mono text-sm font-bold text-gray-900">{card.code}</code>
@@ -515,6 +670,120 @@ export default function AdminGiftCardsPage() {
               </Button>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ═══ Logo Upload Dialog ═══ */}
+      <Dialog open={logoDialog.open} onOpenChange={open => { setLogoDialog({ ...logoDialog, open }); if (!open) { setLogoPreview(null); setLogoFile(null); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ImageIcon className="h-5 w-5 text-emerald-600" />
+              Update Logo
+            </DialogTitle>
+            <DialogDescription>
+              Update the logo for <span className="font-semibold text-gray-900">{logoDialog.brand?.brandName}</span>. Upload from a URL or your device.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 pt-2">
+            {/* Current logo */}
+            {logoDialog.brand && (
+              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border">
+                <AdminBrandLogo name={logoDialog.brand.brandName} logoUrl={logoDialog.brand.logoUrl} slug={logoDialog.brand.slug} size="sm" />
+                <div className="text-sm">
+                  <p className="font-medium text-gray-900">Current Logo</p>
+                  <p className="text-xs text-gray-500">
+                    {hasRealLogo(logoDialog.brand) ? 'Has logo' : 'No logo (showing initials)'}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Upload method tabs */}
+            <div className="flex gap-1 p-1 bg-gray-100 rounded-lg">
+              <button
+                onClick={() => { setLogoTab('url'); setLogoPreview(null); setLogoFile(null); }}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-medium rounded-md transition-colors ${logoTab === 'url' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                <Link className="h-4 w-4" />
+                From URL
+              </button>
+              <button
+                onClick={() => { setLogoTab('device'); setLogoPreview(null); setLogoFile(null); }}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-medium rounded-md transition-colors ${logoTab === 'device' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                <Upload className="h-4 w-4" />
+                From Device
+              </button>
+            </div>
+
+            {/* URL upload */}
+            {logoTab === 'url' && (
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="https://example.com/logo.png"
+                    value={logoUrlInput}
+                    onChange={e => setLogoUrlInput(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleUrlPreview()}
+                    className="flex-1"
+                  />
+                  <Button variant="outline" size="sm" onClick={handleUrlPreview}>
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-400">Paste a direct link to the brand logo image</p>
+              </div>
+            )}
+
+            {/* Device upload */}
+            {logoTab === 'device' && (
+              <div className="space-y-3">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml,image/gif"
+                  className="hidden"
+                  onChange={handleFileSelect}
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center gap-2 hover:border-emerald-400 hover:bg-emerald-50/50 transition-colors"
+                >
+                  <Upload className="h-8 w-8 text-gray-400" />
+                  <p className="text-sm font-medium text-gray-600">
+                    {logoFile ? logoFile.name : 'Click to select a file'}
+                  </p>
+                  <p className="text-xs text-gray-400">PNG, JPG, WebP, SVG, or GIF (max 2MB)</p>
+                </button>
+              </div>
+            )}
+
+            {/* Preview */}
+            {logoPreview && (
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Preview</p>
+                <div className="flex items-center justify-center p-6 bg-white border rounded-xl">
+                  <div className="h-20 w-20 bg-gray-50 rounded-xl border border-gray-100 p-2">
+                    <img src={logoPreview} alt="Logo preview" className="h-full w-full object-contain" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3 pt-2">
+              <Button variant="outline" onClick={() => setLogoDialog({ open: false, brand: null })}>Cancel</Button>
+              <Button
+                onClick={handleSaveLogo}
+                disabled={logoSaving || (logoTab === 'url' ? !logoUrlInput.trim() : !logoFile)}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              >
+                {logoSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Save className="h-4 w-4 mr-1" /> Save Logo</>}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

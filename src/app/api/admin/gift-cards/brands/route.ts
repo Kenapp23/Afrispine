@@ -6,7 +6,7 @@ import { requireAdmin } from '@/lib/auth';
 export async function GET(request: Request) {
   try {
     await ensureDb();
-    const { error, res, admin } = await requireAdmin(request);
+    const { error, res } = await requireAdmin(request);
     if (error) return res!;
 
     const { searchParams } = new URL(request.url);
@@ -20,7 +20,22 @@ export async function GET(request: Request) {
     const brands = await db.giftCardBrand.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-      include: { _count: { select: { giftCards: true } } },
+      select: {
+        id: true,
+        brandName: true,
+        slug: true,
+        logoUrl: true,
+        country: true,
+        countryCode: true,
+        category: true,
+        kycStatus: true,
+        isVerified: true,
+        isActive: true,
+        smartContractHash: true,
+        smartContractAddress: true,
+        createdAt: true,
+        _count: { select: { giftCards: true } },
+      },
     });
 
     return NextResponse.json({ brands });
