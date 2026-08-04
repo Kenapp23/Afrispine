@@ -27,6 +27,8 @@ async function fetchImage(url: string, timeoutMs = 5000, allowTiny = false): Pro
     if (!ct.startsWith('image/')) return null;
     const buf = Buffer.from(await res.arrayBuffer());
     if (buf.length < 100) return null;
+    // Reject Google's generic globe fallback (always 726 bytes, 16x16)
+    if (url.includes('gstatic.com') && buf.length < 1024) return null;
     return { buffer: buf, contentType: ct };
   } catch {
     return null;

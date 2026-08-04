@@ -71,6 +71,13 @@ const steps = [
 
 /* ── Gift Card Brand Card Component ─────────────────────────── */
 
+/* Deterministic hue from string — gives each brand a unique color */
+function nameToHue(name: string): number {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return ((hash % 360) + 360) % 360;
+}
+
 function extractDomain(url: string): string {
   if (url.includes('logo.clearbit.com/')) {
     return url.replace('https://logo.clearbit.com/', '').replace('http://logo.clearbit.com/', '');
@@ -85,7 +92,7 @@ function GiftCardBrandCard({ brand }: { brand: GiftCardBrand }) {
   const [imgFailed, setImgFailed] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
 
-  // Resolve the Clearbit logo URL (same as before)
+  // Resolve the Clearbit logo URL
   const resolvedUrl = useMemo(() => {
     if (brand.logoUrl && !brand.logoUrl.includes('placeholder')) return brand.logoUrl;
     if (brand.slug) {
@@ -100,7 +107,6 @@ function GiftCardBrandCard({ brand }: { brand: GiftCardBrand }) {
   }, [brand.logoUrl, brand.slug, brand.brandName]);
 
   // Use server-side proxy: /api/brand-logo?domain=X
-  // Server tries Clearbit first, falls back to Google favicon
   const proxyUrl = useMemo(() => {
     let domain = extractDomain(resolvedUrl);
     if (!domain && brand.slug) {
@@ -117,13 +123,14 @@ function GiftCardBrandCard({ brand }: { brand: GiftCardBrand }) {
     .join('')
     .toUpperCase();
 
+  const fallbackHue = nameToHue(brand.brandName);
+
   const gradientStyle = {
     background: 'linear-gradient(135deg, ' + color + ', ' + color + 'cc)',
   };
 
   const flag = countryInfo ? countryInfo.flag : '\uD83C\uDF0D';
-  const currentSrc = proxyUrl || '';
-  const hasLogo = !!currentSrc;
+  const hasRealLogo = !!proxyUrl && !imgFailed;
 
   return (
     <button
@@ -138,19 +145,22 @@ function GiftCardBrandCard({ brand }: { brand: GiftCardBrand }) {
         <div className="absolute top-2 right-2 w-16 h-16 rounded-full bg-white/10" aria-hidden="true" />
         <div className="absolute -bottom-4 -left-4 w-20 h-20 rounded-full bg-white/5" aria-hidden="true" />
 
-        {hasLogo ? (
+        {hasRealLogo ? (
           <div className="relative z-[1]">
             {!imgLoaded && <div className="h-14 w-14 rounded-xl bg-white/20 animate-pulse" />}
             <img
-              src={currentSrc}
+              src={proxyUrl}
               alt={brand.brandName}
               className={"h-14 w-14 rounded-xl object-contain shadow-lg transition-opacity duration-300 " + (imgLoaded ? 'opacity-100' : 'opacity-0 absolute')}
               onLoad={() => setImgLoaded(true)}
-              onError={() => { if (!imgFailed) setImgFailed(true); else setImgFailed(true); }}
+              onError={() => setImgFailed(true)}
             />
           </div>
         ) : (
-          <div className="relative z-[1] h-14 w-14 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center shadow-lg border border-white/20">
+          <div
+            className="relative z-[1] h-14 w-14 rounded-xl flex items-center justify-center shadow-lg"
+            style={{ backgroundColor: `hsl(${fallbackHue}, 55%, 45%)` }}
+          >
             <span className="text-2xl font-extrabold text-white drop-shadow-sm">{initials}</span>
           </div>
         )}

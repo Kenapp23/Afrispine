@@ -68,6 +68,12 @@ interface PurchasedCard {
 
 /* ── Logo Component ────────────────────────────────────────────── */
 
+function nameToHue(name: string): number {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return ((hash % 360) + 360) % 360;
+}
+
 function extractDomainFromUrl(url: string): string {
   if (url.includes('logo.clearbit.com/')) {
     return url.replace('https://logo.clearbit.com/', '').replace('http://logo.clearbit.com/', '');
@@ -99,7 +105,6 @@ function BrandLogo({ brand, size = 'md' }: { brand: { brandName: string; logoUrl
   }, [brand.logoUrl, brand.slug, brand.brandName]);
 
   // Use server-side proxy: /api/brand-logo?domain=X
-  // Server tries Clearbit first, falls back to Google favicon
   const proxyUrl = useMemo(() => {
     let domain = extractDomainFromUrl(resolvedUrl);
     if (!domain && brand.slug) {
@@ -131,14 +136,14 @@ function BrandLogo({ brand, size = 'md' }: { brand: { brandName: string; logoUrl
     .join('')
     .toUpperCase();
 
-  // No logo available → neutral gray initials
+  const fallbackHue = nameToHue(brand.brandName);
+
+  // No logo available → distinctive colored initials
   if (!proxyUrl || imgFailed) {
     return (
       <div
-        className={
-          containerCls[size] +
-          ' bg-gray-200 flex items-center justify-center text-gray-500 font-semibold shrink-0'
-        }
+        className={containerCls[size] + ' flex items-center justify-center text-white font-semibold shrink-0'}
+        style={{ backgroundColor: `hsl(${fallbackHue}, 55%, 45%)` }}
       >
         <span className={textCls[size]}>{initials}</span>
       </div>

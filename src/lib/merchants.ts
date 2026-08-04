@@ -216,7 +216,7 @@ const kenya: Merchant[] = [
     country: 'Kenya',
     countryCode: 'KE',
     category: 'Supermarket',
-    logoUrl: 'https://logo.clearbit.com/carrefour.co.ke',
+    logoUrl: 'https://logo.clearbit.com/carrefourkenya.com',
     description: 'International hypermarket and supermarket chain.',
     isActive: true,
   },
