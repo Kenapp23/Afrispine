@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Gift, ArrowRight, MessageSquareHeart, Zap, Store, Smartphone, Banknote, Ticket, QrCode, ChevronDown, ShieldCheck, Star } from 'lucide-react';
-import { MERCH_COUNTRIES, LOCAL_LOGO_MAP } from '@/lib/merchants';
+import { MERCH_COUNTRIES, MERCHANTS } from '@/lib/merchants';
 
 /* ── Types ────────────────────────────────────────────────────── */
 
@@ -74,10 +74,19 @@ const steps = [
 function GiftCardBrandCard({ brand }: { brand: GiftCardBrand }) {
   const navigate = useAppStore((s) => s.navigate);
   const color = CATEGORY_COLORS[brand.category] || DEFAULT_COLOR;
-  const localLogo = LOCAL_LOGO_MAP[brand.slug];
   const countryInfo = MERCH_COUNTRIES.find((c) => c.code === brand.countryCode);
-  const [imgFailed, setImgFailed] = useState(!localLogo);
+  const [imgFailed, setImgFailed] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
+
+  // Resolve logo: brand.logoUrl from API > MERCHANTS lookup by slug
+  const resolvedUrl = useMemo(() => {
+    if (brand.logoUrl && !brand.logoUrl.includes('placeholder')) return brand.logoUrl;
+    if (brand.slug) {
+      const merchant = MERCHANTS.find((m) => m.slug === brand.slug);
+      if (merchant?.logoUrl) return merchant.logoUrl;
+    }
+    return '';
+  }, [brand.logoUrl, brand.slug]);
 
   const initials = brand.brandName
     .split(/\s+/)
@@ -91,7 +100,7 @@ function GiftCardBrandCard({ brand }: { brand: GiftCardBrand }) {
   };
 
   const flag = countryInfo ? countryInfo.flag : '\uD83C\uDF0D';
-  const logoImg = localLogo && !imgFailed;
+  const hasLogo = !!resolvedUrl && !imgFailed;
 
   return (
     <button
@@ -106,11 +115,11 @@ function GiftCardBrandCard({ brand }: { brand: GiftCardBrand }) {
         <div className="absolute top-2 right-2 w-16 h-16 rounded-full bg-white/10" aria-hidden="true" />
         <div className="absolute -bottom-4 -left-4 w-20 h-20 rounded-full bg-white/5" aria-hidden="true" />
 
-        {logoImg ? (
+        {hasLogo ? (
           <div className="relative z-[1]">
             {!imgLoaded && <div className="h-14 w-14 rounded-xl bg-white/20 animate-pulse" />}
             <img
-              src={localLogo!}
+              src={resolvedUrl!}
               alt={brand.brandName}
               className={"h-14 w-14 rounded-xl object-contain shadow-lg transition-opacity duration-300 " + (imgLoaded ? 'opacity-100' : 'opacity-0 absolute')}
               onLoad={() => setImgLoaded(true)}

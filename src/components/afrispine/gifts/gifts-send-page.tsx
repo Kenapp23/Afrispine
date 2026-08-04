@@ -26,7 +26,7 @@ import {
   Shield,
   Clock,
 } from 'lucide-react';
-import { MERCH_COUNTRIES, MERCH_CATEGORIES, LOCAL_LOGO_MAP } from '@/lib/merchants';
+import { MERCH_COUNTRIES, MERCH_CATEGORIES, MERCHANTS } from '@/lib/merchants';
 import { ReferralShareButtons } from '@/components/afrispine/common/referral-share';
 
 /* ── Types ──────────────────────────────────────────────────────── */
@@ -69,55 +69,62 @@ interface PurchasedCard {
 /* ── Logo Component ────────────────────────────────────────────── */
 
 function BrandLogo({ brand, size = 'md' }: { brand: { brandName: string; logoUrl: string; slug?: string; category?: string }; size?: 'sm' | 'md' | 'lg' | 'xl' }) {
-  const localPath = brand.slug ? LOCAL_LOGO_MAP[brand.slug] : null;
-  const hasClearbitLogo = !!brand.logoUrl && brand.logoUrl.includes('clearbit.com');
-  const hasOtherDbLogo = !!brand.logoUrl && !brand.logoUrl.includes('clearbit.com') && !brand.logoUrl.includes('placeholder');
-  const [source, setSource] = useState<'clearbit' | 'local' | 'db' | 'fallback'>(() => {
-    if (hasClearbitLogo) return 'clearbit';
-    if (localPath) return 'local';
-    if (hasOtherDbLogo) return 'db';
-    return 'fallback';
-  });
-
-  const sizes: Record<string, { wrap: string; img: string }> = {
-    sm: { wrap: 'h-8 w-8 rounded-lg', img: 'h-8 w-8 rounded-lg object-contain' },
-    md: { wrap: 'h-12 w-12 rounded-xl', img: 'h-12 w-12 rounded-xl object-contain' },
-    lg: { wrap: 'h-16 w-16 rounded-2xl', img: 'h-16 w-16 rounded-2xl object-contain' },
-    xl: { wrap: 'h-20 w-20 rounded-2xl', img: 'h-20 w-20 rounded-2xl object-contain' },
-  };
-
-  const initials = brand.brandName.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
-  const catColors: Record<string, string> = {
-    Supermarket: 'bg-emerald-600', Electronics: 'bg-slate-600', Fashion: 'bg-pink-600',
-    'Airtime/Telecom': 'bg-orange-500', Travel: 'bg-sky-600', 'Food & Dining': 'bg-rose-600',
-    Healthcare: 'bg-teal-600', Entertainment: 'bg-violet-600', 'E-Commerce': 'bg-emerald-600',
-    Utilities: 'bg-gray-500', General: 'bg-emerald-600',
-  };
-  const fallbackBg = catColors[brand.category || 'General'] ?? 'bg-emerald-600';
-
-  const handleImgError = () => {
-    if (source === 'clearbit' && localPath) {
-      setSource('local');
-    } else if (source === 'local' && hasOtherDbLogo) {
-      setSource('db');
-    } else {
-      setSource('fallback');
+  // Resolve the best logo URL: brand.logoUrl (from API) > MERCHANTS lookup by slug
+  const resolvedUrl = useMemo(() => {
+    if (brand.logoUrl && !brand.logoUrl.includes('placeholder')) {
+      return brand.logoUrl;
     }
+    if (brand.slug) {
+      const merchant = MERCHANTS.find((m) => m.slug === brand.slug);
+      if (merchant?.logoUrl) return merchant.logoUrl;
+    }
+    return '';
+  }, [brand.logoUrl, brand.slug]);
+
+  const [imgFailed, setImgFailed] = useState(false);
+
+  const containerCls: Record<string, string> = {
+    sm: 'h-8 w-8 rounded-lg',
+    md: 'h-12 w-12 rounded-xl',
+    lg: 'h-16 w-16 rounded-2xl',
+    xl: 'h-20 w-20 rounded-2xl',
+  };
+  const textCls: Record<string, string> = {
+    sm: 'text-[10px]',
+    md: 'text-xs',
+    lg: 'text-sm',
+    xl: 'text-lg',
   };
 
-  const imgSrc = source === 'clearbit' || source === 'db' ? brand.logoUrl : localPath!;
+  const initials = brand.brandName
+    .split(/\s+/)
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
 
-  if (source === 'fallback') {
+  // No logo available or image failed to load → neutral gray fallback
+  if (!resolvedUrl || imgFailed) {
     return (
-      <div className={sizes[size].wrap + ' ' + fallbackBg + ' flex items-center justify-center text-white font-bold shadow-sm shrink-0'}>
-        <span className={size === 'xl' ? 'text-2xl' : size === 'lg' ? 'text-lg' : 'text-xs'}>{initials}</span>
+      <div
+        className={
+          containerCls[size] +
+          ' bg-gray-200 flex items-center justify-center text-gray-500 font-semibold shrink-0'
+        }
+      >
+        <span className={textCls[size]}>{initials}</span>
       </div>
     );
   }
 
   return (
-    <div className={sizes[size].img + ' shrink-0'}>
-      <img src={imgSrc} alt={brand.brandName} className="h-full w-full object-contain" onError={handleImgError} />
+    <div className={containerCls[size] + ' shrink-0 overflow-hidden bg-white'}>
+      <img
+        src={resolvedUrl}
+        alt={brand.brandName}
+        className="h-full w-full object-contain p-1"
+        onError={() => setImgFailed(true)}
+      />
     </div>
   );
 }
