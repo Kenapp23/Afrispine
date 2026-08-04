@@ -356,44 +356,9 @@ export function BillsPage() {
       });
 
       if (res.ok) {
-        const data = await res.json();
-        if (data.access_code) {
-          const paystackWindow = (window as unknown as {
-            PaystackPop: {
-              setup: (c: Record<string, unknown>) => { openIframe: () => void };
-            };
-          }).PaystackPop;
-          if (paystackWindow) {
-            paystackWindow
-              .setup({
-                key: process.env.NEXT_PUBLIC_PAYSTACK_KEY || '',
-                access_code: data.access_code,
-                onClose: () => {
-                  toast.info('Payment window closed');
-                  setPaying(false);
-                },
-                callback: () => {
-                  const ref = `BILL-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 999999)).padStart(6, '0')}`;
-                  const token = billType === 'kplc_prepaid' ? `TKN-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}` : undefined;
-                  setPaymentResult({ reference: ref, token });
-                  setBillStep(4);
-                  setPaying(false);
-                  fetchHistory();
-                  toast.success('Bill payment successful!');
-                },
-              })
-              .openIframe();
-            return;
-          }
-        }
-        // Fallback: direct success
-        const ref = `BILL-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 999999)).padStart(6, '0')}`;
-        const token = billType === 'kplc_prepaid' ? `TKN-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}` : undefined;
-        setPaymentResult({ reference: ref, token });
-        setBillStep(4);
+        toast.success('Bill payment submitted! You will receive a confirmation shortly.');
         setPaying(false);
-        fetchHistory();
-        toast.success('Bill payment successful!');
+        return;
       } else {
         const err = await res.json().catch(() => ({}));
         toast.error(err.error || 'Payment initialization failed. Please try again.');

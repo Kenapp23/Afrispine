@@ -162,7 +162,7 @@ function PartnerCard({ partner }: { partner: PartnerConfig }) {
   const fetchKeys = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/paystack-keys', { headers: authH() });
+      const res = await fetch('/api/admin/payment-keys', { headers: authH() });
       const data = await res.json();
       setKeysData(data);
     } catch {}
@@ -189,7 +189,7 @@ function PartnerCard({ partner }: { partner: PartnerConfig }) {
     setSaving(true);
     setMessage(null);
     try {
-      const res = await fetch('/api/admin/paystack-keys', {
+      const res = await fetch('/api/admin/payment-keys', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authH() },
         body: JSON.stringify(formValues),
@@ -209,7 +209,7 @@ function PartnerCard({ partner }: { partner: PartnerConfig }) {
 
   const handleDeleteKey = async (keyName: string) => {
     try {
-      const res = await fetch('/api/admin/paystack-keys', {
+      const res = await fetch('/api/admin/payment-keys', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json', ...authH() },
         body: JSON.stringify({ key: keyName }),

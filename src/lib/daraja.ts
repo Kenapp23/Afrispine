@@ -26,7 +26,6 @@ export type PayoutMethodType =
   | 'opay'
   | 'palm_pay'
   | 'bank_gh'
-  | 'paystack'
   | 'eft_za'
   | 'payfast'
   | 'ozow'
@@ -80,9 +79,6 @@ export interface PayoutMethod {
   bankNameGh?: string;
   accountNumberGh?: string;
   accountNameGh?: string;
-
-  // Paystack Direct
-  paystackEmail?: string;
 
   // South Africa EFT
   bankNameZa?: string;
@@ -356,7 +352,7 @@ export function getRecipientShortcode(method: PayoutMethod): string | null {
 export const COUNTRY_PAYOUT_METHODS: Record<string, PayoutMethodType[]> = {
   KE: ['mpesa_till', 'mpesa_paybill', 'bank_ke'],
   NG: ['bank_ng', 'opay', 'palm_pay'],
-  GH: ['momo_mtn', 'bank_gh', 'paystack'],
+  GH: ['momo_mtn', 'bank_gh'],
   ZA: ['eft_za', 'payfast', 'ozow'],
   UG: ['momo_mtn', 'airtel_money', 'bank_ug'],
   TZ: ['mpesa_tz', 'tigo_pesa', 'crdb_bank'],
@@ -383,7 +379,6 @@ export function getPayoutMethodLabel(type: PayoutMethodType): string {
     opay: 'OPay',
     palm_pay: 'PalmPay',
     bank_gh: 'Bank Transfer (GHS)',
-    paystack: 'Paystack Direct',
     eft_za: 'EFT / Bank Transfer (ZAR)',
     payfast: 'PayFast',
     ozow: 'Ozow',

@@ -59,7 +59,7 @@ export function TransferDetail() {
             ['Provider', tx.provider?.name || '—'],
             ['FX Rate', `1 ${tx.currencySend} = ${tx.fxRate} ${tx.currencyReceive}`],
             ['Fee', `${tx.feePct}% (${formatCurrency(tx.feeAmount, tx.currencySend)})`],
-            ['Payment Ref', tx.paystackRef || '—'],
+            ['Payment Ref', tx.paymentRef || tx.paystackRef || '—'],
             ['Created', new Date(tx.createdAt).toLocaleString()],
             ['Failure reason', tx.failureReason || '—'],
           ].map(([l, v]) => <div key={l as string} className="flex justify-between py-1.5 border-b border-gray-50 last:border-0"><span className="text-sm text-gray-500">{l}</span><span className="text-sm font-medium text-gray-900">{v as string}</span></div>)}

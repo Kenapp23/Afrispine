@@ -407,13 +407,7 @@ const TABLES: string[] = [
     CONSTRAINT "SenderSubscription_pkey" PRIMARY KEY ("id")
   )`,
 
-  `CREATE TABLE IF NOT EXISTS "SenderPaystackAuth" (
-    "id" TEXT NOT NULL,
-    "senderId" TEXT,
-    "authCode" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "SenderPaystackAuth_pkey" PRIMARY KEY ("id")
-  )`,
+  // Legacy payment auth table removed — payment auth is now handled by Fincra
 
   `CREATE TABLE IF NOT EXISTS "PepCheck" (
     "id" TEXT NOT NULL,

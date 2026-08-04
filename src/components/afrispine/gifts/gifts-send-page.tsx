@@ -5,30 +5,16 @@ import { useAppStore } from '@/stores/app';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { toast } from 'sonner';
 import {
   ArrowLeft,
-  ArrowRight,
   Bell,
-  CheckCircle2,
-  Copy,
   Search,
   Loader2,
-  Sparkles,
-  Shield,
   Clock,
 } from 'lucide-react';
 import { MERCH_COUNTRIES, MERCH_CATEGORIES, MERCHANTS } from '@/lib/merchants';
-import { ReferralShareButtons } from '@/components/afrispine/common/referral-share';
 
 /* ── Types ──────────────────────────────────────────────────────── */
 
@@ -46,25 +32,6 @@ interface GiftCardBrand {
   smartContractAddress: string | null;
   brandColor: string;
   isActive: boolean;
-}
-
-interface PurchasedCard {
-  id: string;
-  code: string;
-  amount: number;
-  currency: string;
-  status: string;
-  qrCodeData: string;
-  blockchainTxHash: string | null;
-  smartContractRef: string | null;
-  recipientName: string | null;
-  recipientEmail: string | null;
-  recipientPhone: string | null;
-  message: string | null;
-  occasion: string | null;
-  expiresAt: string | null;
-  purchasedAt: string;
-  brand: { id: string; brandName: string; logoUrl: string; smartContractAddress: string | null };
 }
 
 /* ── Logo Component ────────────────────────────────────────────── */
@@ -163,118 +130,7 @@ function BrandLogo({ brand, size = 'md' }: { brand: { brandName: string; logoUrl
   );
 }
 
-/* ── QR Code Visual Component ──────────────────────────────── */
-
-function VisualQRCode({ code, brandName, size = 160 }: { code: string; brandName: string; size?: number }) {
-  const grid = useMemo(() => {
-    const cells: boolean[][] = [];
-    const gridSize = 21;
-    let hash = 0;
-    for (let i = 0; i < code.length; i++) {
-      hash = ((hash << 5) - hash) + code.charCodeAt(i);
-      hash = hash & hash;
-    }
-    const seed = Math.abs(hash);
-    for (let r = 0; r < gridSize; r++) {
-      cells[r] = [];
-      for (let c = 0; c < gridSize; c++) {
-        const isTopLeft = r < 7 && c < 7;
-        const isTopRight = r < 7 && c >= gridSize - 7;
-        const isBottomLeft = r >= gridSize - 7 && c < 7;
-        if (isTopLeft || isTopRight || isBottomLeft) {
-          const lr = isTopLeft ? r : isTopRight ? r : r - (gridSize - 7);
-          const lc = isTopLeft ? c : isTopRight ? c - (gridSize - 7) : c;
-          const isEdge = lr === 0 || lr === 6 || lc === 0 || lc === 6;
-          const isInner = lr >= 2 && lr <= 4 && lc >= 2 && lc <= 4;
-          cells[r][c] = isEdge || isInner;
-        } else {
-          const val = ((seed * (r * 31 + c * 17 + 7)) + r * c) % 100;
-          cells[r][c] = val < 45;
-        }
-      }
-    }
-    return cells;
-  }, [code]);
-
-  return (
-    <div className="relative inline-block bg-white rounded-xl p-2 shadow-md border border-gray-200" style={{ width: size + 16, height: size + 16 }}>
-      <svg width={size} height={size} viewBox="0 0 21 21" className="block">
-        {grid.map((row, r) => row.map((cell, c) => (
-          <rect key={r + '-' + c} x={c} y={r} width={1} height={1} fill={cell ? '#111827' : 'transparent'} />
-        )))}
-        <rect x={8} y={8} width={5} height={5} fill="white" />
-        <rect x={8.5} y={8.5} width={4} height={4} rx={0.5} fill="#10B981" />
-        <text x={10.5} y={11} textAnchor="middle" fontSize={2.5} fill="white" fontWeight="bold" fontFamily="sans-serif">
-          {brandName[0]?.toUpperCase() || 'G'}
-        </text>
-      </svg>
-    </div>
-  );
-}
-
-/* ── Real-time Card Preview ─────────────────────────────────── */
-
-function CardPreview({ brand, amount, currency, recipientName, symbol }: {
-  brand: GiftCardBrand;
-  amount: string;
-  currency: string;
-  recipientName: string;
-  symbol: string;
-}) {
-  const displayAmount = parseFloat(amount || '0');
-  const color = brand.brandColor || '#059669';
-
-  return (
-    <div className="w-full max-w-[340px] mx-auto rounded-2xl overflow-hidden shadow-lg border border-gray-200">
-      {/* Top accent bar */}
-      <div className="h-2" style={{ backgroundColor: color }} />
-      {/* Card body */}
-      <div className="bg-white px-5 pt-4 pb-5">
-        <div className="flex items-center justify-between mb-6">
-          <BrandLogo brand={brand} size="lg" />
-          <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Gift Card</span>
-        </div>
-        <div className="mb-6">
-          <p className="text-xs text-gray-400 mb-0.5">Amount</p>
-          <p className="text-3xl font-extrabold text-gray-900 tracking-tight">
-            {symbol}{displayAmount > 0 ? displayAmount.toLocaleString() : '---'}
-          </p>
-          <p className="text-xs text-gray-400 mt-0.5">{currency}</p>
-        </div>
-        <div className="border-t border-dashed border-gray-200 pt-4 space-y-2">
-          <div>
-            <p className="text-[10px] text-gray-400 uppercase tracking-wider">To</p>
-            <p className="text-sm font-semibold text-gray-900 truncate">
-              {recipientName || 'Recipient name'}
-            </p>
-          </div>
-          <div>
-            <p className="text-[10px] text-gray-400 uppercase tracking-wider">Brand</p>
-            <p className="text-sm text-gray-600">{brand.brandName}</p>
-          </div>
-        </div>
-      </div>
-      {/* Bottom bar */}
-      <div className="px-5 py-3 flex items-center justify-between" style={{ backgroundColor: color + '0D' }}>
-        <span className="text-[10px] font-medium" style={{ color: color }}>AfriSpine</span>
-        <Shield className="h-3.5 w-3.5" style={{ color: color }} />
-      </div>
-    </div>
-  );
-}
-
-/* ── Occasions & Currencies ──────────────────────────────────── */
-
-const OCCASIONS = [
-  { id: 'birthday', label: 'Birthday', emoji: '\u{1F382}' },
-  { id: 'wedding', label: 'Wedding', emoji: '\u{1F492}' },
-  { id: 'graduation', label: 'Graduation', emoji: '\u{1F393}' },
-  { id: 'christmas', label: 'Christmas', emoji: '\u{1F384}' },
-  { id: 'new-baby', label: 'New Baby', emoji: '\u{1F476}' },
-  { id: 'new-home', label: 'New Home', emoji: '\u{1F3E0}' },
-  { id: 'get-well', label: 'Get Well', emoji: '\u{1F4AA}' },
-  { id: 'eid', label: 'Eid', emoji: '\u{1F64F}' },
-];
+/* ── Currencies ───────────────────────────────────────────────── */
 
 const CURRENCIES = [
   { code: 'KES', symbol: 'KSh', name: 'Kenyan Shilling' },
@@ -296,7 +152,7 @@ export default function GiftsSendPage() {
 
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [purchasing, setPurchasing] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [brands, setBrands] = useState<GiftCardBrand[]>([]);
   const [selectedCountry, setSelectedCountry] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -304,14 +160,8 @@ export default function GiftsSendPage() {
   const [selectedBrand, setSelectedBrand] = useState<GiftCardBrand | null>(null);
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState('KES');
-  const [recipientName, setRecipientName] = useState('');
-  const [recipientEmail, setRecipientEmail] = useState('');
-  const [recipientPhone, setRecipientPhone] = useState('');
-  const [occasion, setOccasion] = useState(viewParams.occasion || 'birthday');
-  const [message, setMessage] = useState('');
   const [waitlistEmail, setWaitlistEmail] = useState('');
   const [waitlistSubmitted, setWaitlistSubmitted] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   // Fetch brands
   const fetchBrands = useCallback(async () => {
@@ -366,7 +216,6 @@ export default function GiftsSendPage() {
     return counts;
   }, [brands]);
 
-  const selectedOcc = OCCASIONS.find(o => o.id === occasion);
   const selectedCur = CURRENCIES.find(c => c.code === currency);
 
   const handleJoinWaitlist = async () => {
@@ -374,7 +223,7 @@ export default function GiftsSendPage() {
       toast.error('Please select a brand first');
       return;
     }
-    setPurchasing(true);
+    setSubmitting(true);
     try {
       const email = waitlistEmail || sender?.email || '';
       const res = await fetch('/api/gift-cards/waitlist', {
@@ -392,21 +241,11 @@ export default function GiftsSendPage() {
       const data = await res.json();
       if (!res.ok) { toast.error(data.error || 'Failed to join waitlist'); return; }
       setWaitlistSubmitted(true);
-      setStep(4);
       toast.success('You\'re on the list! We\'ll notify you when gift cards launch.');
     } catch {
       toast.error('Something went wrong. Please try again.');
     } finally {
-      setPurchasing(false);
-    }
-  };
-
-  const copyCode = () => {
-    if (purchasedCard) {
-      navigator.clipboard.writeText(purchasedCard.code).then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      });
+      setSubmitting(false);
     }
   };
 
@@ -426,6 +265,7 @@ export default function GiftsSendPage() {
       brand.countryCode === 'UG' ? 'UGX' : 'TZS'
     );
     setStep(2);
+    setWaitlistSubmitted(false);
   };
 
   return (
@@ -441,13 +281,12 @@ export default function GiftsSendPage() {
         <div className="flex-1">
           <h1 className="text-base font-bold text-gray-900">
             {step === 1 && 'Choose Brand'}
-            {step === 2 && 'Card Details'}
-            {step === 3 && 'Review & Confirm'}
-            {step === 4 && 'Waitlist Confirmation'}
+            {step === 2 && !waitlistSubmitted && 'Join Waitlist'}
+            {step === 2 && waitlistSubmitted && 'Waitlist Confirmation'}
           </h1>
         </div>
         <div className="flex items-center gap-1">
-          {[1, 2, 3, 4].map(s => (
+          {[1, 2].map(s => (
             <div key={s} className={'h-2 rounded-full transition-all ' + (s <= step ? 'bg-emerald-500 w-6' : 'bg-gray-200 w-2')} />
           ))}
         </div>
@@ -566,213 +405,87 @@ export default function GiftsSendPage() {
           </>
         )}
 
-        {/* STEP 2: Card Details + Live Preview */}
-        {step === 2 && selectedBrand && (
-          <div className="grid lg:grid-cols-2 gap-6 items-start">
-            {/* Left: Form */}
-            <div className="space-y-5">
-              {/* Selected brand */}
-              <div className="flex items-center gap-3 p-4 rounded-xl border bg-white">
-                <BrandLogo brand={selectedBrand} size="lg" />
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-gray-900 truncate">{selectedBrand.brandName}</p>
-                  <p className="text-xs text-gray-500">{selectedBrand.category} {'\u00B7'} {selectedBrand.country}</p>
-                </div>
-                <Badge variant="outline" className="text-emerald-700 border-emerald-200 shrink-0">Verified</Badge>
+        {/* STEP 2: Waitlist Form */}
+        {step === 2 && selectedBrand && !waitlistSubmitted && (
+          <div className="mx-auto max-w-lg space-y-5">
+            {/* Selected brand card */}
+            <div className="flex items-center gap-3 p-4 rounded-xl border bg-white">
+              <BrandLogo brand={selectedBrand} size="xl" />
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-gray-900 truncate">{selectedBrand.brandName}</p>
+                <p className="text-xs text-gray-500">{selectedBrand.category} {'\u00B7'} {selectedBrand.country}</p>
               </div>
-
-              {/* Amount */}
-              <div className="space-y-3">
-                <Label className="text-sm font-semibold">Amount ({selectedCur?.name})</Label>
-                <Input
-                  type="number"
-                  placeholder="Enter amount"
-                  value={amount}
-                  onChange={e => setAmount(e.target.value)}
-                  min={selectedBrand.minAmount}
-                  max={selectedBrand.maxAmount}
-                  className="text-lg font-mono"
-                />
-                <div className="flex flex-wrap gap-2">
-                  {QUICK_AMOUNTS.filter(a => a >= selectedBrand.minAmount && a <= selectedBrand.maxAmount).map(qa => (
-                    <button
-                      key={qa}
-                      onClick={() => setAmount(String(qa))}
-                      className={'rounded-full px-3 py-1 text-xs font-semibold transition-colors ' + (amount === String(qa) ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200')}
-                    >
-                      {selectedCur?.symbol}{qa.toLocaleString()}
-                    </button>
-                  ))}
-                </div>
-                {parseFloat(amount) > 0 && (parseFloat(amount) < selectedBrand.minAmount || parseFloat(amount) > selectedBrand.maxAmount) && (
-                  <p className="text-xs text-red-500">Amount must be between {selectedCur?.symbol}{selectedBrand.minAmount} and {selectedCur?.symbol}{selectedBrand.maxAmount}</p>
-                )}
-              </div>
-
-              {/* Currency */}
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold">Currency</Label>
-                <Select value={currency} onValueChange={setCurrency}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {CURRENCIES.map(c => (
-                      <SelectItem key={c.code} value={c.code}>{c.symbol} {c.code} {'\u2014'} {c.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Occasion */}
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold">Occasion</Label>
-                <div className="flex flex-wrap gap-2">
-                  {OCCASIONS.map(o => (
-                    <button
-                      key={o.id}
-                      onClick={() => setOccasion(o.id)}
-                      className={'rounded-full px-3 py-1.5 text-xs font-semibold transition-colors flex items-center gap-1 ' + (occasion === o.id ? 'bg-amber-500 text-white' : 'bg-amber-50 text-amber-700 hover:bg-amber-100')}
-                    >
-                      <span>{o.emoji}</span> {o.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Recipient */}
-              <div className="space-y-3">
-                <Label className="text-sm font-semibold">Recipient Details</Label>
-                <Input placeholder="Recipient name" value={recipientName} onChange={e => setRecipientName(e.target.value)} />
-                <Input placeholder="Recipient email (optional)" type="email" value={recipientEmail} onChange={e => setRecipientEmail(e.target.value)} />
-                <Input placeholder="Recipient phone (optional)" type="tel" value={recipientPhone} onChange={e => setRecipientPhone(e.target.value)} />
-              </div>
-
-              {/* Message */}
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold">Personal Message (optional)</Label>
-                <Textarea
-                  placeholder="Write something special..."
-                  value={message}
-                  onChange={e => setMessage(e.target.value)}
-                  rows={3}
-                  className="resize-none"
-                />
-              </div>
-
-              <Button
-                onClick={() => setStep(3)}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-12 font-bold"
-                disabled={!amount || parseFloat(amount) <= 0}
-              >
-                Continue to Review
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              <Badge variant="outline" className="text-emerald-700 border-emerald-200 shrink-0">Verified</Badge>
             </div>
 
-            {/* Right: Live Card Preview */}
-            <div className="lg:sticky lg:top-20">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 text-center lg:text-left">Preview</p>
-              <CardPreview
-                brand={selectedBrand}
-                amount={amount}
-                currency={currency}
-                recipientName={recipientName}
-                symbol={selectedCur?.symbol || '$'}
+            {/* Preferred amount (optional) */}
+            <div className="space-y-3 rounded-xl border bg-white p-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold">Preferred Amount <span className="text-gray-400 font-normal">(optional)</span></Label>
+                <span className="text-xs text-gray-400">{selectedCur?.name}</span>
+              </div>
+              <Input
+                type="number"
+                placeholder="Enter amount"
+                value={amount}
+                onChange={e => setAmount(e.target.value)}
+                min={selectedBrand.minAmount}
+                max={selectedBrand.maxAmount}
+                className="text-lg font-mono"
               />
-            </div>
-          </div>
-        )}
-
-        {/* STEP 3: Review & Confirm */}
-        {step === 3 && selectedBrand && (
-          <div className="mx-auto max-w-lg">
-            <div className="rounded-2xl border bg-white overflow-hidden shadow-sm">
-              <div className="p-6 text-white" style={{ background: 'linear-gradient(135deg, ' + (selectedBrand.brandColor || '#059669') + ', ' + (selectedBrand.brandColor || '#059669') + 'cc)' }}>
-                <div className="flex items-center gap-3">
-                  <BrandLogo brand={selectedBrand} size="lg" />
-                  <div>
-                    <p className="font-bold text-lg">{selectedBrand.brandName}</p>
-                    <p className="text-white/80 text-sm">{selectedOcc?.emoji} {selectedOcc?.label}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="p-6 space-y-4">
-                <div className="text-center">
-                  <p className="text-4xl font-extrabold text-gray-900">
-                    {selectedCur?.symbol}{parseFloat(amount || '0').toLocaleString()}
-                  </p>
-                  <p className="text-sm text-gray-500">{currency}</p>
-                </div>
-                <div className="h-px bg-border/50" />
-                <div className="space-y-2 text-sm">
-                  {recipientName && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Recipient</span>
-                      <span className="font-semibold text-gray-900">{recipientName}</span>
-                    </div>
-                  )}
-                  {recipientEmail && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Email</span>
-                      <span className="font-medium text-gray-700">{recipientEmail}</span>
-                    </div>
-                  )}
-                  {recipientPhone && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Phone</span>
-                      <span className="font-medium text-gray-700">{recipientPhone}</span>
-                    </div>
-                  )}
-                  {message && (
-                    <div className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3">
-                      <p className="text-xs text-amber-700 font-medium mb-1">Message</p>
-                      <p className="text-sm text-amber-900 italic">{'\u201C'}{message}{'\u201D'}</p>
-                    </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Expires</span>
-                    <span className="font-medium text-gray-700">12 months from purchase</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-emerald-600 bg-emerald-50 rounded-lg p-3">
-                  <Shield className="h-4 w-4 shrink-0" />
-                  <span>Protected by smart contract escrow with blockchain verification</span>
-                </div>
-                <div className="flex gap-3 pt-2">
-                  <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
-                    <ArrowLeft className="mr-1 h-4 w-4" /> Edit
-                  </Button>
-                  <Button
-                    onClick={handleJoinWaitlist}
-                    disabled={purchasing || (!waitlistEmail && !sender?.email)}
-                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white h-12 font-bold"
+              <div className="flex flex-wrap gap-2">
+                {QUICK_AMOUNTS.filter(a => a >= selectedBrand.minAmount && a <= selectedBrand.maxAmount).map(qa => (
+                  <button
+                    key={qa}
+                    onClick={() => setAmount(String(qa))}
+                    className={'rounded-full px-3 py-1 text-xs font-semibold transition-colors ' + (amount === String(qa) ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200')}
                   >
-                    {purchasing ? <Loader2 className="h-5 w-5 animate-spin" /> : (
-                      <>
-                        <Bell className="mr-1 h-4 w-4" />
-                        Join Waitlist
-                      </>
-                    )}
-                  </Button>
-                </div>
-                {!sender?.email && (
-                  <div className="mt-3">
-                    <Label className="text-sm font-semibold">Email for waitlist notification *</Label>
-                    <Input
-                      type="email"
-                      placeholder="your@email.com"
-                      value={waitlistEmail}
-                      onChange={e => setWaitlistEmail(e.target.value)}
-                      className="mt-1.5"
-                    />
-                  </div>
-                )}
+                    {selectedCur?.symbol}{qa.toLocaleString()}
+                  </button>
+                ))}
               </div>
+              {parseFloat(amount) > 0 && (parseFloat(amount) < selectedBrand.minAmount || parseFloat(amount) > selectedBrand.maxAmount) && (
+                <p className="text-xs text-red-500">Amount must be between {selectedCur?.symbol}{selectedBrand.minAmount} and {selectedCur?.symbol}{selectedBrand.maxAmount}</p>
+              )}
             </div>
+
+            {/* Email input (only if user not logged in) */}
+            {!sender?.email && (
+              <div className="space-y-2 rounded-xl border bg-white p-4">
+                <Label className="text-sm font-semibold">Email for waitlist notification *</Label>
+                <Input
+                  type="email"
+                  placeholder="your@email.com"
+                  value={waitlistEmail}
+                  onChange={e => setWaitlistEmail(e.target.value)}
+                />
+              </div>
+            )}
+
+            {/* Submit button */}
+            <Button
+              onClick={handleJoinWaitlist}
+              disabled={submitting || (!waitlistEmail && !sender?.email)}
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-12 font-bold"
+            >
+              {submitting ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <>
+                  <Bell className="mr-2 h-4 w-4" />
+                  Join Waitlist
+                </>
+              )}
+            </Button>
+
+            {!sender?.email && !waitlistEmail && (
+              <p className="text-xs text-gray-400 text-center">Enter your email above to join the waitlist.</p>
+            )}
           </div>
         )}
 
-        {/* STEP 4: Waitlist Confirmation */}
-        {step === 4 && waitlistSubmitted && selectedBrand && (
+        {/* STEP 2 (SUCCESS): Waitlist Confirmation */}
+        {step === 2 && waitlistSubmitted && selectedBrand && (
           <div className="mx-auto max-w-lg space-y-5">
             <div className="text-center space-y-4">
               <div className="inline-flex items-center justify-center size-16 rounded-full bg-amber-100">

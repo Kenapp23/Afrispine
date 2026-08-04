@@ -331,7 +331,7 @@ export function WealthMarketPage() {
                         <tr
                           key={stock.ticker}
                           className="border-b border-border/50 last:border-0 hover:bg-muted/50 cursor-pointer transition-colors"
-                          onClick={() => navigate('wealth-stock', { ticker: stock.ticker })}
+                          onClick={() => navigate('wealth-stock', { ticker: stock.ticker, exchange: exchangeId })}
                         >
                           <td className="px-4 py-3">
                             <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 font-mono text-xs">

@@ -259,29 +259,8 @@ export default function ChinaCorridorPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Payment initialization failed');
 
-      // Open payment popup
-      if (data.access_code && typeof window !== 'undefined') {
-        // Dynamically load payment inline if available
-        try {
-          const popSetup = (window as unknown as { PaystackPop?: { setup: (c: Record<string, string>) => { openIframe?: () => void } } }).PaystackPop;
-          const handler = popSetup?.setup({
-            key: '', // Will be handled by the popup
-            access_code: data.access_code,
-            onClose: () => {
-              toast.info('Payment cancelled.');
-            },
-            callback: () => {
-              setPaySuccess(true);
-              toast.success('Payment initiated! Your supplier will receive CNY same day.');
-            },
-          });
-          handler?.openIframe?.();
-        } catch {
-          // Fallback: just show success (the payment was initialized)
-          setPaySuccess(true);
-          toast.success('Payment initiated! Your supplier will receive CNY same day.');
-        }
-      }
+      setPaySuccess(true);
+      toast.success('Payment initiated! Your supplier will receive CNY same day.');
     } catch (err: any) {
       setPayError(err.message || 'Something went wrong.');
       toast.error(err.message || 'Payment failed.');

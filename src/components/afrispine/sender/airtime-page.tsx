@@ -129,35 +129,10 @@ export function AirtimePage() {
         }),
       });
       if (res.ok) {
-        const data = await res.json();
-        // If access_code returned, open payment popup
-        if (data.access_code) {
-          const win = (window as unknown as { PaystackPop: { setup: (c: Record<string, unknown>) => { openIframe: () => void } } }).PaystackPop;
-          if (win) {
-            win.setup({
-              key: process.env.NEXT_PUBLIC_PAYSTACK_KEY || '',
-              access_code: data.access_code,
-              onClose: () => {
-                toast.info('Payment window closed');
-                setToppingUp(false);
-              },
-              callback: () => {
-                setShowConfirmation(true);
-                setToppingUp(false);
-                setAmount('');
-                fetchRecent();
-                toast.success('Airtime top-up successful!');
-              },
-            }).openIframe();
-            return;
-          }
-        }
-        // Fallback: direct success
-        setShowConfirmation(true);
+        toast.success('Airtime top-up submitted! You will receive a confirmation shortly.');
         setToppingUp(false);
         setAmount('');
-        fetchRecent();
-        toast.success('Airtime top-up successful!');
+        return;
       } else {
         const err = await res.json().catch(() => ({}));
         toast.error(err.error || 'Top-up failed');

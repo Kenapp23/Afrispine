@@ -1,7 +1,6 @@
 'use client'
 
 import { useAppStore } from '@/stores/app'
-import { featuredMerchants } from '@/lib/merchants'
 
 const occasions = [
   { icon: '🎄', label: 'Christmas' },
@@ -16,10 +15,10 @@ export default function GiftingStrip() {
   const navigate = useAppStore((s) => s.navigate)
 
   return (
-    <section className="bg-gradient-to-r from-amber-50 to-orange-50 py-14 px-4 sm:py-20">
+    <section className="bg-gradient-to-r from-stone-50 to-neutral-100 py-14 px-4 sm:py-20">
       <div className="mx-auto max-w-3xl text-center">
-        <h2 className="text-2xl font-bold tracking-tight text-amber-950 sm:text-3xl">
-          Send the gift of Africa to someone you love
+        <h2 className="text-2xl font-bold tracking-tight text-stone-900 sm:text-3xl">
+          Gift cards are coming soon
         </h2>
 
         {/* Occasion icons */}
@@ -35,29 +34,22 @@ export default function GiftingStrip() {
               >
                 {o.icon}
               </span>
-              <span className="text-xs font-medium text-amber-900 sm:text-sm">
+              <span className="text-xs font-medium text-stone-700 sm:text-sm">
                 {o.label}
               </span>
             </div>
           ))}
         </div>
 
-        <p className="mx-auto mt-8 max-w-xl text-sm leading-relaxed text-amber-800 sm:text-base">
-          Send a gift voucher redeemable at{' '}
-          {featuredMerchants.slice(0, 6).map((m, i) => (
-            <span key={m.id}>
-              {i > 0 && ', '}
-              <span className="font-semibold">{m.name}</span>
-            </span>
-          ))}{' '}
-          and 100+ more stores across Africa. Your love, delivered.
+        <p className="mx-auto mt-8 max-w-xl text-sm leading-relaxed text-stone-600 sm:text-base">
+          We're building the easiest way to send gift cards across Africa. Browse 100+ brands and join the waitlist.
         </p>
 
         <button
           onClick={() => navigate('gifts')}
-          className="mt-6 inline-flex items-center gap-1.5 rounded-full bg-amber-700 px-6 py-3 text-sm font-semibold text-white shadow-md transition-colors hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 sm:mt-8 sm:text-base"
+          className="mt-6 inline-flex items-center gap-1.5 rounded-full bg-stone-700 px-6 py-3 text-sm font-semibold text-white shadow-md transition-colors hover:bg-stone-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2 sm:mt-8 sm:text-base"
         >
-          Send a gift →
+          Join the Waitlist →
         </button>
       </div>
     </section>

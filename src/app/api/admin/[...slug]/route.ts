@@ -73,10 +73,6 @@ async function getPaymentKeysStatus() {
   if (!publicKey) publicKey = await getSetting('fincra_public_key');
   if (!secretKey) secretKey = await getSetting('fincra_secret_key');
 
-  // Also check legacy paystack keys for backward compat
-  const psPublicKey = await getSetting('paystack_public_key');
-  const psSecretKey = await getSetting('paystack_secret_key');
-
   const hasKey = (k: string | null) => k && k.length > 5;
   const mask = (k: string) => k.slice(0, 6) + '••••••' + k.slice(-4);
 
@@ -93,21 +89,9 @@ async function getPaymentKeysStatus() {
         masked: secretKey ? mask(secretKey) : undefined,
         length: secretKey?.length || 0,
       },
-      // Legacy paystack keys (still readable for migration)
-      paystack_public_key: {
-        isSet: !!hasKey(psPublicKey),
-        masked: psPublicKey ? mask(psPublicKey) : undefined,
-        value: psPublicKey || undefined,
-        length: psPublicKey?.length || 0,
-      },
-      paystack_secret_key: {
-        isSet: !!hasKey(psSecretKey),
-        masked: psSecretKey ? mask(psSecretKey) : undefined,
-        length: psSecretKey?.length || 0,
-      },
     },
-    connected: hasKey(secretKey) || hasKey(psSecretKey),
-    provider: hasKey(secretKey) ? 'fincra' : hasKey(psSecretKey) ? 'paystack' : null,
+    connected: hasKey(secretKey),
+    provider: hasKey(secretKey) ? 'fincra' : null,
   };
 }
 
@@ -141,8 +125,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
       });
     }
 
-    // ─── /api/admin/paystack-keys ───
-    if (path === 'paystack-keys') {
+    // ─── /api/admin/payment-keys ───
+    if (path === 'payment-keys' || path === 'paystack-keys') {
       const status = await getPaymentKeysStatus();
       return NextResponse.json(status);
     }
@@ -207,8 +191,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
       return NextResponse.json({ partners });
     }
 
-    // ─── /api/admin/paystack-integration ───
-    if (path === 'paystack-integration') {
+    // ─── /api/admin/payment-integration ───
+    if (path === 'payment-integration' || path === 'paystack-integration') {
       const keys = await getPaymentKeysStatus();
       const provider = keys.provider;
       const connected = keys.connected;
@@ -218,7 +202,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
         return NextResponse.json({
           integration: {
             business_name: companyName,
-            integration_type: provider === 'fincra' ? 'Fincra Collection' : 'Paystack',
+            integration_type: 'Fincra Collection',
             domain: 'afri-spine.com',
             provider,
           },
@@ -227,8 +211,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
       return NextResponse.json({ integration: null });
     }
 
-    // ─── /api/admin/paystack-settlements ───
-    if (path === 'paystack-settlements') {
+    // ─── /api/admin/settlements ───
+    if (path === 'settlements' || path === 'paystack-settlements') {
       // Return settlement records from the database if they exist
       // For now, return empty array — real settlement data comes from payment processor webhooks
       return NextResponse.json({ settlements: [] });
@@ -626,9 +610,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
   if (auth.error) return auth.error;
 
   try {
-    // ─── /api/admin/paystack-keys ───
+    // ─── /api/admin/payment-keys ───
     // Saves to BOTH PlatformSetting and PartnerConfig for unified persistence
-    if (path === 'paystack-keys') {
+    if (path === 'payment-keys' || path === 'paystack-keys') {
       const body = await req.json();
 
       // Helper: sync a key to both PlatformSetting and PartnerConfig
@@ -647,7 +631,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
             });
           }
         } catch (syncErr: any) {
-          console.warn(`[paystack-keys] Failed to sync ${settingKey} to PartnerConfig:`, syncErr.message);
+          console.warn(`[payment-keys] Failed to sync ${settingKey} to PartnerConfig:`, syncErr.message);
         }
       };
 
@@ -658,12 +642,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
       // Also support direct key names
       if (body.fincra_public_key) await dualSave('fincra_public_key', 'fincra', 'publicKey', body.fincra_public_key);
       if (body.fincra_secret_key) await dualSave('fincra_secret_key', 'fincra', 'secretKey', body.fincra_secret_key);
-
-      // Legacy paystack keys
-      if (body.publicKey) await setSetting('paystack_public_key', body.publicKey);
-      if (body.secretKey) await setSetting('paystack_secret_key', body.secretKey);
-      if (body.paystack_public_key) await setSetting('paystack_public_key', body.paystack_public_key);
-      if (body.paystack_secret_key) await setSetting('paystack_secret_key', body.paystack_secret_key);
 
       // Save partner keys (sync to both stores)
       if (body.mystocks_api_key) await dualSave('mystocks_api_key', 'mystocks_africa', 'apiKey', body.mystocks_api_key);
@@ -821,8 +799,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ s
   if (auth.error) return auth.error;
 
   try {
-    // ─── /api/admin/paystack-keys ───
-    if (path === 'paystack-keys') {
+    // ─── /api/admin/payment-keys ───
+    if (path === 'payment-keys' || path === 'paystack-keys') {
       const body = await req.json();
       const { key } = body;
 

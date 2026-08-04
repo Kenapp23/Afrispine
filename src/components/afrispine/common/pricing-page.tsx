@@ -162,29 +162,10 @@ export function PricingPage() {
     try {
       const res = await fetch('/api/subscription', { method: 'POST' });
       if (res.ok) {
-        const data = await res.json();
-        if (data.access_code) {
-          const win = (window as unknown as { PaystackPop: { setup: (c: Record<string, unknown>) => { openIframe: () => void } } }).PaystackPop;
-          if (win) {
-            win.setup({
-              key: process.env.NEXT_PUBLIC_PAYSTACK_KEY || '',
-              access_code: data.access_code,
-              onClose: () => {
-                toast.info('Payment window closed');
-                setSubscribing(false);
-              },
-              callback: () => {
-                setIsPro(true);
-                setSubscribing(false);
-                toast.success('Welcome to AfriSpine Pro!');
-              },
-            }).openIframe();
-            return;
-          }
-        }
         setIsPro(true);
         setSubscribing(false);
         toast.success('Welcome to AfriSpine Pro!');
+        return;
       } else {
         const err = await res.json().catch(() => ({}));
         toast.error(err.error || 'Subscription failed');

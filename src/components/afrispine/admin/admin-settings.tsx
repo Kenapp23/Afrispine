@@ -351,9 +351,8 @@ export function AdminSettingsPage() {
         headers: headers(),
         body: JSON.stringify({
           settings: {
-            paystack_public_key: settings.paystack_public_key || '',
-            paystack_secret_key: settings.paystack_secret_key || '',
-            paystack_webhook_secret: settings.paystack_webhook_secret || '',
+            fincra_public_key: settings.fincra_public_key || '',
+            fincra_secret_key: settings.fincra_secret_key || '',
             at_api_key: settings.at_api_key || '',
             at_username: settings.at_username || '',
             resend_api_key: settings.resend_api_key || '',
@@ -549,7 +548,7 @@ export function AdminSettingsPage() {
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Payment Processor Configuration</CardTitle>
+                  <CardTitle className="text-base">Fincra Payment Processor</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -557,42 +556,32 @@ export function AdminSettingsPage() {
                       <Label>Public Key</Label>
                       <Input
                         type="password"
-                        value={settings.paystack_public_key || ''}
-                        onChange={(e) => setSettings(prev => ({ ...prev, paystack_public_key: e.target.value }))}
-                        placeholder="pk_test_... or pk_live_..."
+                        value={settings.fincra_public_key || ''}
+                        onChange={(e) => setSettings(prev => ({ ...prev, fincra_public_key: e.target.value }))}
+                        placeholder="pk_live_..."
                       />
-                      <p className="text-xs text-muted-foreground">Used on the frontend for payment popup</p>
+                      <p className="text-xs text-muted-foreground">Fincra public key</p>
                     </div>
                     <div className="space-y-1.5">
                       <Label>Secret Key</Label>
                       <Input
                         type="password"
-                        value={settings.paystack_secret_key || ''}
-                        onChange={(e) => setSettings(prev => ({ ...prev, paystack_secret_key: e.target.value }))}
-                        placeholder="sk_test_... or sk_live_..."
+                        value={settings.fincra_secret_key || ''}
+                        onChange={(e) => setSettings(prev => ({ ...prev, fincra_secret_key: e.target.value }))}
+                        placeholder="sk_live_..."
                       />
-                      <p className="text-xs text-muted-foreground">Used server-side for transaction verification</p>
+                      <p className="text-xs text-muted-foreground">Fincra secret key</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="space-y-1.5">
-                      <Label>Webhook Secret</Label>
-                      <Input
-                        type="password"
-                        value={settings.paystack_webhook_secret || ''}
-                        onChange={(e) => setSettings(prev => ({ ...prev, paystack_webhook_secret: e.target.value }))}
-                        placeholder="Webhook signing secret"
-                      />
-                      <p className="text-xs text-muted-foreground">HMAC-SHA512 signature verification for webhooks</p>
-                    </div>
-                    <div className="space-y-1.5">
                       <Label>Mode</Label>
                       <div className="flex items-center gap-3 mt-1">
-                        <Badge className={settings.paystack_public_key?.includes('_live_') ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}>
-                          {settings.paystack_public_key?.includes('_live_') ? 'Live' : 'Test'}
+                        <Badge className={settings.fincra_public_key?.includes('live') ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}>
+                          {settings.fincra_public_key?.includes('live') ? 'Live' : 'Test'}
                         </Badge>
                         <span className="text-xs text-muted-foreground">
-                          {settings.paystack_public_key ? 'Key detected' : 'No key configured'}
+                          {settings.fincra_public_key ? 'Key detected' : 'No key configured'}
                         </span>
                       </div>
                     </div>
@@ -663,7 +652,7 @@ export function AdminSettingsPage() {
                       ? 'Keys saved successfully'
                       : saveResult?.startsWith('error')
                         ? 'Save failed: ' + saveResult.replace('error: ', '')
-                        : (settings.paystack_public_key || settings.at_api_key || settings.resend_api_key)
+                        : (settings.fincra_public_key || settings.at_api_key || settings.resend_api_key)
                           ? 'Keys detected — click save to store them'
                           : 'No integration keys configured yet'}
                   </p>

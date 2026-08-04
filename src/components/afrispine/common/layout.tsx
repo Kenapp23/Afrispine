@@ -482,6 +482,9 @@ export function SenderLayout({ children }: { children: React.ReactNode }) {
                   if (currentView === 'wealth-buy') {
                     // Go back to stock page preserving the ticker
                     navigate('wealth-stock', { ticker: viewParams.ticker || '' });
+                  } else if (currentView === 'wealth-stock') {
+                    // Go back to the specific exchange's stock list
+                    navigate('wealth-market', { exchange: viewParams.exchange || '' });
                   } else {
                     navigate(parentView);
                   }

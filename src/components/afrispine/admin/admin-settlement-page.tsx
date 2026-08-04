@@ -54,7 +54,7 @@ interface SettlementConfig {
   sweepNotifyEmail: string;
 }
 
-interface PaystackSettlement {
+interface SettlementRecord {
   id: number;
   domain: string;
   integration: number;
@@ -202,7 +202,7 @@ export function AdminSettlementPage() {
   const [feeError, setFeeError] = useState<string | null>(null);
 
   // ── Section 4: Reconciliation state ──
-  const [settlements, setSettlements] = useState<PaystackSettlement[]>([]);
+  const [settlements, setSettlements] = useState<SettlementRecord[]>([]);
   const [settlementsLoading, setSettlementsLoading] = useState(false);
   const [revenue, setRevenue] = useState<RevenueSummary | null>(null);
   const [revenueLoading, setRevenueLoading] = useState(true);
@@ -276,7 +276,7 @@ export function AdminSettlementPage() {
   const fetchSettlements = useCallback(async () => {
     setSettlementsLoading(true);
     try {
-      const res = await fetch('/api/admin/paystack-settlements?perPage=50', { headers: authHeaders() });
+      const res = await fetch('/api/admin/settlements?perPage=50', { headers: authHeaders() });
       const json = await res.json();
       if (json.settlements) {
         setSettlements(json.settlements);

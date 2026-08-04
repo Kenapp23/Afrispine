@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 
-export async function POST() {
+export async function GET() {
   return NextResponse.json(
-    { error: 'Gift card redemption is coming soon.' },
+    {
+      error: 'Bill payment history is coming soon.',
+    },
     { status: 503 }
   );
 }

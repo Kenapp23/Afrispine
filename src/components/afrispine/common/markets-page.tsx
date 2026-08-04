@@ -97,7 +97,7 @@ function ExchangeCard({ exchange }: { exchange: ExchangeInfo }) {
 
   return (
     <button
-      onClick={() => navigate('wealth-market', { exchangeId: liveData.id })}
+      onClick={() => navigate('wealth-market', { exchange: liveData.id })}
       className={`rounded-xl border-2 p-6 ${status.color} transition-all hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] text-left w-full cursor-pointer group`}
     >
       <div className="flex items-start justify-between">

@@ -1096,7 +1096,7 @@ function StepReviewPay() {
     //       },
     //     }),
     //   });
-    toast.info('Payments are coming soon! We are integrating our payment processor. Please check back shortly.');
+    toast.info('Payments are coming soon! We are integrating our payment processor and will launch shortly. Thank you for your patience.');
   };
 
   const railLabel = rails.find((r) => r.id === store.selectedRail)?.label || store.selectedRail;

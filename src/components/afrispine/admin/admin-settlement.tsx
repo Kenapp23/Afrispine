@@ -39,7 +39,7 @@ interface SettlementConfigData {
   sweepNotifyEmail: string;
 }
 
-interface PaystackData {
+interface PaymentProviderData {
   connected: boolean;
   businessName?: string;
   merchantId?: string;
@@ -58,7 +58,7 @@ function fmtMoney(val: number) {
 export function AdminSettlementPage() {
   const navigate = useAppStore((s) => s.navigate);
   const [config, setConfig] = useState<SettlementConfigData | null>(null);
-  const [paystack, setPaystack] = useState<PaystackData | null>(null);
+  const [paymentProvider, setPaymentProvider] = useState<PaymentProviderData | null>(null);
   const [recon, setRecon] = useState<ReconData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -76,7 +76,7 @@ export function AdminSettlementPage() {
       if (!res.ok) throw new Error('Failed to load settlement data');
       const json = await res.json();
       setConfig(json.config);
-      setPaystack(json.paystack);
+      setPaymentProvider(json.paymentProvider);
       // Initialize form
       const f: Record<string, string> = {};
       const c = json.config;
@@ -180,11 +180,11 @@ export function AdminSettlementPage() {
     );
   }
 
-  const reconStatus = paystack?.connected
+  const reconStatus = paymentProvider?.connected
     ? '✅ Matched'
     : '⚠️ Mismatch';
 
-  const reconStatusColor = paystack?.connected
+  const reconStatusColor = paymentProvider?.connected
     ? 'text-emerald-700 bg-emerald-50'
     : 'text-amber-700 bg-amber-50';
 
@@ -206,26 +206,26 @@ export function AdminSettlementPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            {paystack?.connected ? (
+            {paymentProvider?.connected ? (
               <>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-5 w-5 text-emerald-600" />
                   <span className="text-sm font-medium text-emerald-700">Connected</span>
-                  <Badge className={paystack.mode === 'Live' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}>
-                    {paystack.mode || 'Test'}
+                  <Badge className={paymentProvider.mode === 'Live' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}>
+                    {paymentProvider.mode || 'Test'}
                   </Badge>
                 </div>
                 <div className="space-y-2 text-sm">
-                  {paystack.businessName && (
+                  {paymentProvider.businessName && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Business Name</span>
-                      <span className="font-medium">{paystack.businessName}</span>
+                      <span className="font-medium">{paymentProvider.businessName}</span>
                     </div>
                   )}
-                  {paystack.merchantId && (
+                  {paymentProvider.merchantId && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Merchant ID</span>
-                      <span className="font-mono text-xs">{paystack.merchantId}</span>
+                      <span className="font-mono text-xs">{paymentProvider.merchantId}</span>
                     </div>
                   )}
                   <div className="flex justify-between">
@@ -392,18 +392,18 @@ export function AdminSettlementPage() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Settled by Payment Processor</p>
-                  <p className="text-xl font-bold text-gray-900">{paystack?.connected ? fmtMoney(recon.feesCollected) : '—'}</p>
+                  <p className="text-xl font-bold text-gray-900">{paymentProvider?.connected ? fmtMoney(recon.feesCollected) : '—'}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">In-Transit</p>
-                  <p className="text-xl font-bold text-gray-900">{paystack?.connected ? '$0.00' : fmtMoney(recon.feesCollected)}</p>
+                  <p className="text-xl font-bold text-gray-900">{paymentProvider?.connected ? '$0.00' : fmtMoney(recon.feesCollected)}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <span className={'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ' + reconStatusColor}>
                   {reconStatus}
                 </span>
-                {!paystack?.connected && (
+                {!paymentProvider?.connected && (
                   <span className="text-xs text-muted-foreground flex items-center gap-1">
                     <Info className="h-3 w-3" />
                     Connect payment processor for automatic reconciliation

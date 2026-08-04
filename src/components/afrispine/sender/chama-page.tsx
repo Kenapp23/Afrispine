@@ -40,7 +40,7 @@ import {
   Sparkles,
   Globe,
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { getSavingsCircleName, ALL_CIRCLE_COUNTRIES } from '@/lib/savings-circle-names';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -176,7 +176,7 @@ function fmtDateShort(d: string | null): string {
 export function ChamaPage() {
   const sender = useAppStore((s) => s.sender);
   const detectedCountry = useAppStore((s) => s.detectedCountry);
-  const { toast } = useToast();
+
 
   // Country selector state (null = auto-detect from sender/detected country)
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
@@ -232,7 +232,7 @@ export function ChamaPage() {
         setCircles(data.circles || []);
       }
     } catch {
-      toast({ title: 'Failed to load circles', variant: 'destructive' });
+      toast.error('Failed to load circles');
     } finally {
       setLoading(false);
     }
@@ -252,7 +252,7 @@ export function ChamaPage() {
         setSelectedCircle(data.circle);
       }
     } catch {
-      toast({ title: 'Failed to load circle details', variant: 'destructive' });
+      toast.error('Failed to load circle details');
     } finally {
       setDetailLoading(false);
     }
@@ -275,7 +275,7 @@ export function ChamaPage() {
       });
       if (res.ok) {
         const data = await res.json();
-        toast({ title: 'Circle created successfully!', description: `Invite code: ${data.circle.slug}` });
+        toast.success('Circle created successfully!', { description: `Invite code: ${data.circle.slug}` });
         setCreateOpen(false);
         setCreateError('');
         setCreateForm({ name: '', type: circleName.types?.[0]?.value || 'general', contributionAmount: '', contributionCurrency: 'USD', frequency: 'monthly' });
@@ -285,12 +285,12 @@ export function ChamaPage() {
         const err = await res.json().catch(() => ({ error: '' }));
         const msg = err.error || `Failed to create circle (HTTP ${res.status})`;
         setCreateError(msg);
-        toast({ title: msg, variant: 'destructive' });
+        toast.error(msg);
       }
     } catch (e: any) {
       const msg = e?.message || 'Network error — check your connection.';
       setCreateError(msg);
-      toast({ title: msg, variant: 'destructive' });
+      toast.error(msg);
     } finally {
       setCreating(false);
     }
@@ -307,17 +307,17 @@ export function ChamaPage() {
         body: JSON.stringify(addMemberForm),
       });
       if (res.ok) {
-        toast({ title: `${addMemberForm.memberName} added to circle` });
+        toast.success(`${addMemberForm.memberName} added to circle`);
         setAddMemberOpen(false);
         setAddMemberForm({ memberName: '', phone: '', email: '' });
         await fetchDetail(selectedCircle.id);
         await fetchCircles();
       } else {
         const err = await res.json();
-        toast({ title: err.error || 'Failed to add member', variant: 'destructive' });
+        toast.error(err.error || 'Failed to add member');
       }
     } catch {
-      toast({ title: 'Something went wrong', variant: 'destructive' });
+      toast.error('Something went wrong');
     } finally {
       setAddingMember(false);
     }
@@ -334,15 +334,15 @@ export function ChamaPage() {
         body: JSON.stringify({ memberName }),
       });
       if (res.ok) {
-        toast({ title: 'Contribution recorded!', description: `${memberName}'s payment has been recorded.` });
+        toast.success('Contribution recorded!', { description: `${memberName}'s payment has been recorded.` });
         await fetchDetail(selectedCircle.id);
         await fetchCircles();
       } else {
         const err = await res.json();
-        toast({ title: err.error || 'Failed to record contribution', variant: 'destructive' });
+        toast.error(err.error || 'Failed to record contribution');
       }
     } catch {
-      toast({ title: 'Something went wrong', variant: 'destructive' });
+      toast.error('Something went wrong');
     } finally {
       setContributingFor(null);
     }
@@ -351,7 +351,7 @@ export function ChamaPage() {
   // Join circle
   const handleJoin = async () => {
     if (!joinSlug.trim()) {
-      toast({ title: 'Please enter an invite code', variant: 'destructive' });
+      toast.error('Please enter an invite code');
       return;
     }
     try {
@@ -362,16 +362,16 @@ export function ChamaPage() {
         body: JSON.stringify({ slug: joinSlug.trim() }),
       });
       if (res.ok) {
-        toast({ title: 'Joined circle successfully!' });
+        toast.success('Joined circle successfully!');
         setJoinOpen(false);
         setJoinSlug('');
         await fetchCircles();
       } else {
         const err = await res.json();
-        toast({ title: err.error || 'Failed to join circle', variant: 'destructive' });
+        toast.error(err.error || 'Failed to join circle');
       }
     } catch {
-      toast({ title: 'Something went wrong', variant: 'destructive' });
+      toast.error('Something went wrong');
     } finally {
       setJoining(false);
     }
@@ -380,13 +380,13 @@ export function ChamaPage() {
   // Copy invite code
   const copyInviteCode = (slug: string) => {
     navigator.clipboard.writeText(slug);
-    toast({ title: 'Invite code copied!', description: slug });
+    toast.success('Invite code copied!', { description: slug });
   };
 
   // Leave circle (organiser can't leave)
   const handleLeave = async () => {
     if (!selectedCircle || selectedCircle.organiserId === sender?.id) {
-      toast({ title: 'Organiser cannot leave the circle', variant: 'destructive' });
+      toast.error('Organiser cannot leave the circle');
       return;
     }
     try {
@@ -394,11 +394,11 @@ export function ChamaPage() {
       const member = selectedCircle.members.find((m) => m.senderId === sender?.id);
       if (!member) return;
       await fetch(`/api/chama/circles/${selectedCircle.id}/members/${member.id}`, { method: 'DELETE' });
-      toast({ title: 'You have left the circle' });
+      toast.success('You have left the circle');
       setSelectedCircle(null);
       await fetchCircles();
     } catch {
-      toast({ title: 'Failed to leave circle', variant: 'destructive' });
+      toast.error('Failed to leave circle');
     }
   };
 
