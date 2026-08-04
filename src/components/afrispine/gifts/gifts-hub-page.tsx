@@ -71,6 +71,13 @@ const steps = [
 
 /* ── Gift Card Brand Card Component ─────────────────────────── */
 
+function extractDomain(url: string): string {
+  if (url.includes('logo.clearbit.com/')) {
+    return url.replace('https://logo.clearbit.com/', '').replace('http://logo.clearbit.com/', '');
+  }
+  return '';
+}
+
 function GiftCardBrandCard({ brand }: { brand: GiftCardBrand }) {
   const navigate = useAppStore((s) => s.navigate);
   const color = CATEGORY_COLORS[brand.category] || DEFAULT_COLOR;
@@ -78,7 +85,7 @@ function GiftCardBrandCard({ brand }: { brand: GiftCardBrand }) {
   const [imgFailed, setImgFailed] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
 
-  // Resolve logo: brand.logoUrl from API > MERCHANTS lookup by slug > by brandName
+  // Resolve the Clearbit logo URL (same as before)
   const resolvedUrl = useMemo(() => {
     if (brand.logoUrl && !brand.logoUrl.includes('placeholder')) return brand.logoUrl;
     if (brand.slug) {
@@ -92,6 +99,17 @@ function GiftCardBrandCard({ brand }: { brand: GiftCardBrand }) {
     return '';
   }, [brand.logoUrl, brand.slug, brand.brandName]);
 
+  // Use server-side proxy: /api/brand-logo?domain=X
+  // Server tries Clearbit first, falls back to Google favicon
+  const proxyUrl = useMemo(() => {
+    let domain = extractDomain(resolvedUrl);
+    if (!domain && brand.slug) {
+      const m = MERCHANTS.find((x) => x.slug === brand.slug);
+      if (m?.logoUrl) domain = extractDomain(m.logoUrl);
+    }
+    return domain ? `/api/brand-logo?domain=${encodeURIComponent(domain)}` : '';
+  }, [resolvedUrl, brand.slug]);
+
   const initials = brand.brandName
     .split(/\s+/)
     .map((w: string) => w[0])
@@ -104,7 +122,8 @@ function GiftCardBrandCard({ brand }: { brand: GiftCardBrand }) {
   };
 
   const flag = countryInfo ? countryInfo.flag : '\uD83C\uDF0D';
-  const hasLogo = !!resolvedUrl && !imgFailed;
+  const currentSrc = proxyUrl || '';
+  const hasLogo = !!currentSrc;
 
   return (
     <button
@@ -123,11 +142,11 @@ function GiftCardBrandCard({ brand }: { brand: GiftCardBrand }) {
           <div className="relative z-[1]">
             {!imgLoaded && <div className="h-14 w-14 rounded-xl bg-white/20 animate-pulse" />}
             <img
-              src={resolvedUrl!}
+              src={currentSrc}
               alt={brand.brandName}
               className={"h-14 w-14 rounded-xl object-contain shadow-lg transition-opacity duration-300 " + (imgLoaded ? 'opacity-100' : 'opacity-0 absolute')}
               onLoad={() => setImgLoaded(true)}
-              onError={() => setImgFailed(true)}
+              onError={() => { if (!imgFailed) setImgFailed(true); else setImgFailed(true); }}
             />
           </div>
         ) : (

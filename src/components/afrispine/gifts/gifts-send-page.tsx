@@ -68,6 +68,13 @@ interface PurchasedCard {
 
 /* ── Logo Component ────────────────────────────────────────────── */
 
+function extractDomainFromUrl(url: string): string {
+  if (url.includes('logo.clearbit.com/')) {
+    return url.replace('https://logo.clearbit.com/', '').replace('http://logo.clearbit.com/', '');
+  }
+  return '';
+}
+
 function BrandLogo({ brand, size = 'md' }: { brand: { brandName: string; logoUrl: string; slug?: string; category?: string }; size?: 'sm' | 'md' | 'lg' | 'xl' }) {
   // Resolve the best logo URL:
   // 1. brand.logoUrl from API (may be empty if DB has no logo)
@@ -91,6 +98,17 @@ function BrandLogo({ brand, size = 'md' }: { brand: { brandName: string; logoUrl
     return '';
   }, [brand.logoUrl, brand.slug, brand.brandName]);
 
+  // Use server-side proxy: /api/brand-logo?domain=X
+  // Server tries Clearbit first, falls back to Google favicon
+  const proxyUrl = useMemo(() => {
+    let domain = extractDomainFromUrl(resolvedUrl);
+    if (!domain && brand.slug) {
+      const m = MERCHANTS.find((x) => x.slug === brand.slug);
+      if (m?.logoUrl) domain = extractDomainFromUrl(m.logoUrl);
+    }
+    return domain ? `/api/brand-logo?domain=${encodeURIComponent(domain)}` : '';
+  }, [resolvedUrl, brand.slug]);
+
   const [imgFailed, setImgFailed] = useState(false);
 
   const containerCls: Record<string, string> = {
@@ -113,8 +131,8 @@ function BrandLogo({ brand, size = 'md' }: { brand: { brandName: string; logoUrl
     .join('')
     .toUpperCase();
 
-  // No logo available or image failed to load → neutral gray fallback
-  if (!resolvedUrl || imgFailed) {
+  // No logo available → neutral gray initials
+  if (!proxyUrl || imgFailed) {
     return (
       <div
         className={
@@ -130,7 +148,7 @@ function BrandLogo({ brand, size = 'md' }: { brand: { brandName: string; logoUrl
   return (
     <div className={containerCls[size] + ' shrink-0 overflow-hidden bg-white'}>
       <img
-        src={resolvedUrl}
+        src={proxyUrl}
         alt={brand.brandName}
         className="h-full w-full object-contain p-1"
         onError={() => setImgFailed(true)}
