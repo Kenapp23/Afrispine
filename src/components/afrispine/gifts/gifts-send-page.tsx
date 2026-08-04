@@ -70,10 +70,12 @@ interface PurchasedCard {
 
 function BrandLogo({ brand, size = 'md' }: { brand: { brandName: string; logoUrl: string; slug?: string; category?: string }; size?: 'sm' | 'md' | 'lg' | 'xl' }) {
   const localPath = brand.slug ? LOCAL_LOGO_MAP[brand.slug] : null;
-  const hasDbLogo = !!brand.logoUrl && !brand.logoUrl.includes('clearbit.com');
-  const [source, setSource] = useState<'local' | 'db' | 'fallback'>(() => {
+  const hasClearbitLogo = !!brand.logoUrl && brand.logoUrl.includes('clearbit.com');
+  const hasOtherDbLogo = !!brand.logoUrl && !brand.logoUrl.includes('clearbit.com') && !brand.logoUrl.includes('placeholder');
+  const [source, setSource] = useState<'clearbit' | 'local' | 'db' | 'fallback'>(() => {
+    if (hasClearbitLogo) return 'clearbit';
     if (localPath) return 'local';
-    if (hasDbLogo) return 'db';
+    if (hasOtherDbLogo) return 'db';
     return 'fallback';
   });
 
@@ -94,14 +96,16 @@ function BrandLogo({ brand, size = 'md' }: { brand: { brandName: string; logoUrl
   const fallbackBg = catColors[brand.category || 'General'] ?? 'bg-emerald-600';
 
   const handleImgError = () => {
-    if (source === 'local' && hasDbLogo) {
+    if (source === 'clearbit' && localPath) {
+      setSource('local');
+    } else if (source === 'local' && hasOtherDbLogo) {
       setSource('db');
     } else {
       setSource('fallback');
     }
   };
 
-  const imgSrc = source === 'local' ? localPath! : brand.logoUrl;
+  const imgSrc = source === 'clearbit' || source === 'db' ? brand.logoUrl : localPath!;
 
   if (source === 'fallback') {
     return (

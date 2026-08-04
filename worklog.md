@@ -152,6 +152,34 @@ Stage Summary:
 - NOTE: Kennedy should run `prisma db push` from a machine with direct DB access to fully sync schema
 
 ---
+Task ID: 6
+Agent: Main Agent
+Task: Fix brand logos showing 0 captured — Clearbit URLs blocked by BrandLogo component
+
+Work Log:
+- Analyzed screenshot showing generic colored squares instead of real brand logos
+- Read BrandLogo component in gifts-send-page.tsx line 73: `const hasDbLogo = !!brand.logoUrl && !brand.logoUrl.includes('clearbit.com');`
+- ROOT CAUSE: This line EXPLICITLY EXCLUDED Clearbit URLs from being treated as valid logos
+- All 122 brands in DB have logoUrl set to Clearbit URLs (e.g. https://logo.clearbit.com/naivas.co.ke)
+- So `hasDbLogo` was always `false`, component fell to local SVG stubs (text-in-colored-box), or fallback initials
+- Also discovered the priority was wrong: local SVG stubs (just brand name text) were checked BEFORE Clearbit real logos
+
+FIX:
+- Changed priority from `local → db → fallback` to `clearbit → local → db → fallback`
+- Added `hasClearbitLogo` check that explicitly INCLUDES Clearbit URLs
+- Added `hasOtherDbLogo` for non-Clearbit, non-placeholder DB URLs
+- Updated error fallback chain: clearbit fails → try local SVG → try other DB URL → colored initials
+- Admin page (LogoStatus, TinyLogo, missingLogoCount) was already correct — no changes needed
+- Ran `bun run lint` — zero errors
+
+Stage Summary:
+- File modified: src/components/afrispine/gifts/gifts-send-page.tsx (BrandLogo component only)
+- The logo capture tool WAS working (admin correctly saved Clearbit URLs to DB)
+- The bug was purely in the user-facing BrandLogo rendering component blocking Clearbit URLs
+- After this fix, all 122 brands with Clearbit URLs will show real logos in the Choose Brand grid
+- If Clearbit can't serve a logo for a specific domain, it falls back to local SVG, then initials
+
+---
 Task ID: 3
 Agent: fullstack-developer
 Task: Build Clearbit logo capture admin tool
