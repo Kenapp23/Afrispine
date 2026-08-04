@@ -78,15 +78,19 @@ function GiftCardBrandCard({ brand }: { brand: GiftCardBrand }) {
   const [imgFailed, setImgFailed] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
 
-  // Resolve logo: brand.logoUrl from API > MERCHANTS lookup by slug
+  // Resolve logo: brand.logoUrl from API > MERCHANTS lookup by slug > by brandName
   const resolvedUrl = useMemo(() => {
     if (brand.logoUrl && !brand.logoUrl.includes('placeholder')) return brand.logoUrl;
     if (brand.slug) {
-      const merchant = MERCHANTS.find((m) => m.slug === brand.slug);
-      if (merchant?.logoUrl) return merchant.logoUrl;
+      const bySlug = MERCHANTS.find((m) => m.slug === brand.slug);
+      if (bySlug?.logoUrl) return bySlug.logoUrl;
+    }
+    if (brand.brandName) {
+      const byName = MERCHANTS.find((m) => m.name === brand.brandName);
+      if (byName?.logoUrl) return byName.logoUrl;
     }
     return '';
-  }, [brand.logoUrl, brand.slug]);
+  }, [brand.logoUrl, brand.slug, brand.brandName]);
 
   const initials = brand.brandName
     .split(/\s+/)

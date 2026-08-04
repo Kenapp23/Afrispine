@@ -69,17 +69,27 @@ interface PurchasedCard {
 /* ── Logo Component ────────────────────────────────────────────── */
 
 function BrandLogo({ brand, size = 'md' }: { brand: { brandName: string; logoUrl: string; slug?: string; category?: string }; size?: 'sm' | 'md' | 'lg' | 'xl' }) {
-  // Resolve the best logo URL: brand.logoUrl (from API) > MERCHANTS lookup by slug
+  // Resolve the best logo URL:
+  // 1. brand.logoUrl from API (may be empty if DB has no logo)
+  // 2. MERCHANTS lookup by slug (matches seed data)
+  // 3. MERCHANTS lookup by brandName (covers DB brands with null slug)
   const resolvedUrl = useMemo(() => {
+    // 1. Use API-provided URL if present
     if (brand.logoUrl && !brand.logoUrl.includes('placeholder')) {
       return brand.logoUrl;
     }
+    // 2. Match by slug first (most reliable)
     if (brand.slug) {
-      const merchant = MERCHANTS.find((m) => m.slug === brand.slug);
-      if (merchant?.logoUrl) return merchant.logoUrl;
+      const bySlug = MERCHANTS.find((m) => m.slug === brand.slug);
+      if (bySlug?.logoUrl) return bySlug.logoUrl;
+    }
+    // 3. Match by brandName as fallback (handles null slug from DB)
+    if (brand.brandName) {
+      const byName = MERCHANTS.find((m) => m.name === brand.brandName);
+      if (byName?.logoUrl) return byName.logoUrl;
     }
     return '';
-  }, [brand.logoUrl, brand.slug]);
+  }, [brand.logoUrl, brand.slug, brand.brandName]);
 
   const [imgFailed, setImgFailed] = useState(false);
 

@@ -124,14 +124,19 @@ export async function GET(request: Request) {
       console.warn('[gift-cards/brands] PlatformConfig check failed, showing all brands as active:', e);
     }
 
-    /* Build response */
+    /* Build a slug→logoUrl map from in-memory MERCHANTS for logo backfill */
+    const merchantLogoMap = new Map<string, string>();
+    for (const m of MERCHANTS) {
+      if (m.logoUrl) merchantLogoMap.set(m.slug, m.logoUrl);
+    }
+    /* Build response — backfill empty logoUrl from MERCHANTS */
     const result = brands
       .filter((b) => !deletedSlugs.has(b.slug))
       .map((b) => ({
         id: b.id,
         brandName: b.brandName,
         slug: b.slug,
-        logoUrl: b.logoUrl,
+        logoUrl: b.logoUrl || merchantLogoMap.get(b.slug) || '',
         country: b.country,
         countryCode: b.countryCode,
         category: b.category,
