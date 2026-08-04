@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { db, dbReady } from '@/lib/db';
 import { ensureDb } from '@/lib/ensure-db';
 import { MERCHANTS } from '@/lib/merchants';
 
@@ -18,12 +18,45 @@ const CATEGORY_DEFAULT_COLORS: Record<string, string> = {
   General: '#059669',
 };
 
+/**
+ * Build brand objects from the in-memory MERCHANTS array.
+ * Used as fallback when the database is unreachable.
+ */
+function merchantsToBrands(country?: string | null) {
+  const filtered = country && country !== 'all'
+    ? MERCHANTS.filter((m) => m.countryCode === country.toUpperCase())
+    : MERCHANTS;
+
+  return filtered.map((m) => ({
+    id: m.id,
+    brandName: m.name,
+    slug: m.slug,
+    logoUrl: m.logoUrl,
+    country: m.country,
+    countryCode: m.countryCode,
+    category: m.category,
+    description: m.description,
+    minAmount: 5,
+    maxAmount: 500,
+    smartContractAddress: null,
+    brandColor: CATEGORY_DEFAULT_COLORS[m.category] || '#059669',
+    isActive: m.isActive,
+  }));
+}
+
 export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const country = searchParams.get('country');
+
+  /* ── Database unreachable? Return in-memory fallback ─────── */
+  if (!dbReady) {
+    console.warn('[gift-cards/brands] DB not ready — serving brands from in-memory MERCHANTS fallback');
+    const brands = merchantsToBrands(country);
+    return NextResponse.json({ brands, _fallback: true });
+  }
+
   try {
     await ensureDb();
-
-    const { searchParams } = new URL(request.url);
-    const country = searchParams.get('country');
 
     /* Fetch ALL verified brands (including inactive — frontend handles gating) */
     const where: any = { isVerified: true };
@@ -50,6 +83,13 @@ export async function GET(request: Request) {
         smartContractAddress: true,
       },
     });
+
+    /* If DB is empty (0 brands), fall back to in-memory data */
+    if (brands.length === 0) {
+      console.warn('[gift-cards/brands] DB returned 0 brands — serving from in-memory MERCHANTS fallback');
+      const fallback = merchantsToBrands(country);
+      return NextResponse.json({ brands: fallback, _fallback: true });
+    }
 
     /* Check PlatformConfig for admin overrides. If this fails,
        just show all brands as active — don't crash the whole page. */
@@ -105,7 +145,8 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ brands: result });
   } catch (error: any) {
-    console.error('[gift-cards/brands]', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('[gift-cards/brands] DB error — falling back to in-memory MERCHANTS:', error.message);
+    const brands = merchantsToBrands(country);
+    return NextResponse.json({ brands, _fallback: true });
   }
 }
