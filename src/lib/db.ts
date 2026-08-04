@@ -1,14 +1,36 @@
 /**
  * Database client — PostgreSQL via Supabase.
  *
- * HARDENED: This module validates DATABASE_URL at import time to prevent
- * the class of bugs where a shell env override (e.g. an SQLite file URL)
- * silently replaces the real Postgres connection. The app will CRASH on
- * startup with a clear message rather than failing mysteriously at login.
+ * HARDENED: This module validates DATABASE_URL at import time. If a shell
+ * environment variable overrides .env with a non-PostgreSQL URL (e.g. SQLite),
+ * the module recovers by reading .env directly.
  *
  * No SQLite, no /tmp, no Turso — just a persistent Postgres connection.
  */
 import { PrismaClient } from '@prisma/client'
+import { readFileSync } from 'fs'
+import { resolve } from 'path'
+
+// ─── Bootstrap .env with override:true for DB URLs only ─────────
+// Next.js loads .env with override:false (shell wins). We re-read
+// .env and force-set DATABASE_URL/DIRECT_URL so a stale shell var
+// can't point us at SQLite.
+try {
+  const envLines = readFileSync(resolve(process.cwd(), '.env'), 'utf-8').split('\n')
+  for (const raw of envLines) {
+    const line = raw.trim()
+    if (!line || line.startsWith('#')) continue
+    const eq = line.indexOf('=')
+    if (eq < 1) continue
+    const key = line.slice(0, eq).trim()
+    const val = line.slice(eq + 1).trim().replace(/^[\'"]|[\'"]$/g, '')
+    if (key === 'DATABASE_URL' || key === 'DIRECT_URL') {
+      process.env[key] = val
+    }
+  }
+} catch {
+  // .env not readable — use whatever env vars are already set
+}
 
 // ─── Runtime guard: DATABASE_URL must be PostgreSQL ───────────────
 const dbUrl = process.env.DATABASE_URL ?? ''
@@ -40,7 +62,6 @@ if (dbUrl.includes(':6543') && !dbUrl.includes('pgbouncer=true')) {
 }
 
 // ─── Append connection timeout to prevent indefinite hangs ───────
-// If the DB is unreachable, fail fast (15s) rather than hanging forever.
 const urlWithTimeout = dbUrl.includes('?')
   ? `${dbUrl}&connect_timeout=15`
   : `${dbUrl}?connect_timeout=15`

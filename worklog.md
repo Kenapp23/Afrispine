@@ -150,3 +150,36 @@ Stage Summary:
 - BrandLogo components now use 3-tier fallback: local SVG → DB logoUrl → colored initials
 - NOTE: brandColor column missing in Supabase (not critical — public API generates it client-side; admin API now uses explicit select)
 - NOTE: Kennedy should run `prisma db push` from a machine with direct DB access to fully sync schema
+
+---
+Task ID: 3
+Agent: fullstack-developer
+Task: Build Clearbit logo capture admin tool
+
+Work Log:
+- Created GET/PATCH API endpoint at /api/admin/gift-cards/brands/logo-capture/route.ts
+  - GET: returns all brands with id, brandName, slug, logoUrl, website, countryCode, category, isActive (admin-protected)
+  - PATCH: updates website and/or logoUrl for a brand by id (admin-protected)
+- Refactored admin-gift-providers-page.tsx into two-tab layout using shadcn Tabs component
+  - "Merchants" tab contains all original merchant management content (extracted into MerchantsTab component)
+  - "Logo Capture" tab is a new LogoCaptureTab component with:
+    - Stats row: Total Brands, Missing Logo, Missing Domain counts
+    - Search input + filter dropdown (All / Missing Logo / Missing Domain)
+    - Bulk Entry button opening a Dialog with textarea for "Brand Name → domain.com" format
+    - Table with columns: Logo (current + green/red status indicator), Brand Name + Category, Country, Domain input field, Clearbit Preview (48x48), Approve button
+    - Domain input auto-triggers Clearbit preview via img tag with error handling
+    - Approve button saves Clearbit URL as logoUrl and domain as website, shows success toast
+    - Bulk entry parses arrow-separated lines, matches brands case-insensitively, fills domain fields
+    - ClearbitPreview component handles loading/error states with placeholder
+    - LogoStatus component shows green CheckCircle2 for real logos, red XCircle for missing
+- Used existing shadcn/ui: Tabs, Dialog, Textarea, Card, Badge, Button, Input, Select, Skeleton
+- Used Lucide icons: Store, ImageIcon, Globe, Check, FileText, ArrowRight, ImageOff, CheckCircle2, XCircle, RefreshCw, Search, etc.
+- Dark theme styling matches existing Merchants tab (bg-gray-900, bg-gray-800, border-gray-700)
+- Ran `bun run lint` — zero errors
+
+Stage Summary:
+- Files created: src/app/api/admin/gift-cards/brands/logo-capture/route.ts
+- Files modified: src/components/afrispine/admin/admin-gift-providers-page.tsx
+- Admin can now browse all 122 brands, enter domains, preview Clearbit logos, and approve them in bulk
+- Bulk entry supports paste-format: "Brand Name → domain.com" for rapid domain population
+- Filter helps focus on brands missing logos or domains
