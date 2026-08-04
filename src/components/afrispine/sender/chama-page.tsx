@@ -259,9 +259,11 @@ export function ChamaPage() {
   }, [toast]);
 
   // Create circle
+  const [createError, setCreateError] = useState('');
   const handleCreate = async () => {
+    setCreateError('');
     if (!createForm.name.trim() || !createForm.contributionAmount) {
-      toast({ title: 'Please fill in all required fields', variant: 'destructive' });
+      setCreateError('Please fill in all required fields.');
       return;
     }
     try {
@@ -275,16 +277,20 @@ export function ChamaPage() {
         const data = await res.json();
         toast({ title: 'Circle created successfully!', description: `Invite code: ${data.circle.slug}` });
         setCreateOpen(false);
+        setCreateError('');
         setCreateForm({ name: '', type: circleName.types?.[0]?.value || 'general', contributionAmount: '', contributionCurrency: 'USD', frequency: 'monthly' });
         await fetchCircles();
-        // Open the newly created circle
         setSelectedCircle(data.circle);
       } else {
-        const err = await res.json();
-        toast({ title: err.error || 'Failed to create circle', variant: 'destructive' });
+        const err = await res.json().catch(() => ({ error: '' }));
+        const msg = err.error || `Failed to create circle (HTTP ${res.status})`;
+        setCreateError(msg);
+        toast({ title: msg, variant: 'destructive' });
       }
-    } catch {
-      toast({ title: 'Something went wrong', variant: 'destructive' });
+    } catch (e: any) {
+      const msg = e?.message || 'Network error — check your connection.';
+      setCreateError(msg);
+      toast({ title: msg, variant: 'destructive' });
     } finally {
       setCreating(false);
     }
@@ -884,6 +890,9 @@ export function ChamaPage() {
                     </Select>
                   </div>
                 </div>
+                {createError && (
+                  <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{createError}</p>
+                )}
                 <Separator />
                 <Button onClick={handleCreate} disabled={creating} className="w-full bg-emerald-600 hover:bg-emerald-700">
                   {creating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}

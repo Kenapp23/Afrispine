@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import {
   ArrowLeft,
   ArrowRight,
+  Bell,
   CheckCircle2,
   Copy,
   Search,
@@ -308,7 +309,8 @@ export default function GiftsSendPage() {
   const [recipientPhone, setRecipientPhone] = useState('');
   const [occasion, setOccasion] = useState(viewParams.occasion || 'birthday');
   const [message, setMessage] = useState('');
-  const [purchasedCard, setPurchasedCard] = useState<PurchasedCard | null>(null);
+  const [waitlistEmail, setWaitlistEmail] = useState('');
+  const [waitlistSubmitted, setWaitlistSubmitted] = useState(false);
   const [copied, setCopied] = useState(false);
 
   // Fetch brands
@@ -367,39 +369,33 @@ export default function GiftsSendPage() {
   const selectedOcc = OCCASIONS.find(o => o.id === occasion);
   const selectedCur = CURRENCIES.find(c => c.code === currency);
 
-  const handlePurchase = async () => {
-    if (!selectedBrand || !amount || !currency) {
-      toast.error('Please select a brand and enter an amount');
-      return;
-    }
-    if (!sender) {
-      toast.error('Please log in to purchase a gift card');
-      navigate('login');
+  const handleJoinWaitlist = async () => {
+    if (!selectedBrand) {
+      toast.error('Please select a brand first');
       return;
     }
     setPurchasing(true);
     try {
-      const res = await fetch('/api/gift-cards/purchase', {
+      const email = waitlistEmail || sender?.email || '';
+      const res = await fetch('/api/gift-cards/waitlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           brandId: selectedBrand.id,
-          amount: parseFloat(amount),
-          currency,
-          recipientName: recipientName || undefined,
-          recipientEmail: recipientEmail || undefined,
-          recipientPhone: recipientPhone || undefined,
-          occasion,
-          message: message || undefined,
+          brandName: selectedBrand.brandName,
+          email,
+          country: selectedBrand.country,
+          countryCode: selectedBrand.countryCode,
+          ...(amount ? { preferredAmount: parseFloat(amount), preferredCurrency: currency } : {}),
         }),
       });
       const data = await res.json();
-      if (!res.ok) { toast.error(data.error || 'Purchase failed'); return; }
-      setPurchasedCard(data.giftCard);
+      if (!res.ok) { toast.error(data.error || 'Failed to join waitlist'); return; }
+      setWaitlistSubmitted(true);
       setStep(4);
-      toast.success('Gift card purchased successfully!');
+      toast.success('You\'re on the list! We\'ll notify you when gift cards launch.');
     } catch {
-      toast.error('Purchase failed. Please try again.');
+      toast.error('Something went wrong. Please try again.');
     } finally {
       setPurchasing(false);
     }
@@ -447,7 +443,7 @@ export default function GiftsSendPage() {
             {step === 1 && 'Choose Brand'}
             {step === 2 && 'Card Details'}
             {step === 3 && 'Review & Confirm'}
-            {step === 4 && 'Gift Card Ready!'}
+            {step === 4 && 'Waitlist Confirmation'}
           </h1>
         </div>
         <div className="flex items-center gap-1">
@@ -746,106 +742,79 @@ export default function GiftsSendPage() {
                     <ArrowLeft className="mr-1 h-4 w-4" /> Edit
                   </Button>
                   <Button
-                    onClick={handlePurchase}
-                    disabled={purchasing}
+                    onClick={handleJoinWaitlist}
+                    disabled={purchasing || (!waitlistEmail && !sender?.email)}
                     className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white h-12 font-bold"
                   >
                     {purchasing ? <Loader2 className="h-5 w-5 animate-spin" /> : (
                       <>
-                        <Sparkles className="mr-1 h-4 w-4" />
-                        Purchase Gift Card
+                        <Bell className="mr-1 h-4 w-4" />
+                        Join Waitlist
                       </>
                     )}
                   </Button>
                 </div>
+                {!sender?.email && (
+                  <div className="mt-3">
+                    <Label className="text-sm font-semibold">Email for waitlist notification *</Label>
+                    <Input
+                      type="email"
+                      placeholder="your@email.com"
+                      value={waitlistEmail}
+                      onChange={e => setWaitlistEmail(e.target.value)}
+                      className="mt-1.5"
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>
         )}
 
-        {/* STEP 4: Success */}
-        {step === 4 && purchasedCard && (
+        {/* STEP 4: Waitlist Confirmation */}
+        {step === 4 && waitlistSubmitted && selectedBrand && (
           <div className="mx-auto max-w-lg space-y-5">
             <div className="text-center space-y-4">
-              <div className="inline-flex items-center justify-center size-16 rounded-full bg-emerald-100">
-                <CheckCircle2 className="size-8 text-emerald-600" />
+              <div className="inline-flex items-center justify-center size-16 rounded-full bg-amber-100">
+                <Bell className="size-8 text-amber-600" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900">Gift Card Purchased!</h2>
-              <p className="text-sm text-gray-500">Your gift card has been created and is ready to share.</p>
+              <h2 className="text-xl font-bold text-gray-900">You're on the waitlist!</h2>
+              <p className="text-sm text-gray-500 max-w-sm mx-auto">
+                Gift cards are launching soon. We'll notify you when {selectedBrand.brandName} gift cards become available.
+              </p>
             </div>
 
-            <div className="rounded-2xl border bg-white overflow-hidden shadow-lg">
-              <div className="bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-700 p-6 text-white relative">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-                <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
-                <div className="relative flex items-center gap-4">
-                  <BrandLogo brand={purchasedCard.brand} size="lg" />
-                  <div>
-                    <p className="font-bold text-lg">{purchasedCard.brand.brandName}</p>
-                    <p className="text-emerald-200 text-sm">{OCCASIONS.find(o => o.id === purchasedCard.occasion)?.emoji} {OCCASIONS.find(o => o.id === purchasedCard.occasion)?.label || purchasedCard.occasion}</p>
-                  </div>
-                </div>
-              </div>
+            <div className="rounded-2xl border bg-white overflow-hidden shadow-sm">
               <div className="p-6 space-y-4">
-                <div className="text-center">
-                  <p className="text-4xl font-extrabold text-gray-900">
-                    {CURRENCIES.find(c => c.code === purchasedCard.currency)?.symbol || '$'}{purchasedCard.amount.toLocaleString()}
-                  </p>
-                  <p className="text-sm text-gray-500">{purchasedCard.currency}</p>
-                </div>
-                <div className="h-px bg-border/50" />
-                <div className="flex justify-center">
-                  <VisualQRCode code={purchasedCard.code} brandName={purchasedCard.brand.brandName} size={160} />
-                </div>
-                <div className="text-center">
-                  <p className="text-xs text-gray-500 mb-1">Gift Card Code</p>
-                  <div className="inline-flex items-center gap-2 bg-gray-50 rounded-lg px-4 py-2 border">
-                    <code className="text-lg font-mono font-bold text-gray-900 tracking-wider">{purchasedCard.code}</code>
-                    <button onClick={copyCode} className="text-emerald-600 hover:text-emerald-700 transition-colors">
-                      {copied ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                    </button>
+                <div className="flex items-center gap-4">
+                  <BrandLogo brand={selectedBrand} size="lg" />
+                  <div>
+                    <p className="font-bold text-lg text-gray-900">{selectedBrand.brandName}</p>
+                    <p className="text-sm text-gray-500">{selectedBrand.category} · {selectedBrand.country}</p>
                   </div>
                 </div>
                 <div className="h-px bg-border/50" />
-                <div className="space-y-2 text-sm">
-                  {purchasedCard.recipientName && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">To</span>
-                      <span className="font-semibold">{purchasedCard.recipientName}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Status</span>
-                    <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">Active</Badge>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="rounded-lg bg-gray-50 p-3">
+                    <p className="text-xs text-gray-500">Preferred Amount</p>
+                    <p className="font-bold text-gray-900">{amount ? selectedCur?.symbol + parseFloat(amount).toLocaleString() : 'Not specified'}</p>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Expires</span>
-                    <span className="font-medium">{purchasedCard.expiresAt ? new Date(purchasedCard.expiresAt).toLocaleDateString() : '12 months'}</span>
+                  <div className="rounded-lg bg-gray-50 p-3">
+                    <p className="text-xs text-gray-500">Currency</p>
+                    <p className="font-bold text-gray-900">{currency}</p>
                   </div>
-                  {purchasedCard.blockchainTxHash && (
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-1 text-xs text-gray-500">
-                        <Shield className="h-3 w-3" /> Blockchain Verified
-                      </div>
-                      <p className="text-[10px] font-mono text-gray-400 break-all truncate max-h-4">{purchasedCard.blockchainTxHash}</p>
-                    </div>
-                  )}
                 </div>
-                {purchasedCard.message && (
-                  <div className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3">
-                    <p className="text-xs text-amber-700 font-medium mb-1">Message</p>
-                    <p className="text-sm text-amber-900 italic">{'\u201C'}{purchasedCard.message}{'\u201D'}</p>
-                  </div>
-                )}
-                <div className="flex gap-3 pt-2">
-                  <Button variant="outline" className="flex-1" onClick={copyCode}>
-                    <Copy className="mr-1 h-4 w-4" /> Copy Code
+                <div className="rounded-lg bg-emerald-50 border border-emerald-100 p-3 text-center">
+                  <p className="text-sm text-emerald-700 font-medium">We'll email {waitlistEmail || sender?.email || 'you'} when this brand goes live.</p>
+                </div>
+                <div className="flex gap-3">
+                  <Button variant="outline" className="flex-1" onClick={() => { setWaitlistSubmitted(false); setStep(1); }}>
+                    Browse More Brands
                   </Button>
                   <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => navigate('gifts')}>
                     Done
                   </Button>
                 </div>
-                <ReferralShareButtons referralCode={sender?.referralCode || ''} compact className="mt-4" />
               </div>
             </div>
           </div>
