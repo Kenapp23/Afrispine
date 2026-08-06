@@ -407,7 +407,7 @@ const TABLES: string[] = [
     CONSTRAINT "SenderSubscription_pkey" PRIMARY KEY ("id")
   )`,
 
-  // Legacy payment auth table removed — payment auth is now handled by Fincra
+  // Legacy payment auth table removed — payment auth is now handled by Eversend
 
   `CREATE TABLE IF NOT EXISTS "PepCheck" (
     "id" TEXT NOT NULL,

@@ -47,7 +47,7 @@ export function PrivacyPage() {
             <li><strong className="text-gray-700">Recipient Information:</strong> The name, phone number, and in some cases bank account details of individuals to whom you send money.</li>
           </ul>
           <p className="mt-3">
-            We do not collect, store, or have access to your full card number, CVV, or other sensitive payment card data. All payment card information is handled directly by Fincra on their secure infrastructure.
+            We do not collect, store, or have access to your full card number, CVV, or other sensitive payment card data. All payment card information is handled directly by Eversend on their secure infrastructure.
           </p>
         </section>
 
@@ -70,7 +70,7 @@ export function PrivacyPage() {
           <h2 className="text-lg font-semibold text-gray-900 mb-3">4. Who We Share It With</h2>
           <p>We may share your personal information with the following categories of third parties:</p>
           <ul className="mt-3 list-disc pl-5 space-y-2">
-            <li><strong className="text-gray-700">Fincra:</strong> Payment processing service used to collect your payment for transfers.</li>
+            <li><strong className="text-gray-700">Eversend:</strong> Payment processing service used to collect your payment for transfers.</li>
             <li><strong className="text-gray-700">Smile Identity:</strong> Identity verification services used for KYC checks, including ID document verification and biometric liveness detection.</li>
             <li><strong className="text-gray-700">Licensed Delivery Providers:</strong> Licensed financial service providers in destination countries that deliver funds to your recipients.</li>
             <li><strong className="text-gray-700">Africa&apos;s Talking:</strong> Communications platform used to send SMS notifications to you and your recipients regarding transfer status.</li>

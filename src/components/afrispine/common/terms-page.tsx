@@ -81,10 +81,10 @@ export function TermsPage() {
         <section>
           <h2 className="text-lg font-semibold text-gray-900 mb-3">5. Payment Processing</h2>
           <p>
-            All payments made through the AfriSpine platform are processed by Fincra, a licensed payment service provider. When you enter your card details, you are interacting directly with Fincra&apos;s secure payment infrastructure. AfriSpine does not store, process, or have access to your full card number, CVV, or other sensitive card data.
+            All payments made through the AfriSpine platform are processed by Eversend, a licensed payment service provider. When you enter your card details, you are interacting directly with Eversend&apos;s secure payment infrastructure. AfriSpine does not store, process, or have access to your full card number, CVV, or other sensitive card data.
           </p>
           <p className="mt-3">
-            By making a payment through AfriSpine, you also agree to be bound by Fincra&apos;s Terms of Service, which are available on Fincra&apos;s website. Any disputes relating to card charges, payment authorisation, or payment security are governed by Fincra&apos;s terms and applicable payment network rules.
+            By making a payment through AfriSpine, you also agree to be bound by Eversend&apos;s Terms of Service, which are available on Eversend&apos;s website. Any disputes relating to card charges, payment authorisation, or payment security are governed by Eversend&apos;s terms and applicable payment network rules.
           </p>
         </section>
 
@@ -95,7 +95,7 @@ export function TermsPage() {
             AfriSpine will issue a full refund of your transfer amount (including the service fee) in the following circumstances: the delivery provider fails to deliver funds to the recipient due to a provider-side error; a technical error on our platform or our provider&apos;s system prevents the transfer from being completed; or an incorrect routing decision by AfriSpine results in the transfer being sent to the wrong rail or provider.
           </p>
           <p className="mt-3">
-            Refund requests must be submitted within twenty-four (24) hours of the failed or erroneous transfer. Refunds are processed back to the original payment method via Fincra and typically take between five (5) and ten (10) business days to appear in your account, depending on your bank or card issuer&apos;s processing times.
+            Refund requests must be submitted within twenty-four (24) hours of the failed or erroneous transfer. Refunds are processed back to the original payment method via Eversend and typically take between five (5) and ten (10) business days to appear in your account, depending on your bank or card issuer&apos;s processing times.
           </p>
           <p className="mt-3">
             AfriSpine will not issue a refund where the transfer has been successfully delivered to the recipient as directed, or where the failure is caused by incorrect information provided by the sender (such as an incorrect phone number or bank account details). If you believe you are entitled to a refund, please contact us at{' '}

@@ -138,7 +138,7 @@ export function LandingPage() {
               {
                 step: 2,
                 title: 'Pay via secure processor',
-                desc: 'Pay by debit or credit card. Your payment is processed by Fincra with bank-level encryption.',
+                desc: 'Pay by debit or credit card. Your payment is processed by Eversend with bank-level encryption.',
                 Icon: CreditCard,
               },
               {
@@ -191,12 +191,12 @@ export function LandingPage() {
             Trusted By &amp; Powered By
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-6">
-            {/* Fincra — actual logo */}
+            {/* Eversend — actual logo */}
             <div className="flex flex-col items-center gap-1">
               <div className="flex h-12 w-auto sm:h-14 items-center justify-center rounded-xl border border-border bg-white p-2 transition-colors hover:border-emerald-200">
-                <img src="/partner-fincra.png" alt="Fincra" className="h-full w-auto max-w-[120px] object-contain" />
+                <img src="/partner-eversend.png" alt="Eversend" className="h-full w-auto max-w-[120px] object-contain" />
               </div>
-              <span className="text-xs font-medium text-gray-600">Fincra</span>
+              <span className="text-xs font-medium text-gray-600">Eversend</span>
               <span className="text-[10px] text-muted-foreground">Payment processing</span>
             </div>
             {/* Smile ID — actual logo */}
@@ -452,7 +452,7 @@ export function LandingPage() {
           <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Lock className="h-5 w-5 text-emerald-600" />
-              <span>Secured by Fincra</span>
+              <span>Secured by Eversend</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <CheckCircle className="h-5 w-5 text-emerald-600" />
@@ -479,7 +479,7 @@ export function LandingPage() {
         <section className="bg-white py-6 border-b border-border/40">
           <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <p className="text-center text-sm text-muted-foreground">
-              🇺🇸 US senders: Your card is charged securely by Fincra. AfriSpine does not store card details. Money delivered to Africa by licensed local partners.
+              🇺🇸 US senders: Your card is charged securely by Eversend. AfriSpine does not store card details. Money delivered to Africa by licensed local partners.
             </p>
           </div>
         </section>
@@ -489,7 +489,7 @@ export function LandingPage() {
       <section className="border-t border-border/40 bg-gray-50 py-10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <p className="mx-auto max-w-3xl text-center text-sm text-muted-foreground leading-relaxed">
-            AfriSpine Ltd is registered in Kenya. Payment processing by Fincra. Funds delivered by regulated mobile money and banking partners. AfriSpine is not a bank.
+            AfriSpine Ltd is registered in Kenya. Payment processing by Eversend. Funds delivered by regulated mobile money and banking partners. AfriSpine is not a bank.
           </p>
         </div>
       </section>

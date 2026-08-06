@@ -68,30 +68,30 @@ async function getOrCreateSettlementConfig() {
 /** Helper: check if payment processor keys are configured */
 async function getPaymentKeysStatus() {
   // Read from PartnerConfig (source of truth), with PlatformSetting fallback
-  let publicKey = await getPartnerKey('fincra', 'publicKey');
-  let secretKey = await getPartnerKey('fincra', 'secretKey');
-  if (!publicKey) publicKey = await getSetting('fincra_public_key');
-  if (!secretKey) secretKey = await getSetting('fincra_secret_key');
+  let publicKey = await getPartnerKey('eversend', 'publicKey');
+  let secretKey = await getPartnerKey('eversend', 'secretKey');
+  if (!publicKey) publicKey = await getSetting('eversend_client_id');
+  if (!secretKey) secretKey = await getSetting('eversend_client_secret');
 
   const hasKey = (k: string | null) => k && k.length > 5;
   const mask = (k: string) => k.slice(0, 6) + '••••••' + k.slice(-4);
 
   return {
     keys: {
-      fincra_public_key: {
+      eversend_client_id: {
         isSet: !!hasKey(publicKey),
         masked: publicKey ? mask(publicKey) : undefined,
         value: publicKey || undefined,
         length: publicKey?.length || 0,
       },
-      fincra_secret_key: {
+      eversend_client_secret: {
         isSet: !!hasKey(secretKey),
         masked: secretKey ? mask(secretKey) : undefined,
         length: secretKey?.length || 0,
       },
     },
     connected: hasKey(secretKey),
-    provider: hasKey(secretKey) ? 'fincra' : null,
+    provider: hasKey(secretKey) ? 'eversend' : null,
   };
 }
 
@@ -135,8 +135,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
     // Reads from PartnerConfig (source of truth) with PlatformSetting fallback
     if (path === 'partner-status') {
       // Read from PartnerConfig first, then fall back to PlatformSetting
-      const fincraPub = await getPartnerKey('fincra', 'publicKey') || await getSetting('fincra_public_key');
-      const fincraSec = await getPartnerKey('fincra', 'secretKey') || await getSetting('fincra_secret_key');
+      const eversendPub = await getPartnerKey('eversend', 'publicKey') || await getSetting('eversend_client_id');
+      const eversendSec = await getPartnerKey('eversend', 'secretKey') || await getSetting('eversend_client_secret');
       const mystocksKey = await getPartnerKey('mystocks_africa', 'apiKey') || await getSetting('mystocks_api_key');
       const mystocksId = await getPartnerKey('mystocks_africa', 'partnerId') || await getSetting('mystocks_partner_id');
       const atKey = await getPartnerKey('africas_talking', 'apiKey') || await getSetting('at_api_key');
@@ -147,14 +147,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
 
       const partners = [
         {
-          id: 'fincra',
-          name: 'Fincra',
+          id: 'eversend',
+          name: 'Eversend',
           purpose: 'Payments & Collections',
-          configured: hasKey(fincraSec) && hasKey(fincraPub),
-          keysSet: [hasKey(fincraPub), hasKey(fincraSec)].filter(Boolean).length,
+          configured: hasKey(eversendSec) && hasKey(eversendPub),
+          keysSet: [hasKey(eversendPub), hasKey(eversendSec)].filter(Boolean).length,
           keysTotal: 2,
-          keyLabels: ['Public Key', 'Secret Key'],
-          keyStatuses: [hasKey(fincraPub), hasKey(fincraSec)],
+          keyLabels: ['Client ID', 'Client Secret'],
+          keyStatuses: [hasKey(eversendPub), hasKey(eversendSec)],
         },
         {
           id: 'mystocks_africa',
@@ -202,7 +202,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
         return NextResponse.json({
           integration: {
             business_name: companyName,
-            integration_type: 'Fincra Collection',
+            integration_type: 'Eversend Collection',
             domain: 'afri-spine.com',
             provider,
           },
@@ -635,13 +635,20 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
         }
       };
 
-      // Save Fincra keys (primary payment processor)
-      if (body.fincraPublicKey) await dualSave('fincra_public_key', 'fincra', 'publicKey', body.fincraPublicKey);
-      if (body.fincraSecretKey) await dualSave('fincra_secret_key', 'fincra', 'secretKey', body.fincraSecretKey);
+      // Save Eversend keys (primary payment processor)
+      if (body.eversendClientId) await dualSave('eversend_client_id', 'eversend', 'publicKey', body.eversendClientId);
+      if (body.eversendClientSecret) await dualSave('eversend_client_secret', 'eversend', 'secretKey', body.eversendClientSecret);
+
+      // Backward-compat: accept old fincra key names
+      if (body.fincraPublicKey) await dualSave('eversend_client_id', 'eversend', 'publicKey', body.fincraPublicKey);
+      if (body.fincraSecretKey) await dualSave('eversend_client_secret', 'eversend', 'secretKey', body.fincraSecretKey);
 
       // Also support direct key names
-      if (body.fincra_public_key) await dualSave('fincra_public_key', 'fincra', 'publicKey', body.fincra_public_key);
-      if (body.fincra_secret_key) await dualSave('fincra_secret_key', 'fincra', 'secretKey', body.fincra_secret_key);
+      if (body.eversend_client_id) await dualSave('eversend_client_id', 'eversend', 'publicKey', body.eversend_client_id);
+      if (body.eversend_client_secret) await dualSave('eversend_client_secret', 'eversend', 'secretKey', body.eversend_client_secret);
+      // Legacy fallback
+      if (body.fincra_public_key) await dualSave('eversend_client_id', 'eversend', 'publicKey', body.fincra_public_key);
+      if (body.fincra_secret_key) await dualSave('eversend_client_secret', 'eversend', 'secretKey', body.fincra_secret_key);
 
       // Save partner keys (sync to both stores)
       if (body.mystocks_api_key) await dualSave('mystocks_api_key', 'mystocks_africa', 'apiKey', body.mystocks_api_key);

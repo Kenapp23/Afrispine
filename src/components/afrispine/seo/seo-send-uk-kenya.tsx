@@ -27,7 +27,7 @@ import { PartnerDisclosure } from '@/components/afrispine/common/partner-disclos
 const faqs = [
   {
     q: 'How long does it take for money to reach M-Pesa in Kenya?',
-    a: 'Most transfers arrive within 2–5 minutes once your Fincra payment is confirmed. During peak hours (evenings UK time), it may take up to 15 minutes. Bank transfers to KCB, Equity, or Co-op typically settle within 1 business day.',
+    a: 'Most transfers arrive within 2–5 minutes once your Eversend payment is confirmed. During peak hours (evenings UK time), it may take up to 15 minutes. Bank transfers to KCB, Equity, or Co-op typically settle within 1 business day.',
   },
   {
     q: 'Can I pay for KPLC tokens through AfriSpine?',
@@ -249,7 +249,7 @@ export function SeoSendUkKenya() {
               },
               {
                 icon: <Lock className="h-6 w-6" />,
-                title: 'Fincra Secured',
+                title: 'Eversend Secured',
                 desc: 'PCI-DSS Level 1 certified payment processing. Same security as your bank.',
               },
               {
@@ -292,7 +292,7 @@ export function SeoSendUkKenya() {
             {
               step: '2',
               icon: <ShieldCheck className="h-8 w-8 text-emerald-600" />,
-              title: 'Pay with Fincra',
+              title: 'Pay with Eversend',
               desc: 'Use your UK debit card, bank transfer, or Apple Pay. Our payment processor is PCI-DSS Level 1 certified — the same security standard as your bank.',
             },
             {

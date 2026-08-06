@@ -98,7 +98,7 @@ interface FeeCorridor {
 // ─── Partner icon map ─────────────────────────────────────────────────────
 
 const PARTNER_ICONS: Record<string, React.ElementType> = {
-  fincra: Wallet,
+  eversend: Wallet,
   mystocks_africa: TrendingUpIcon,
   africas_talking: MessageSquare,
   resend: Mail,
@@ -192,8 +192,8 @@ export function AdminSettlementPage() {
   const [partnersLoading, setPartnersLoading] = useState(true);
   const [partnersError, setPartnersError] = useState<string | null>(null);
 
-  // Derive Fincra keys configured from partner status
-  const keysConfigured = partners.some((p) => p.id === 'fincra' && p.configured);
+  // Derive Eversend keys configured from partner status
+  const keysConfigured = partners.some((p) => p.id === 'eversend' && p.configured);
 
   // ── Section 3.5: Fee Structure state ──
   const [feeCorridors, setFeeCorridors] = useState<FeeCorridor[]>([]);
@@ -315,7 +315,7 @@ export function AdminSettlementPage() {
     fetchFeeStructure();
   }, [fetchConfig, fetchPartners, fetchRevenue, fetchFeeStructure]);
 
-  // When Fincra is configured (from partner status), fetch settlements
+  // When Eversend is configured (from partner status), fetch settlements
   useEffect(() => {
     if (keysConfigured) {
       fetchSettlements();
@@ -586,12 +586,12 @@ export function AdminSettlementPage() {
 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <a
-              href="https://live.fincra.com"
+              href="https://app.eversend.co"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-sm font-medium text-emerald-600 hover:text-emerald-700 transition-colors"
             >
-              Open Fincra Dashboard
+              Open Eversend Dashboard
               <ExternalLink className="h-4 w-4" />
             </a>
             <p className="text-xs text-muted-foreground leading-relaxed">
@@ -782,7 +782,7 @@ export function AdminSettlementPage() {
               <TableProperties className="mb-3 h-8 w-8 text-gray-300" />
               <p className="text-sm font-medium text-muted-foreground">No settlement batches found</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Settlement batches will appear here once Fincra processes them.
+                Settlement batches will appear here once Eversend processes them.
               </p>
             </div>
           ) : (

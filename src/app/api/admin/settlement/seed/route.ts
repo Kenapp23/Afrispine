@@ -5,8 +5,8 @@ import { ensureDb } from '@/lib/ensure-db';
 
 const PARTNER_SEEDS = [
   {
-    partnerId: 'fincra',
-    partnerName: 'Fincra',
+    partnerId: 'eversend',
+    partnerName: 'Eversend',
     purpose: 'Payments & Collections',
     configJson: JSON.stringify({
       publicKey: '',

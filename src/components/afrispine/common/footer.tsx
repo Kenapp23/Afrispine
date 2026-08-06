@@ -119,12 +119,12 @@ export function Footer() {
         <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10 mb-8">
           <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 overflow-hidden">
-              <img src="/partner-fincra.png" alt="Fincra" className="h-5 w-auto object-contain" />
+              <img src="/partner-eversend.png" alt="Eversend" className="h-5 w-auto object-contain" />
             </div>
             <div>
               <span className="font-medium text-gray-700">Payment processing</span>
               <br />
-              Fincra
+              Eversend
             </div>
           </div>
           <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
@@ -179,7 +179,7 @@ export function Footer() {
           <p className="text-center text-xs leading-relaxed text-muted-foreground/80">
             &copy; {new Date().getFullYear()} AfriSpine Ltd. Registered in Kenya. AfriSpine is a
             payment routing platform, not a bank or money transmitter. Transactions are
-            processed by Fincra. Funds are delivered by licensed
+            processed by Eversend. Funds are delivered by licensed
             partner providers in each recipient country. AfriSpine does not hold customer
             funds at any time.
           </p>

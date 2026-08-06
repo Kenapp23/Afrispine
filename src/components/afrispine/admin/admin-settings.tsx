@@ -351,8 +351,9 @@ export function AdminSettingsPage() {
         headers: headers(),
         body: JSON.stringify({
           settings: {
-            fincra_public_key: settings.fincra_public_key || '',
-            fincra_secret_key: settings.fincra_secret_key || '',
+            eversend_client_id: settings.eversend_client_id || '',
+            eversend_client_secret: settings.eversend_client_secret || '',
+
             at_api_key: settings.at_api_key || '',
             at_username: settings.at_username || '',
             resend_api_key: settings.resend_api_key || '',
@@ -548,40 +549,40 @@ export function AdminSettingsPage() {
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Fincra Payment Processor</CardTitle>
+                  <CardTitle className="text-base">Eversend Payment Processor</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="space-y-1.5">
-                      <Label>Public Key</Label>
+                      <Label>Client ID</Label>
                       <Input
                         type="password"
-                        value={settings.fincra_public_key || ''}
-                        onChange={(e) => setSettings(prev => ({ ...prev, fincra_public_key: e.target.value }))}
-                        placeholder="pk_live_..."
+                        value={settings.eversend_client_id || ''}
+                        onChange={(e) => setSettings(prev => ({ ...prev, eversend_client_id: e.target.value }))}
+                        placeholder="sandbox client ID..."
                       />
-                      <p className="text-xs text-muted-foreground">Fincra public key</p>
+                      <p className="text-xs text-muted-foreground">Eversend client ID</p>
                     </div>
                     <div className="space-y-1.5">
-                      <Label>Secret Key</Label>
+                      <Label>Client Secret</Label>
                       <Input
                         type="password"
-                        value={settings.fincra_secret_key || ''}
-                        onChange={(e) => setSettings(prev => ({ ...prev, fincra_secret_key: e.target.value }))}
-                        placeholder="sk_live_..."
+                        value={settings.eversend_client_secret || ''}
+                        onChange={(e) => setSettings(prev => ({ ...prev, eversend_client_secret: e.target.value }))}
+                        placeholder="sandbox client secret..."
                       />
-                      <p className="text-xs text-muted-foreground">Fincra secret key</p>
+                      <p className="text-xs text-muted-foreground">Eversend client secret</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="space-y-1.5">
                       <Label>Mode</Label>
                       <div className="flex items-center gap-3 mt-1">
-                        <Badge className={settings.fincra_public_key?.includes('live') ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}>
-                          {settings.fincra_public_key?.includes('live') ? 'Live' : 'Test'}
+                        <Badge className={settings.eversend_client_id?.includes('live') ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}>
+                          {settings.eversend_client_id?.includes('live') ? 'Live' : 'Test'}
                         </Badge>
                         <span className="text-xs text-muted-foreground">
-                          {settings.fincra_public_key ? 'Key detected' : 'No key configured'}
+                          {settings.eversend_client_id ? 'Key detected' : 'No key configured'}
                         </span>
                       </div>
                     </div>
@@ -652,7 +653,7 @@ export function AdminSettingsPage() {
                       ? 'Keys saved successfully'
                       : saveResult?.startsWith('error')
                         ? 'Save failed: ' + saveResult.replace('error: ', '')
-                        : (settings.fincra_public_key || settings.at_api_key || settings.resend_api_key)
+                        : (settings.eversend_client_id || settings.at_api_key || settings.resend_api_key)
                           ? 'Keys detected — click save to store them'
                           : 'No integration keys configured yet'}
                   </p>

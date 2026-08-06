@@ -75,13 +75,15 @@ export async function PUT(
     // Sync key values to PlatformSetting for unified reads across the platform
     try {
       const syncMap: Record<string, string> = {
-        fincra: 'fincra',
+        eversend: 'eversend',
+        fincra: 'eversend', // backward-compat alias
         mystocks_africa: 'mystocks_africa',
         africas_talking: 'africas_talking',
         resend: 'resend',
       };
       const fieldToSetting: Record<string, Record<string, string>> = {
-        fincra: { publicKey: 'fincra_public_key', secretKey: 'fincra_secret_key' },
+        eversend: { publicKey: 'eversend_client_id', secretKey: 'eversend_client_secret' },
+        fincra: { publicKey: 'eversend_client_id', secretKey: 'eversend_client_secret' }, // backward-compat alias
         mystocks_africa: { apiKey: 'mystocks_api_key', partnerId: 'mystocks_partner_id' },
         africas_talking: { apiKey: 'at_api_key', username: 'at_username' },
         resend: { apiKey: 'resend_api_key' },

@@ -75,13 +75,13 @@ interface PartnerConfig {
 
 const PARTNERS: PartnerConfig[] = [
   {
-    id: 'fincra',
-    name: 'Fincra',
+    id: 'eversend',
+    name: 'Eversend',
     description: 'Primary payment processor for collections, transfers, and payouts across Africa.',
     color: 'emerald',
     keyFields: [
-      { name: 'fincra_public_key', label: 'Public Key', placeholder: 'pk_live_...', secret: false },
-      { name: 'fincra_secret_key', label: 'Secret Key', placeholder: 'sk_live_...', secret: true },
+      { name: 'eversend_client_id', label: 'Client ID', placeholder: 'sandbox client ID...', secret: false },
+      { name: 'eversend_client_secret', label: 'Client Secret', placeholder: 'sandbox client secret...', secret: true },
     ],
   },
   {

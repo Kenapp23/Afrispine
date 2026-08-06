@@ -79,12 +79,12 @@ interface SettlementStats {
 
 // ─── Partner field definitions ─────────────────────────────────
 const PARTNER_FIELDS: Record<string, { label: string; isSecret: boolean }[]> = {
-  fincra: [
-    { label: 'Public Key', isSecret: false },
-    { label: 'Secret Key', isSecret: true },
+  eversend: [
+    { label: 'Client ID', isSecret: false },
+    { label: 'Client Secret', isSecret: true },
     { label: 'Webhook Secret', isSecret: true },
-    { label: 'Test Public Key', isSecret: false },
-    { label: 'Test Secret Key', isSecret: true },
+    { label: 'Test Client ID', isSecret: false },
+    { label: 'Test Client Secret', isSecret: true },
     { label: 'Test Webhook Secret', isSecret: true },
   ],
   mystocks_africa: [
@@ -113,7 +113,7 @@ const PARTNER_FIELDS: Record<string, { label: string; isSecret: boolean }[]> = {
 };
 
 const FIELD_KEY_MAP: Record<string, Record<string, string>> = {
-  fincra: { 'Public Key': 'publicKey', 'Secret Key': 'secretKey', 'Webhook Secret': 'webhookSecret', 'Test Public Key': 'testPublicKey', 'Test Secret Key': 'testSecretKey', 'Test Webhook Secret': 'testWebhookSecret' },
+  eversend: { 'Client ID': 'publicKey', 'Client Secret': 'secretKey', 'Webhook Secret': 'webhookSecret', 'Test Client ID': 'testPublicKey', 'Test Client Secret': 'testSecretKey', 'Test Webhook Secret': 'testWebhookSecret' },
   mystocks_africa: { 'API Key': 'apiKey', 'Partner ID': 'partnerId', 'Settlement Endpoint': 'settlementEndpoint', 'Test API Key': 'testApiKey', 'Test Partner ID': 'testPartnerId' },
   africas_talking: { 'Username': 'username', 'API Key': 'apiKey', 'Test Username': 'testUsername', 'Test API Key': 'testApiKey' },
   resend: { 'API Key': 'apiKey', 'Test API Key': 'testApiKey' },

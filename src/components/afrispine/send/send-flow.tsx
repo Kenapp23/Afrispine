@@ -1081,22 +1081,51 @@ function StepReviewPay() {
   const [saveCard, setSaveCard] = useState(false);
 
   const handlePay = async () => {
-    // TODO: When payment processor is integrated, send WhatsApp confirmation:
-    //   const res = await fetch('/api/whatsapp/send', {
-    //     method: 'POST',
-    //     headers: { 'Content-Type': 'application/json' },
-    //     body: JSON.stringify({
-    //       templateKey: 'transaction_confirmation',
-    //       templateParams: {
-    //         name: store.sender?.fullName || 'User',
-    //         amount: store.sendAmount.toFixed(2),
-    //         currency: store.sendCurrency,
-    //         recipientName: store.recipientName || 'Recipient',
-    //         reference: transactionRef,
-    //       },
-    //     }),
-    //   });
-    toast.info('Payments are coming soon! We are integrating our payment processor and will launch shortly. Thank you for your patience.');
+    setPaying(true);
+    try {
+      // Generate a reference for this transfer
+      const transactionRef = `AS-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+
+      // Step 1: Initialize the collection (charge the sender)
+      const res = await fetch('/api/send/initialize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: store.totalCharged,
+          sendCurrency: store.sendCurrency,
+          receiveCurrency: store.receiveCurrency,
+          recipientPhone: store.recipientPhone,
+          recipientName: store.recipientName,
+          recipientCountry: store.sendCorridor?.to || '',
+          rail: store.selectedRail,
+          senderEmail: store.sender?.email || '',
+          reference: transactionRef,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error || 'Payment initialization failed. Please try again.');
+        return;
+      }
+
+      if (data.checkoutUrl) {
+        // Redirect to Eversend's hosted checkout page
+        // The webhook will handle the rest (collection.completed → execute payout)
+        toast.info('Redirecting to secure payment...');
+        window.location.href = data.checkoutUrl;
+      } else {
+        // No checkout URL — collection was initiated via other method
+        toast.success('Payment initiated! Processing your transfer...');
+        // TODO: Poll for status or rely on webhook
+      }
+    } catch (err) {
+      console.error('[StepReviewPay] handlePay error:', err);
+      toast.error('Something went wrong. Please try again.');
+    } finally {
+      setPaying(false);
+    }
   };
 
   const railLabel = rails.find((r) => r.id === store.selectedRail)?.label || store.selectedRail;
@@ -1193,12 +1222,12 @@ function StepReviewPay() {
         {/* Security badge */}
         <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
           <Shield className="h-3.5 w-3.5" />
-          <span>Secured by Fincra — Card &amp; Bank Transfer accepted</span>
+          <span>Secured by Eversend — Card &amp; Bank Transfer accepted</span>
         </div>
 
         {/* Compliance disclosure */}
         <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800 leading-relaxed">
-          <p>AfriSpine is a payment routing platform. Your card is charged securely by Fincra. Funds are delivered to your recipient by the selected licensed provider. AfriSpine does not hold your funds at any time. By clicking Pay you agree to our <button onClick={() => store.navigate('terms')} className="underline font-medium">Terms of Service</button> and <button onClick={() => store.navigate('privacy')} className="underline font-medium">Privacy Policy</button>.</p>
+          <p>AfriSpine is a payment routing platform. Your card is charged securely by Eversend. Funds are delivered to your recipient by the selected licensed provider. AfriSpine does not hold your funds at any time. By clicking Pay you agree to our <button onClick={() => store.navigate('terms')} className="underline font-medium">Terms of Service</button> and <button onClick={() => store.navigate('privacy')} className="underline font-medium">Privacy Policy</button>.</p>
         </div>
 
         {store.sendCurrency === 'USD' && store.sendAmount > 3000 && (

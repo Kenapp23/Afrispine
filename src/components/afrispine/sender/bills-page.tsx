@@ -356,7 +356,14 @@ export function BillsPage() {
       });
 
       if (res.ok) {
-        toast.success('Bill payment submitted! You will receive a confirmation shortly.');
+        const data = await res.json();
+        if (data.checkoutUrl) {
+          // Redirect to Eversend's hosted checkout
+          toast.info('Redirecting to secure payment...');
+          window.location.href = data.checkoutUrl;
+        } else {
+          toast.success('Bill payment submitted! You will receive a confirmation shortly.');
+        }
         setPaying(false);
         return;
       } else {
