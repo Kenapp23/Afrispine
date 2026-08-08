@@ -1,5 +1,15 @@
+/**
+ * Send Money — Execute Payout
+ *
+ * Called after collection completes (via webhook or polling).
+ * Creates a payout to deliver funds to the recipient.
+ * Uses the payment adapter for provider-agnostic execution.
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
-import { EversendClient, EversendError, RAIL_MAP, COUNTRY_CURRENCY } from '@/lib/eversend';
+import { db, dbReady } from '@/lib/db';
+import { getProvider } from '@/lib/payments/adapter';
+import { RAIL_MAP, COUNTRY_CURRENCY } from '@/lib/eversend';
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,16 +33,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const client = await EversendClient.fromSettings();
-    if (!client) {
+    const provider = await getProvider();
+    if (!provider) {
       return NextResponse.json({ error: 'Payment processor not configured.' }, { status: 503 });
     }
 
     const destCurrency = COUNTRY_CURRENCY[recipientCountry] || receiveCurrency;
     const eversendRail = RAIL_MAP[rail] || rail;
 
-    // Step 2: Create payout (deliver to recipient)
-    const payout = await client.createPayout({
+    // Execute payout via the adapter
+    const payout = await provider.executePayout({
       amount: Number(receiveAmount || amount),
       currency: destCurrency,
       rail: eversendRail,
@@ -40,7 +50,6 @@ export async function POST(req: NextRequest) {
       bankCode,
       accountNumber,
       accountName,
-      fund: 'stablecoin',
       metadata: {
         afri_spine_ref: reference || '',
         collection_id: collectionId,
@@ -49,19 +58,27 @@ export async function POST(req: NextRequest) {
       idempotencyKey: reference || `as_pay_${Date.now()}`,
     });
 
+    // Update the Transaction record with the payout provider ID
+    if (dbReady && reference) {
+      try {
+        await db.transaction.update({
+          where: { reference },
+          data: { eversendId: payout.providerId },
+        });
+      } catch { /* ignore */ }
+    }
+
     return NextResponse.json({
-      payoutId: payout.id,
+      payoutId: payout.providerId,
       status: payout.status,
       amount: payout.amount,
       currency: payout.currency,
       rail: payout.rail,
-      reference: payout.reference || payout.id,
+      reference: payout.reference || payout.providerId,
     });
   } catch (err) {
-    if (err instanceof EversendError) {
-      return NextResponse.json({ error: err.message }, { status: err.status });
-    }
-    console.error('[send/execute] Unexpected error:', err);
-    return NextResponse.json({ error: 'Failed to execute transfer.' }, { status: 500 });
+    const msg = err instanceof Error ? err.message : 'Failed to execute transfer.';
+    console.error('[send/execute] Error:', err);
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

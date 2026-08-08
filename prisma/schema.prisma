@@ -64,6 +64,10 @@ model Transaction {
   recipientBank     String?
   recipientAccount  String?
   matchType         String?
+  purpose           String?                              // 'send' | 'bill_payment'
+  eversendId        String?                              // Eversend collection/payout ID for webhook correlation
+  billType          String?                              // 'kplc_prepaid' | 'nairobi_water' | 'dstv' | 'gotv' | 'airtime'
+  billAccountRef    String?                              // meter number / account number / phone number
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
@@ -73,6 +77,7 @@ model Transaction {
   @@index([senderId])
   @@index([status])
   @@index([createdAt])
+  @@index([eversendId])
 }
 
 model TransactionEvent {
@@ -348,8 +353,28 @@ model BillPayment {
   currency      String?
   status        String   @default("pending")
   reference     String?
+  eversendId    String?                              // Eversend collection ID for webhook correlation
+  settledBy     String?                              // admin email who manually settled
+  settledAt     DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@index([status])
+  @@index([eversendId])
+}
+
+model IdempotencyRecord {
+  id          String   @id @default(cuid())
+  key         String   @unique                         // client-generated idempotency key
+  endpoint    String                                   // 'send/initialize' | 'bills/initialize'
+  requestHash String?                                  // SHA-256 hash of the request body for integrity
+  responseRef String?                                  // reference/ID of the created resource
+  status      String   @default("processing")          // 'processing' | 'completed' | 'failed'
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime                                 // auto-expire after 24h
+
+  @@index([key])
+  @@index([expiresAt])
 }
 
 model Wallet {

@@ -427,23 +427,40 @@ export class EversendClient {
    * This is the primary way to instantiate the client in API routes.
    */
   static async fromSettings(): Promise<EversendClient | null> {
-    const { db } = await import('@/lib/db');
+    const { db, dbReady } = await import('@/lib/db');
 
     // Try partner config first, then fall back to PlatformSetting
-    const partner = await db.partnerConfig.findUnique({ where: { id: 'eversend' } });
-    let clientId = partner?.clientId || '';
-    let clientSecret = partner?.clientSecret || '';
-    let webhookSecret = partner?.webhookSecret || '';
+    let clientId = '';
+    let clientSecret = '';
+    let webhookSecret = '';
     let baseUrl = '';
 
-    if (!clientId) {
-      const setting = (key: string) =>
-        db.platformSetting.findUnique({ where: { key } }).then((r) => r?.value || '');
+    if (dbReady) {
+      try {
+        const partner = await db.partnerConfig.findUnique({ where: { partnerId: 'eversend' } });
+        if (partner?.configJson) {
+          try {
+            const parsed = JSON.parse(partner.configJson);
+            clientId = parsed.clientId || '';
+            clientSecret = parsed.clientSecret || '';
+            webhookSecret = parsed.webhookSecret || '';
+          } catch {
+            // ignore parse errors
+          }
+        }
+      } catch {
+        // DB query failed — fall through to PlatformSetting
+      }
 
-      clientId = await setting('eversend_client_id');
-      clientSecret = await setting('eversend_client_secret');
-      webhookSecret = await setting('eversend_webhook_secret');
-      baseUrl = await setting('eversend_base_url');
+      if (!clientId) {
+        const setting = (key: string) =>
+          db.platformSetting.findUnique({ where: { key } }).then((r) => r?.value || '');
+
+        clientId = await setting('eversend_client_id');
+        clientSecret = await setting('eversend_client_secret');
+        webhookSecret = await setting('eversend_webhook_secret');
+        baseUrl = await setting('eversend_base_url');
+      }
     }
 
     // Detect sandbox vs live from client ID

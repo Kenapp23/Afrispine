@@ -75,14 +75,27 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
-export const db =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
-    datasources: { db: { url: urlWithTimeout } },
-  })
+// Stub for non-PostgreSQL environments (sandbox/dev without real DB).
+// Every model accessor (db.sender, db.transaction, etc.) returns a
+// sub-stub whose methods throw a clear message.
+const noDb = () => { throw new Error('[db] Database not available — DATABASE_URL is not PostgreSQL') }
+const dbStub = new Proxy({}, {
+  get() { return dbStub },
+  apply: noDb,
+}) as unknown as PrismaClient
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
+// Only create a real PrismaClient when the URL is PostgreSQL.
+// In sandbox/dev with SQLite URL, use a safe stub instead.
+export const db: PrismaClient = isPostgres
+  ? (globalForPrisma.prisma ?? new PrismaClient({
+      log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+      datasources: { db: { url: urlWithTimeout } },
+    }))
+  : dbStub
+
+if (process.env.NODE_ENV !== 'production' && isPostgres && db !== dbStub) {
+  globalForPrisma.prisma = db
+}
 
 /**
  * `true` when the database URL is a valid PostgreSQL connection string.

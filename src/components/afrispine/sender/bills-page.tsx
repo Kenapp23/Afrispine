@@ -131,6 +131,7 @@ export function BillsPage() {
   const setBillType = useAppStore((s) => s.setBillType);
   const resetBillFlow = useAppStore((s) => s.resetBillFlow);
   const navigate = useAppStore((s) => s.navigate);
+  const sender = useAppStore((s) => s.sender);
 
   // ── Step 2 form state ──────────────────────────────────────────────────
   const [meterNumber, setMeterNumber] = useState('');
@@ -156,6 +157,7 @@ export function BillsPage() {
     token?: string;
   } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
 
   // ── History ────────────────────────────────────────────────────────────
   const [history, setHistory] = useState<BillHistoryItem[]>([]);
@@ -207,6 +209,24 @@ export function BillsPage() {
     fetchHistory();
   }, [fetchHistory]);
 
+  // ── Detect redirect back from payment checkout ─────────────────────────
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get('status');
+    const ref = params.get('ref');
+    if (status === 'processing' && ref) {
+      setBillStep(4);
+      setPaymentResult({ reference: ref });
+      setPaymentProcessing(true);
+      // Clean URL without triggering a re-render
+      const url = new URL(window.location.href);
+      url.searchParams.delete('status');
+      url.searchParams.delete('ref');
+      url.searchParams.delete('view');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, []);
+
   // ── Reset form fields when bill type changes ───────────────────────────
   useEffect(() => {
     setMeterNumber('');
@@ -222,6 +242,7 @@ export function BillsPage() {
     setWaterAmount('');
     setPaymentResult(null);
     setCopied(false);
+    setPaymentProcessing(false);
   }, [billType]);
 
   // ── Handlers ───────────────────────────────────────────────────────────
@@ -347,6 +368,9 @@ export function BillsPage() {
         billerName,
         accountHolderName,
         dstvPackage: (billType === 'dstv' || billType === 'gotv') ? (customAmount ? 'custom' : selectedPackage) : undefined,
+        currency,
+        usdTotal,
+        senderEmail: sender?.email || '',
       };
 
       const res = await fetch('/api/bills/initialize', {
