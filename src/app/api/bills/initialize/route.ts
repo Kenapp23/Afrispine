@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { randomBytes } from 'crypto';
 import { db, dbReady } from '@/lib/db';
 import { getSenderFromRequest } from '@/lib/auth';
-import { getProvider } from '@/lib/payments/adapter';
+import { getProvider, ProviderInitializationError } from '@/lib/payments/adapter';
 
 export async function POST(req: NextRequest) {
   try {
@@ -63,15 +63,43 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        await db.idempotencyRecord.create({
-          data: {
-            key: idempotencyKey,
-            endpoint: 'bills/initialize',
-            requestHash: randomBytes(16).toString('hex'),
-            status: 'processing',
-            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-          },
-        });
+        // Create idempotency record — catch P2002 (unique constraint) for
+        // the race where two near-simultaneous requests both see "not found"
+        // and both try to insert. Treat it as "another request is already
+        // handling this" — the same as the 'processing' case above.
+        try {
+          await db.idempotencyRecord.create({
+            data: {
+              key: idempotencyKey,
+              endpoint: 'bills/initialize',
+              requestHash: randomBytes(16).toString('hex'),
+              status: 'processing',
+              expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+            },
+          });
+        } catch (createErr: unknown) {
+          const prismaErr = createErr as { code?: string };
+          if (prismaErr.code === 'P2002') {
+            // Unique constraint violation — another request won the race.
+            // Re-fetch to give the most helpful response.
+            const retry = await db.idempotencyRecord.findUnique({
+              where: { key: idempotencyKey },
+            });
+            if (retry?.status === 'completed' && retry.responseRef) {
+              return NextResponse.json({
+                reference: retry.responseRef,
+                status: 'completed',
+                message: 'Already processed',
+              });
+            }
+            return NextResponse.json(
+              { error: 'Request is being processed' },
+              { status: 409 }
+            );
+          }
+          // Some other DB error — log and let the request proceed
+          console.error('[bills/initialize] Idempotency create error:', createErr);
+        }
       } catch (err) {
         console.error('[bills/initialize] Idempotency DB error:', err);
       }
@@ -124,7 +152,16 @@ export async function POST(req: NextRequest) {
     }
 
     // ── Initialize collection ─────────────────────────────────────────
-    const provider = await getProvider();
+    let provider;
+    try {
+      provider = await getProvider();
+    } catch (err) {
+      if (err instanceof ProviderInitializationError) {
+        console.error('[bills/initialize] Provider init error:', err.message);
+        return NextResponse.json({ error: err.message }, { status: 503 });
+      }
+      throw err;
+    }
     if (!provider) {
       if (dbReady && idempotencyKey) {
         try {

@@ -9,7 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getProvider } from '@/lib/payments/adapter';
+import { getProvider, ProviderInitializationError } from '@/lib/payments/adapter';
 import { isHandledEvent, processWebhookPayload } from '@/lib/payments/webhook-processor';
 
 export async function POST(req: NextRequest) {
@@ -21,7 +21,11 @@ export async function POST(req: NextRequest) {
   let provider;
   try {
     provider = await getProvider();
-  } catch {
+  } catch (err) {
+    if (err instanceof ProviderInitializationError) {
+      console.error('[webhook/eversend] Provider misconfigured:', err.message);
+      return NextResponse.json({ error: 'Provider misconfigured' }, { status: 503 });
+    }
     console.error('[webhook/eversend] Failed to get provider');
     return NextResponse.json({ error: 'Provider error' }, { status: 503 });
   }

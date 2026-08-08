@@ -397,8 +397,11 @@ export class EversendClient {
   verifyWebhookSignature(rawBody: string, signature: string): boolean {
     const secret = this.config.webhookSecret;
     if (!secret) {
-      console.warn('[Eversend] Webhook secret not configured — skipping signature verification');
-      return true; // Allow through in dev without secret
+      // In production/Eversend mode, a missing webhook secret is a
+      // configuration error. Fail verification rather than silently
+      // allowing unverified requests through.
+      console.error('[Eversend] Webhook secret not configured — rejecting webhook');
+      return false;
     }
 
     const expected = createHmac('sha256', secret).update(rawBody).digest('hex');

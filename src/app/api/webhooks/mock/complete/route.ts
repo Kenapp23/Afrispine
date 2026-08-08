@@ -4,16 +4,38 @@
  * Simulates a user completing a mock payment.
  * GET /api/webhooks/mock/complete?ref=XXX
  *
- * 1. Calls MockProvider.simulateWebhook(ref) to generate a webhook payload
- * 2. Processes the payload (updates Transaction/BillPayment status)
- * 3. Redirects the user back to the app with status=processing
+ * SECURITY: This endpoint is ONLY active when payment_provider is 'mock'.
+ * When payment_provider=eversend, this endpoint returns 404 to prevent
+ * fake-completing real transactions.
+ *
+ * 1. Reads payment_provider setting — returns 404 if 'eversend'
+ * 2. Calls MockProvider.simulateWebhook(ref) to generate a webhook payload
+ * 3. Processes the payload (updates Transaction/BillPayment status)
+ * 4. Redirects the user back to the app with status=processing
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { MockProvider } from '@/lib/payments/adapter';
 import { processWebhookPayload } from '@/lib/payments/webhook-processor';
+import { db, dbReady } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
+  // ── Gate: block when not in mock mode ──────────────────────────────
+  if (dbReady) {
+    try {
+      const setting = await db.platformSetting.findUnique({ where: { key: 'payment_provider' } });
+      const provider = setting?.value || 'mock';
+      if (provider === 'eversend') {
+        // In live mode this endpoint must not exist — return 404, not 403,
+        // so attackers can't even discover it.
+        return new NextResponse('Not Found', { status: 404 });
+      }
+    } catch {
+      // If DB is unreadable, be safe and deny
+      return new NextResponse('Not Found', { status: 404 });
+    }
+  }
+
   const ref = req.nextUrl.searchParams.get('ref');
 
   if (!ref) {

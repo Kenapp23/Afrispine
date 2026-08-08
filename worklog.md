@@ -333,3 +333,22 @@ Stage Summary:
 - Adapter factory reads PlatformSetting 'payment_provider' — switching Mock→Eversend is purely a config change
 - ESLint: 0 errors, 0 warnings
 - Turbopack env instability causes server to crash on subsequent requests (not a code bug — confirmed by successful first-request response)
+---
+Task ID: safety-gaps-1-4
+Agent: main
+Task: Close four safety gaps before Eversend integration goes production
+
+Work Log:
+- Read adapter.ts, webhook routes, admin bills/pending, send/initialize, bills/initialize, eversend.ts, schema.prisma
+- Task 1 (FIXED): Changed getProvider() to throw ProviderInitializationError when payment_provider=eversend but EversendClient.fromSettings() returns null. Updated callers (send/initialize, bills/initialize, webhook/eversend) to catch and return 503.
+- Task 2 (FIXED): Added payment_provider gate to /api/webhooks/mock/complete — returns 404 when payment_provider=eversend. Also returns 404 on DB errors (fail-closed).
+- Task 3 (CONFIRMED CORRECT): /api/admin/bills/pending already has requireAdmin on line 15, same pattern as other admin routes.
+- Task 4 (FIXED): Both send/initialize and bills/initialize now catch Prisma P2002 (unique constraint violation) on IdempotencyRecord.create. On P2002, re-fetches the record: if completed, returns cached result; otherwise returns 409 Conflict.
+- Bonus (FIXED): Confirmed webhook HMAC verification happens BEFORE touching transaction state (verifyWebhook at step 4, processWebhookPayload at step 5). Also fixed verifyWebhookSignature to return false (reject) when webhook secret is not configured, instead of returning true (allow).
+- Ran bun run lint: clean, zero errors.
+- Dev server starts and compiles without errors.
+
+Stage Summary:
+- Files modified: adapter.ts, eversend.ts, webhooks/eversend/route.ts, webhooks/mock/complete/route.ts, send/initialize/route.ts, bills/initialize/route.ts
+- No new files created.
+- All four tasks + bonus confirmed/fixed.

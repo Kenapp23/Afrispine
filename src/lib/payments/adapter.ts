@@ -293,33 +293,50 @@ export class EversendProvider implements PaymentProvider {
  * Reads PlatformSetting 'payment_provider' (values: 'mock', 'eversend').
  * If 'mock' or no setting found, returns MockProvider.
  * If 'eversend', tries to create EversendClient.fromSettings().
- * Falls back to MockProvider if Eversend credentials are missing.
+ * If 'eversend' but credentials are missing/invalid, THROWS ProviderInitializationError
+ *   (never silently falls back to Mock — see Task 1 rationale).
  */
+export class ProviderInitializationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ProviderInitializationError';
+  }
+}
+
 export async function getProvider(): Promise<PaymentProvider | null> {
-  // MockProvider is always available as a fallback
   const mock = new MockProvider();
 
   try {
     const { db, dbReady } = await import('@/lib/db');
     if (!dbReady) {
+      // No DB → can't read setting → mock is acceptable in dev
       console.warn('[payments/adapter] DB not ready — using MockProvider');
       return mock;
     }
 
     const setting = await db.platformSetting.findUnique({ where: { key: 'payment_provider' } });
-    const provider = setting?.value || 'mock';
+    const configuredProvider = setting?.value || 'mock';
 
-    if (provider === 'eversend') {
+    if (configuredProvider === 'eversend') {
       const client = await EversendClient.fromSettings();
       if (client) {
         return new EversendProvider(client);
       }
-      console.warn('[payments/adapter] Eversend configured but credentials missing — falling back to MockProvider');
+      // FAIL LOUD: eversend is explicitly configured but credentials are missing or invalid.
+      // Never silently fall back to Mock — a payment looking like it succeeded when it
+      // actually went to a fake provider is worse than an honest 5xx.
+      throw new ProviderInitializationError(
+        'Eversend is configured as the payment provider but credentials are missing or invalid. ' +
+        'Set eversend_client_id and eversend_client_secret in PlatformSetting (or PartnerConfig).' +
+        ' If you want Mock mode, set payment_provider to "mock".'
+      );
     }
 
-    // Default: mock
+    // payment_provider is 'mock' or unset → MockProvider is the intended provider
     return mock;
   } catch (err) {
+    if (err instanceof ProviderInitializationError) throw err;
+    // DB read errors during provider selection → acceptable to fall back to mock
     console.warn('[payments/adapter] Error determining provider, using MockProvider:', err);
     return mock;
   }
