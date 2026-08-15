@@ -381,3 +381,21 @@ Stage Summary:
 - Asset created: public/hero-creator.png
 - All creator pages are self-contained (own nav + footer), no layout wrapper needed
 - Ready for deployment once preview is verified
+
+---
+Task ID: fix-blank-preview
+Agent: Main Agent
+Task: Fix blank preview caused by OOM during page.tsx compilation
+
+Work Log:
+- Diagnosed root cause: page.tsx had 100+ static imports causing Turbopack OOM
+- Rewrote page.tsx to use next/dynamic for all 80+ component imports
+- Compilation dropped from OOM-crash to ~8 seconds
+- Fixed SendFlow import bug (wrong module)
+- Used Task subagent to keep dev server alive
+- Browser-verified landing page and navigation work
+
+Stage Summary:
+- Preview is no longer blank
+- All components use dynamic imports
+- Key file changed: src/app/page.tsx

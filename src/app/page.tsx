@@ -1,193 +1,174 @@
 'use client';
 
-import React, { useEffect, useSyncExternalStore } from 'react';
-import { useAppStore, ViewName } from '@/stores/app';
+import React, { useEffect, useSyncExternalStore, type ComponentType } from 'react';
+import dynamic from 'next/dynamic';
+import { useAppStore, type ViewName } from '@/stores/app';
 
-// ─── Layouts ─────────────────────────────────────────────────
-import { PublicLayout, SenderLayout, AdminLayout } from '@/components/afrispine/common/layout';
+// ─── Loading skeleton ──────────────────────────────────────
+function PageSkeleton() {
+  return (
+    <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="flex flex-col items-center gap-3">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-600" />
+        <span className="text-sm text-gray-400">Loading…</span>
+      </div>
+    </div>
+  );
+}
 
-// ─── Creator Platform Pages (public-facing, self-contained) ──
-import { CreatorLandingPage } from '@/components/creator/creator-landing-page';
-import { CreatorAboutPage } from '@/components/creator/creator-about-page';
-import { CreatorContactPage } from '@/components/creator/creator-contact-page';
-import { CreatorTermsPage } from '@/components/creator/creator-terms-page';
-import { CreatorPrivacyPage } from '@/components/creator/creator-privacy-page';
-import { CreatorWatchPage } from '@/components/creator/creator-watch-page';
-import { CreatorApplyPage } from '@/components/creator/creator-apply-page';
+// ─── Dynamic import helper ─────────────────────────────────
+const d = <P extends object>(loader: () => Promise<{ default: ComponentType<P> }>) =>
+  dynamic(loader, { loading: () => <PageSkeleton /> });
 
-// ─── Auth Pages (eager — critical path) ─────────────────────
-import { LoginPage } from '@/components/afrispine/auth/login-page';
-import { SignupPage } from '@/components/afrispine/auth/signup-page';
-import { AdminLoginPage } from '@/components/afrispine/auth/admin-login-page';
-import { ForgotPasswordPage } from '@/components/afrispine/auth/forgot-password-page';
-import { OnboardingPage } from '@/components/afrispine/auth/onboarding-page';
-import { VerifyEmailPage } from '@/components/afrispine/auth/verify-email-page';
+// Creator Platform Pages
+const CreatorLandingPage = d(() => import('@/components/creator/creator-landing-page').then(m => ({ default: m.CreatorLandingPage })));
+const CreatorAboutPage = d(() => import('@/components/creator/creator-about-page').then(m => ({ default: m.CreatorAboutPage })));
+const CreatorContactPage = d(() => import('@/components/creator/creator-contact-page').then(m => ({ default: m.CreatorContactPage })));
+const CreatorTermsPage = d(() => import('@/components/creator/creator-terms-page').then(m => ({ default: m.CreatorTermsPage })));
+const CreatorPrivacyPage = d(() => import('@/components/creator/creator-privacy-page').then(m => ({ default: m.CreatorPrivacyPage })));
+const CreatorWatchPage = d(() => import('@/components/creator/creator-watch-page').then(m => ({ default: m.CreatorWatchPage })));
+const CreatorApplyPage = d(() => import('@/components/creator/creator-apply-page').then(m => ({ default: m.CreatorApplyPage })));
 
-// ─── Public / Static Pages ──────────────────────────────────
-import { LandingPage } from '@/components/afrispine/common/landing-page';
-import { AboutPage } from '@/components/afrispine/common/about-page';
-import { FaqPage } from '@/components/afrispine/common/faq-page';
-import { ContactPage } from '@/components/afrispine/common/contact-page';
-import { PricingPage } from '@/components/afrispine/common/pricing-page';
-import { TermsPage } from '@/components/afrispine/common/terms-page';
-import { PrivacyPage } from '@/components/afrispine/common/privacy-page';
-import { AmlPolicyPage } from '@/components/afrispine/common/aml-policy-page';
-import { BestRatesPage } from '@/components/afrispine/common/best-rates-page';
-import { MarketsPage } from '@/components/afrispine/common/markets-page';
-import { DangoteIpoPage } from '@/components/afrispine/common/dangote-ipo-page';
-import ChinaCorridorPage from '@/components/afrispine/common/china-corridor-page';
-import { IntraAfricaPage } from '@/components/afrispine/common/intra-africa-page';
-import { BusinessLandingPage } from '@/components/afrispine/common/business-landing-page';
-import { BusinessRegisterPage } from '@/components/afrispine/common/business-register-page';
-import { BusinessSendPage } from '@/components/afrispine/common/business-send-page';
+// Auth Pages
+const LoginPage = d(() => import('@/components/afrispine/auth/login-page').then(m => ({ default: m.LoginPage })));
+const SignupPage = d(() => import('@/components/afrispine/auth/signup-page').then(m => ({ default: m.SignupPage })));
+const AdminLoginPage = d(() => import('@/components/afrispine/auth/admin-login-page').then(m => ({ default: m.AdminLoginPage })));
+const ForgotPasswordPage = d(() => import('@/components/afrispine/auth/forgot-password-page').then(m => ({ default: m.ForgotPasswordPage })));
+const OnboardingPage = d(() => import('@/components/afrispine/auth/onboarding-page').then(m => ({ default: m.OnboardingPage })));
+const VerifyEmailPage = d(() => import('@/components/afrispine/auth/verify-email-page').then(m => ({ default: m.VerifyEmailPage })));
 
-// ─── SEO Corridor Pages ─────────────────────────────────────
-import { SeoSendUkKenya } from '@/components/afrispine/seo/seo-send-uk-kenya';
-import { SeoSendUsNigeria } from '@/components/afrispine/seo/seo-send-us-nigeria';
-import { SeoSendCanadaGhana } from '@/components/afrispine/seo/seo-send-canada-ghana';
-import { SeoSendUkNigeria } from '@/components/afrispine/seo/seo-send-uk-nigeria';
-import { SeoSendDangoteIpo } from '@/components/afrispine/seo/seo-send-dangote-ipo';
+// Public / Static Pages
+const LandingPage = d(() => import('@/components/afrispine/common/landing-page').then(m => ({ default: m.LandingPage })));
+const AboutPage = d(() => import('@/components/afrispine/common/about-page').then(m => ({ default: m.AboutPage })));
+const FaqPage = d(() => import('@/components/afrispine/common/faq-page').then(m => ({ default: m.FaqPage })));
+const ContactPage = d(() => import('@/components/afrispine/common/contact-page').then(m => ({ default: m.ContactPage })));
+const PricingPage = d(() => import('@/components/afrispine/common/pricing-page').then(m => ({ default: m.PricingPage })));
+const TermsPage = d(() => import('@/components/afrispine/common/terms-page').then(m => ({ default: m.TermsPage })));
+const PrivacyPage = d(() => import('@/components/afrispine/common/privacy-page').then(m => ({ default: m.PrivacyPage })));
+const AmlPolicyPage = d(() => import('@/components/afrispine/common/aml-policy-page').then(m => ({ default: m.AmlPolicyPage })));
+const BestRatesPage = d(() => import('@/components/afrispine/common/best-rates-page').then(m => ({ default: m.BestRatesPage })));
+const MarketsPage = d(() => import('@/components/afrispine/common/markets-page').then(m => ({ default: m.MarketsPage })));
+const DangoteIpoPage = d(() => import('@/components/afrispine/common/dangote-ipo-page').then(m => ({ default: m.DangoteIpoPage })));
+const ChinaCorridorPage = d(() => import('@/components/afrispine/common/china-corridor-page'));
+const IntraAfricaPage = d(() => import('@/components/afrispine/common/intra-africa-page').then(m => ({ default: m.IntraAfricaPage })));
+const BusinessLandingPage = d(() => import('@/components/afrispine/common/business-landing-page').then(m => ({ default: m.BusinessLandingPage })));
+const BusinessRegisterPage = d(() => import('@/components/afrispine/common/business-register-page').then(m => ({ default: m.BusinessRegisterPage })));
+const BusinessSendPage = d(() => import('@/components/afrispine/common/business-send-page').then(m => ({ default: m.BusinessSendPage })));
 
-// ─── Sender Pages ───────────────────────────────────────────
-import { DashboardPage } from '@/components/afrispine/sender/dashboard-page';
-import { SendFlow } from '@/components/afrispine/send/send-flow';
-import { TransfersPage } from '@/components/afrispine/sender/transfers-page';
-import { TransferDetailPage } from '@/components/afrispine/sender/transfer-detail-page';
-import { ProfilePage } from '@/components/afrispine/sender/profile-page';
-import { NotificationsPage } from '@/components/afrispine/sender/notifications-page';
-import { RecurringSendsPage } from '@/components/afrispine/sender/recurring-sends-page';
-import { RateAlertsPage } from '@/components/afrispine/sender/rate-alerts-page';
-import { AirtimePage } from '@/components/afrispine/sender/airtime-page';
-import { BillsPage } from '@/components/afrispine/sender/bills-page';
-import { GroupSendsPage } from '@/components/afrispine/sender/group-sends-page';
-import { ChamaPage } from '@/components/afrispine/sender/chama-page';
-import { KycPage } from '@/components/afrispine/sender/kyc-page';
+// SEO Pages
+const SeoSendUkKenya = d(() => import('@/components/afrispine/seo/seo-send-uk-kenya').then(m => ({ default: m.SeoSendUkKenya })));
+const SeoSendUsNigeria = d(() => import('@/components/afrispine/seo/seo-send-us-nigeria').then(m => ({ default: m.SeoSendUsNigeria })));
+const SeoSendCanadaGhana = d(() => import('@/components/afrispine/seo/seo-send-canada-ghana').then(m => ({ default: m.SeoSendCanadaGhana })));
+const SeoSendUkNigeria = d(() => import('@/components/afrispine/seo/seo-send-uk-nigeria').then(m => ({ default: m.SeoSendUkNigeria })));
+const SeoSendDangoteIpo = d(() => import('@/components/afrispine/seo/seo-send-dangote-ipo').then(m => ({ default: m.SeoSendDangoteIpo })));
 
-// ─── Wealth Pages ───────────────────────────────────────────
-import { WealthLandingPage } from '@/components/afrispine/wealth/wealth-landing-page';
-import { WealthMarketPage } from '@/components/afrispine/wealth/wealth-market-page';
-import { WealthStockPage } from '@/components/afrispine/wealth/wealth-stock-page';
-import { WealthPortfolioPage } from '@/components/afrispine/wealth/wealth-portfolio-page';
-import { WealthBuyPage } from '@/components/afrispine/wealth/wealth-buy-page';
-import { WealthBondsPage } from '@/components/afrispine/wealth/wealth-bonds-page';
-import { WealthWatchlistPage } from '@/components/afrispine/wealth/wealth-watchlist-page';
-import { WealthActivationPage } from '@/components/afrispine/wealth/wealth-activation-page';
+// Sender Pages
+const DashboardPage = d(() => import('@/components/afrispine/sender/dashboard-page').then(m => ({ default: m.DashboardPage })));
+const SendFlow = d(() => import('@/components/afrispine/send/send-flow').then(m => ({ default: m.SendFlow })));
+const TransfersPage = d(() => import('@/components/afrispine/sender/transfers-page').then(m => ({ default: m.TransfersPage })));
+const TransferDetailPage = d(() => import('@/components/afrispine/sender/transfer-detail-page').then(m => ({ default: m.TransferDetailPage })));
+const ProfilePage = d(() => import('@/components/afrispine/sender/profile-page').then(m => ({ default: m.ProfilePage })));
+const NotificationsPage = d(() => import('@/components/afrispine/sender/notifications-page').then(m => ({ default: m.NotificationsPage })));
+const RecurringSendsPage = d(() => import('@/components/afrispine/sender/recurring-sends-page').then(m => ({ default: m.RecurringSendsPage })));
+const RateAlertsPage = d(() => import('@/components/afrispine/sender/rate-alerts-page').then(m => ({ default: m.RateAlertsPage })));
+const AirtimePage = d(() => import('@/components/afrispine/sender/airtime-page').then(m => ({ default: m.AirtimePage })));
+const BillsPage = d(() => import('@/components/afrispine/sender/bills-page').then(m => ({ default: m.BillsPage })));
+const GroupSendsPage = d(() => import('@/components/afrispine/sender/group-sends-page').then(m => ({ default: m.GroupSendsPage })));
+const ChamaPage = d(() => import('@/components/afrispine/sender/chama-page').then(m => ({ default: m.ChamaPage })));
+const KycPage = d(() => import('@/components/afrispine/sender/kyc-page').then(m => ({ default: m.KycPage })));
 
-// ─── Gift Pages ─────────────────────────────────────────────
-import GiftsHubPage from '@/components/afrispine/gifts/gifts-hub-page';
-import GiftsSendPage from '@/components/afrispine/gifts/gifts-send-page';
-import GiftsRedeemPage from '@/components/afrispine/gifts/gifts-redeem-page';
-import MerchantOnboardingPage from '@/components/afrispine/gifts/merchant-onboarding-page';
+// Wealth Pages
+const WealthLandingPage = d(() => import('@/components/afrispine/wealth/wealth-landing-page').then(m => ({ default: m.WealthLandingPage })));
+const WealthMarketPage = d(() => import('@/components/afrispine/wealth/wealth-market-page').then(m => ({ default: m.WealthMarketPage })));
+const WealthStockPage = d(() => import('@/components/afrispine/wealth/wealth-stock-page').then(m => ({ default: m.WealthStockPage })));
+const WealthPortfolioPage = d(() => import('@/components/afrispine/wealth/wealth-portfolio-page').then(m => ({ default: m.WealthPortfolioPage })));
+const WealthBuyPage = d(() => import('@/components/afrispine/wealth/wealth-buy-page').then(m => ({ default: m.WealthBuyPage })));
+const WealthBondsPage = d(() => import('@/components/afrispine/wealth/wealth-bonds-page').then(m => ({ default: m.WealthBondsPage })));
+const WealthWatchlistPage = d(() => import('@/components/afrispine/wealth/wealth-watchlist-page').then(m => ({ default: m.WealthWatchlistPage })));
+const WealthActivationPage = d(() => import('@/components/afrispine/wealth/wealth-activation-page').then(m => ({ default: m.WealthActivationPage })));
 
-// ─── Digest Pages ───────────────────────────────────────────
-import { DigestCurrentIssuePage } from '@/components/afrispine/digest/digest-current-issue-page';
-import { DigestArchivePage } from '@/components/afrispine/digest/digest-archive-page';
-import { DigestIssuePage } from '@/components/afrispine/digest/digest-issue-page';
-import { DigestStoryPage } from '@/components/afrispine/digest/digest-story-page';
-import { DigestAdvertisePage } from '@/components/afrispine/digest/digest-advertise-page';
-import { DigestSubscribePage } from '@/components/afrispine/digest/digest-subscribe-page';
+// Gift Pages
+const GiftsHubPage = d(() => import('@/components/afrispine/gifts/gifts-hub-page'));
+const GiftsSendPage = d(() => import('@/components/afrispine/gifts/gifts-send-page'));
+const GiftsRedeemPage = d(() => import('@/components/afrispine/gifts/gifts-redeem-page'));
+const MerchantOnboardingPage = d(() => import('@/components/afrispine/gifts/merchant-onboarding-page'));
 
-// ─── Admin Pages ────────────────────────────────────────────
-import { AdminDashboard as AdminDashboardPage } from '@/components/afrispine/admin/admin-dashboard';
-import { AdminTransactionsPage } from '@/components/afrispine/admin/admin-transactions-page';
-import { AdminSendersPage } from '@/components/afrispine/admin/admin-senders-page';
-import { AdminProvidersPage } from '@/components/afrispine/admin/admin-providers-page';
-import { AdminRevenuePage } from '@/components/afrispine/admin/admin-revenue-page';
-import { AdminBillingPage } from '@/components/afrispine/admin/admin-billing-page';
-import { AdminSettlementPage } from '@/components/afrispine/admin/admin-settlement-page';
-import { AdminCompliancePage } from '@/components/afrispine/admin/admin-compliance-page';
-import { AdminSettingsPage } from '@/components/afrispine/admin/admin-settings-page';
-import { AdminBusinessPage } from '@/components/afrispine/admin/admin-business-page';
-import { AdminWealthPage } from '@/components/afrispine/admin/admin-wealth-page';
-import { AdminDigestPage } from '@/components/afrispine/admin/admin-digest-page';
-import { AdminGiftProvidersPage } from '@/components/afrispine/admin/admin-gift-providers-page';
-import AdminGiftCardsPage from '@/components/afrispine/admin/admin-gift-cards-page';
-import { AdminTestingDashboard } from '@/components/afrispine/admin/admin-testing-dashboard';
-import { AdminPartnersPage } from '@/components/afrispine/admin/admin-partners-page';
+// Digest Pages
+const DigestCurrentIssuePage = d(() => import('@/components/afrispine/digest/digest-current-issue-page').then(m => ({ default: m.DigestCurrentIssuePage })));
+const DigestArchivePage = d(() => import('@/components/afrispine/digest/digest-archive-page').then(m => ({ default: m.DigestArchivePage })));
+const DigestIssuePage = d(() => import('@/components/afrispine/digest/digest-issue-page').then(m => ({ default: m.DigestIssuePage })));
+const DigestStoryPage = d(() => import('@/components/afrispine/digest/digest-story-page').then(m => ({ default: m.DigestStoryPage })));
+const DigestAdvertisePage = d(() => import('@/components/afrispine/digest/digest-advertise-page').then(m => ({ default: m.DigestAdvertisePage })));
+const DigestSubscribePage = d(() => import('@/components/afrispine/digest/digest-subscribe-page').then(m => ({ default: m.DigestSubscribePage })));
+
+// Admin Pages
+const AdminDashboard = d(() => import('@/components/afrispine/admin/admin-dashboard').then(m => ({ default: m.AdminDashboard })));
+const AdminTransactionsPage = d(() => import('@/components/afrispine/admin/admin-transactions-page').then(m => ({ default: m.AdminTransactionsPage })));
+const AdminSendersPage = d(() => import('@/components/afrispine/admin/admin-senders-page').then(m => ({ default: m.AdminSendersPage })));
+const AdminProvidersPage = d(() => import('@/components/afrispine/admin/admin-providers-page').then(m => ({ default: m.AdminProvidersPage })));
+const AdminRevenuePage = d(() => import('@/components/afrispine/admin/admin-revenue-page').then(m => ({ default: m.AdminRevenuePage })));
+const AdminBillingPage = d(() => import('@/components/afrispine/admin/admin-billing-page').then(m => ({ default: m.AdminBillingPage })));
+const AdminSettlementPage = d(() => import('@/components/afrispine/admin/admin-settlement-page').then(m => ({ default: m.AdminSettlementPage })));
+const AdminCompliancePage = d(() => import('@/components/afrispine/admin/admin-compliance-page').then(m => ({ default: m.AdminCompliancePage })));
+const AdminSettingsPage = d(() => import('@/components/afrispine/admin/admin-settings-page').then(m => ({ default: m.AdminSettingsPage })));
+const AdminBusinessPage = d(() => import('@/components/afrispine/admin/admin-business-page').then(m => ({ default: m.AdminBusinessPage })));
+const AdminWealthPage = d(() => import('@/components/afrispine/admin/admin-wealth-page').then(m => ({ default: m.AdminWealthPage })));
+const AdminDigestPage = d(() => import('@/components/afrispine/admin/admin-digest-page').then(m => ({ default: m.AdminDigestPage })));
+const AdminGiftProvidersPage = d(() => import('@/components/afrispine/admin/admin-gift-providers-page').then(m => ({ default: m.AdminGiftProvidersPage })));
+const AdminGiftCardsPage = d(() => import('@/components/afrispine/admin/admin-gift-cards-page'));
+const AdminTestingDashboard = d(() => import('@/components/afrispine/admin/admin-testing-dashboard').then(m => ({ default: m.AdminTestingDashboard })));
+const AdminPartnersPage = d(() => import('@/components/afrispine/admin/admin-partners-page').then(m => ({ default: m.AdminPartnersPage })));
+
+// Layouts
+const PublicLayout = d(() => import('@/components/afrispine/common/layout').then(m => ({ default: m.PublicLayout })));
+const SenderLayout = d(() => import('@/components/afrispine/common/layout').then(m => ({ default: m.SenderLayout })));
+const AdminLayout = d(() => import('@/components/afrispine/common/layout').then(m => ({ default: m.AdminLayout })));
 
 // ─── URL-to-View mapping ─────────────────────────────────────
 const URL_VIEW_MAP: Record<string, ViewName> = {
   '/': 'landing',
-  '/login': 'login',
-  '/signup': 'signup',
-  '/forgot-password': 'forgot-password',
-  '/onboarding': 'onboarding',
-  '/verify': 'verify',
-  '/admin-login': 'admin-login',
-  '/pricing': 'pricing',
-  '/faq': 'faq',
-  '/about': 'about',
-  '/contact': 'contact',
-  '/terms': 'terms',
-  '/privacy': 'privacy',
-  '/aml-policy': 'aml-policy',
-  '/best-rates': 'best-rates',
-  '/business': 'business',
-  '/business/register': 'business-register',
-  '/business/send': 'business-send',
-  '/markets': 'markets',
-  '/dangote-ipo': 'dangote-ipo',
-  '/china-corridor': 'china-corridor',
-  '/intra-africa': 'intra-africa',
-  '/send/uk-kenya': 'send-uk-kenya',
-  '/send/us-nigeria': 'send-us-nigeria',
-  '/send/canada-ghana': 'send-canada-ghana',
-  '/send/uk-nigeria': 'send-uk-nigeria',
+  '/login': 'login', '/signup': 'signup', '/forgot-password': 'forgot-password',
+  '/onboarding': 'onboarding', '/verify': 'verify', '/admin-login': 'admin-login',
+  '/pricing': 'pricing', '/faq': 'faq', '/about': 'about', '/contact': 'contact',
+  '/terms': 'terms', '/privacy': 'privacy', '/aml-policy': 'aml-policy',
+  '/best-rates': 'best-rates', '/business': 'business',
+  '/business/register': 'business-register', '/business/send': 'business-send',
+  '/markets': 'markets', '/dangote-ipo': 'dangote-ipo',
+  '/china-corridor': 'china-corridor', '/intra-africa': 'intra-africa',
+  '/send/uk-kenya': 'send-uk-kenya', '/send/us-nigeria': 'send-us-nigeria',
+  '/send/canada-ghana': 'send-canada-ghana', '/send/uk-nigeria': 'send-uk-nigeria',
   '/send/dangote-ipo': 'send-dangote-ipo',
-  '/dashboard': 'dashboard',
-  '/send': 'send',
-  '/transfers': 'transfers',
-  '/profile': 'profile',
-  '/notifications': 'notifications',
-  '/recurring-sends': 'recurring-sends',
-  '/rate-alerts': 'rate-alerts',
-  '/airtime': 'airtime',
-  '/bills': 'bills',
-  '/group-sends': 'group-sends',
-  '/chama': 'chama',
-  '/kyc': 'kyc',
-  '/wealth': 'wealth-landing',
-  '/wealth/market': 'wealth-market',
-  '/wealth/stock': 'wealth-stock',
-  '/wealth/portfolio': 'wealth-portfolio',
-  '/wealth/buy': 'wealth-buy',
-  '/wealth/bonds': 'wealth-bonds',
-  '/wealth/watchlist': 'wealth-watchlist',
-  '/wealth/activation': 'wealth-activation',
-  '/gifts': 'gifts',
-  '/gifts/send': 'gifts-send',
-  '/gifts/redeem': 'gifts-redeem',
-  '/gifts/merchant': 'gifts-merchant',
-  '/digest': 'digest-current',
-  '/digest/archive': 'digest-archive',
-  '/digest/issue': 'digest-issue',
-  '/digest/story': 'digest-story',
-  '/digest/advertise': 'digest-advertise',
-  '/digest/subscribe': 'digest-subscribe',
-  '/admin': 'admin-dashboard',
-  '/admin/transactions': 'admin-transactions',
-  '/admin/senders': 'admin-senders',
-  '/admin/providers': 'admin-providers',
-  '/admin/revenue': 'admin-revenue',
-  '/admin/billing': 'admin-billing',
-  '/admin/settlement': 'admin-settlement',
-  '/admin/compliance': 'admin-compliance',
-  '/admin/settings': 'admin-settings',
-  '/admin/business': 'admin-business',
-  '/admin/wealth': 'admin-wealth',
-  '/admin/digest': 'admin-digest',
+  '/dashboard': 'dashboard', '/send': 'send', '/transfers': 'transfers',
+  '/profile': 'profile', '/notifications': 'notifications',
+  '/recurring-sends': 'recurring-sends', '/rate-alerts': 'rate-alerts',
+  '/airtime': 'airtime', '/bills': 'bills', '/group-sends': 'group-sends',
+  '/chama': 'chama', '/kyc': 'kyc',
+  '/wealth': 'wealth-landing', '/wealth/market': 'wealth-market',
+  '/wealth/stock': 'wealth-stock', '/wealth/portfolio': 'wealth-portfolio',
+  '/wealth/buy': 'wealth-buy', '/wealth/bonds': 'wealth-bonds',
+  '/wealth/watchlist': 'wealth-watchlist', '/wealth/activation': 'wealth-activation',
+  '/gifts': 'gifts', '/gifts/send': 'gifts-send',
+  '/gifts/redeem': 'gifts-redeem', '/gifts/merchant': 'gifts-merchant',
+  '/digest': 'digest-current', '/digest/archive': 'digest-archive',
+  '/digest/issue': 'digest-issue', '/digest/story': 'digest-story',
+  '/digest/advertise': 'digest-advertise', '/digest/subscribe': 'digest-subscribe',
+  '/admin': 'admin-dashboard', '/admin/transactions': 'admin-transactions',
+  '/admin/senders': 'admin-senders', '/admin/providers': 'admin-providers',
+  '/admin/revenue': 'admin-revenue', '/admin/billing': 'admin-billing',
+  '/admin/settlement': 'admin-settlement', '/admin/compliance': 'admin-compliance',
+  '/admin/settings': 'admin-settings', '/admin/business': 'admin-business',
+  '/admin/wealth': 'admin-wealth', '/admin/digest': 'admin-digest',
   '/admin/gift-providers': 'admin-gift-providers',
-  '/admin/gift-cards': 'admin-gift-cards',
-  '/admin/testing': 'admin-testing',
+  '/admin/gift-cards': 'admin-gift-cards', '/admin/testing': 'admin-testing',
   '/admin/partners': 'admin-partners',
-  '/watch': 'watch',
-  '/apply': 'creator-apply',
+  '/watch': 'watch', '/apply': 'creator-apply',
 };
 
 const ADMIN_VIEWS: ViewName[] = [
   'admin-dashboard', 'admin-transactions', 'admin-senders', 'admin-providers',
   'admin-revenue', 'admin-billing', 'admin-settlement', 'admin-compliance',
-  'admin-settings', 'admin-business', 'admin-wealth', 'admin-digest', 'admin-gift-providers', 'admin-gift-cards', 'admin-testing', 'admin-partners',
+  'admin-settings', 'admin-business', 'admin-wealth', 'admin-digest',
+  'admin-gift-providers', 'admin-gift-cards', 'admin-testing', 'admin-partners',
 ];
 
 const SENDER_VIEWS: ViewName[] = [
@@ -200,8 +181,6 @@ const SENDER_VIEWS: ViewName[] = [
 ];
 
 const AUTH_VIEWS: ViewName[] = ['login', 'signup', 'forgot-password', 'onboarding', 'verify'];
-
-// ─── Creator platform views (self-contained: own nav + footer) ──
 const CREATOR_VIEWS: ViewName[] = ['landing', 'about', 'contact', 'terms', 'privacy', 'watch', 'creator-apply'];
 
 function renderCreatorPage(view: ViewName): React.ReactNode {
@@ -217,7 +196,6 @@ function renderCreatorPage(view: ViewName): React.ReactNode {
   }
 }
 
-// ─── Page renderers (legacy: all imported at module level) ───
 function renderPublicPage(view: ViewName): React.ReactNode {
   switch (view) {
     case 'landing': return <LandingPage />;
@@ -284,7 +262,7 @@ function renderSenderPage(view: ViewName): React.ReactNode {
 
 function renderAdminPage(view: ViewName): React.ReactNode {
   switch (view) {
-    case 'admin-dashboard': return <AdminDashboardPage />;
+    case 'admin-dashboard': return <AdminDashboard />;
     case 'admin-transactions': return <AdminTransactionsPage />;
     case 'admin-senders': return <AdminSendersPage />;
     case 'admin-providers': return <AdminProvidersPage />;
@@ -310,14 +288,12 @@ export default function Home() {
   const sender = useAppStore((s) => s.sender);
   const admin = useAppStore((s) => s.admin);
 
-  // Detect client-side mount without hydration mismatch (React 18+ pattern)
   const mounted = useSyncExternalStore(
     () => () => {},
     () => true,
     () => false,
   );
 
-  // Restore session from httpOnly cookie on mount
   useEffect(() => {
     (async () => {
       try {
@@ -325,34 +301,20 @@ export default function Home() {
         if (!res.ok) return;
         const data = await res.json();
         if (data.success && data.type === 'sender' && data.sender) {
-          // Restore sender state WITHOUT navigating away from current view
-          useAppStore.setState({
-            sender: data.sender,
-            sessionToken: 'restored',
-            admin: null,
-            adminSessionToken: null,
-          });
+          useAppStore.setState({ sender: data.sender, sessionToken: 'restored', admin: null, adminSessionToken: null });
         } else if (data.success && data.type === 'admin' && data.admin) {
-          useAppStore.setState({
-            admin: data.admin,
-            adminSessionToken: 'restored',
-            sender: null,
-            sessionToken: null,
-          });
+          useAppStore.setState({ admin: data.admin, adminSessionToken: 'restored', sender: null, sessionToken: null });
         }
       } catch {}
     })();
   }, []);
 
-  // Sync URL/hash → Zustand view on mount & popstate
   useEffect(() => {
     const sync = () => {
       const hashPath = window.location.hash.replace(/^#/, '');
       const path = hashPath || window.location.pathname;
       const v = URL_VIEW_MAP[path];
       if (v) {
-        // If the view came from the pathname (Vercel rewrite), clean the URL
-        // to a pure hash format to prevent doubled paths like /admin-login#/admin-login
         if (!hashPath && window.location.pathname !== '/') {
           window.history.replaceState({}, '', '#' + window.location.pathname);
         }
@@ -362,7 +324,6 @@ export default function Home() {
     sync();
     window.addEventListener('popstate', sync);
     window.addEventListener('hashchange', sync);
-    // Ensure database is seeded (idempotent)
     fetch('/api/seed', { method: 'POST' }).catch(() => {});
     return () => {
       window.removeEventListener('popstate', sync);
@@ -370,7 +331,6 @@ export default function Home() {
     };
   }, []);
 
-  // Sync Zustand → browser URL (hash-based for SPA compatibility)
   useEffect(() => {
     const entry = Object.entries(URL_VIEW_MAP).find(([, v]) => v === currentView);
     const target = entry?.[0] || '/';
@@ -380,13 +340,11 @@ export default function Home() {
     }
   }, [currentView]);
 
-  // Auth guards
   useEffect(() => {
     if (SENDER_VIEWS.includes(currentView) && !sender) navigate('login');
     if (ADMIN_VIEWS.includes(currentView) && !admin) navigate('admin-login');
   }, [currentView, sender, admin]);
 
-  // Before mount: show minimal loading shell to prevent SSR flash of wrong page
   if (!mounted) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -395,18 +353,13 @@ export default function Home() {
     );
   }
 
-  // ─── Admin Login: full-page dark layout (no public wrapper) ──
   if (currentView === 'admin-login') return <AdminLoginPage />;
 
-  // ─── Creator Platform pages (self-contained: own nav + footer) ──
-  // These override the legacy public pages for landing/about/contact/terms/privacy
-  // and add new pages: watch, creator-apply
   if (CREATOR_VIEWS.includes(currentView)) {
     const creatorContent = renderCreatorPage(currentView);
     if (creatorContent) return creatorContent;
   }
 
-  // ─── Auth pages: center card in minimal public wrapper ──────
   if (AUTH_VIEWS.includes(currentView)) {
     let content: React.ReactNode;
     switch (currentView) {
@@ -436,30 +389,18 @@ export default function Home() {
     );
   }
 
-  // ─── Sender views (authenticated) ──────────────────────────
   if (SENDER_VIEWS.includes(currentView) && sender) {
-    return (
-      <SenderLayout>
-        {renderSenderPage(currentView)}
-      </SenderLayout>
-    );
+    return <SenderLayout>{renderSenderPage(currentView)}</SenderLayout>;
   }
 
-  // ─── Admin views (authenticated) ───────────────────────────
   if (ADMIN_VIEWS.includes(currentView) && admin) {
-    return (
-      <AdminLayout>
-        {renderAdminPage(currentView)}
-      </AdminLayout>
-    );
+    return <AdminLayout>{renderAdminPage(currentView)}</AdminLayout>;
   }
 
-  // ─── Public / Static pages ────────────────────────────────
   const publicContent = renderPublicPage(currentView);
   if (publicContent) {
     return <PublicLayout>{publicContent}</PublicLayout>;
   }
 
-  // ─── Fallback: Landing page ────────────────────────────────
   return <PublicLayout><LandingPage /></PublicLayout>;
 }
