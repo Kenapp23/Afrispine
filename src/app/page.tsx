@@ -6,6 +6,15 @@ import { useAppStore, ViewName } from '@/stores/app';
 // ─── Layouts ─────────────────────────────────────────────────
 import { PublicLayout, SenderLayout, AdminLayout } from '@/components/afrispine/common/layout';
 
+// ─── Creator Platform Pages (public-facing, self-contained) ──
+import { CreatorLandingPage } from '@/components/creator/creator-landing-page';
+import { CreatorAboutPage } from '@/components/creator/creator-about-page';
+import { CreatorContactPage } from '@/components/creator/creator-contact-page';
+import { CreatorTermsPage } from '@/components/creator/creator-terms-page';
+import { CreatorPrivacyPage } from '@/components/creator/creator-privacy-page';
+import { CreatorWatchPage } from '@/components/creator/creator-watch-page';
+import { CreatorApplyPage } from '@/components/creator/creator-apply-page';
+
 // ─── Auth Pages (eager — critical path) ─────────────────────
 import { LoginPage } from '@/components/afrispine/auth/login-page';
 import { SignupPage } from '@/components/afrispine/auth/signup-page';
@@ -171,6 +180,8 @@ const URL_VIEW_MAP: Record<string, ViewName> = {
   '/admin/gift-cards': 'admin-gift-cards',
   '/admin/testing': 'admin-testing',
   '/admin/partners': 'admin-partners',
+  '/watch': 'watch',
+  '/apply': 'creator-apply',
 };
 
 const ADMIN_VIEWS: ViewName[] = [
@@ -190,7 +201,23 @@ const SENDER_VIEWS: ViewName[] = [
 
 const AUTH_VIEWS: ViewName[] = ['login', 'signup', 'forgot-password', 'onboarding', 'verify'];
 
-// ─── Page renderers (lazy-safe: all imported at module level) ───
+// ─── Creator platform views (self-contained: own nav + footer) ──
+const CREATOR_VIEWS: ViewName[] = ['landing', 'about', 'contact', 'terms', 'privacy', 'watch', 'creator-apply'];
+
+function renderCreatorPage(view: ViewName): React.ReactNode {
+  switch (view) {
+    case 'landing': return <CreatorLandingPage />;
+    case 'about': return <CreatorAboutPage />;
+    case 'contact': return <CreatorContactPage />;
+    case 'terms': return <CreatorTermsPage />;
+    case 'privacy': return <CreatorPrivacyPage />;
+    case 'watch': return <CreatorWatchPage />;
+    case 'creator-apply': return <CreatorApplyPage />;
+    default: return null;
+  }
+}
+
+// ─── Page renderers (legacy: all imported at module level) ───
 function renderPublicPage(view: ViewName): React.ReactNode {
   switch (view) {
     case 'landing': return <LandingPage />;
@@ -370,6 +397,14 @@ export default function Home() {
 
   // ─── Admin Login: full-page dark layout (no public wrapper) ──
   if (currentView === 'admin-login') return <AdminLoginPage />;
+
+  // ─── Creator Platform pages (self-contained: own nav + footer) ──
+  // These override the legacy public pages for landing/about/contact/terms/privacy
+  // and add new pages: watch, creator-apply
+  if (CREATOR_VIEWS.includes(currentView)) {
+    const creatorContent = renderCreatorPage(currentView);
+    if (creatorContent) return creatorContent;
+  }
 
   // ─── Auth pages: center card in minimal public wrapper ──────
   if (AUTH_VIEWS.includes(currentView)) {

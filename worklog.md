@@ -352,3 +352,32 @@ Stage Summary:
 - Files modified: adapter.ts, eversend.ts, webhooks/eversend/route.ts, webhooks/mock/complete/route.ts, send/initialize/route.ts, bills/initialize/route.ts
 - No new files created.
 - All four tasks + bonus confirmed/fixed.
+---
+Task ID: creator-platform-public-site
+Agent: main
+Task: Build and ship AfriSpine as a live public website for Safaricom M-PESA Business review
+
+Work Log:
+- Analyzed existing page.tsx SPA routing architecture (50+ views, hash-based routing)
+- Generated hero image at /public/hero-creator.png via z-ai CLI
+- Delegated to 3 parallel subagents:
+  - Agent 1: Creator landing page (hero, how-it-works, for-creators, trust strip, footer)
+  - Agent 2: About/Business Profile page (business model, target market, payment infrastructure)
+  - Agent 3: Contact, Terms, Privacy pages
+  - Agent 4: Interactive Watch feed (scroll-snap, IntersectionObserver, M-Pesa paywall mock)
+- Created creator-apply-page.tsx (creator application form with success state)
+- Added 'watch' | 'creator-apply' to ViewName union type in stores/app.ts
+- Added /watch and /apply entries to URL_VIEW_MAP in page.tsx
+- Created CREATOR_VIEWS array and renderCreatorPage() function
+- Wired creator pages into Home() component BEFORE legacy public pages
+- Creator pages override: landing, about, contact, terms, privacy
+- Creator pages add new: watch, creator-apply
+- Verified: bun run lint clean (zero errors)
+- Verified: no TS errors in new creator files (all errors pre-existing in legacy code)
+
+Stage Summary:
+- Files created: 7 new components in src/components/creator/
+- Files modified: src/app/page.tsx (imports + routing), src/stores/app.ts (ViewName type)
+- Asset created: public/hero-creator.png
+- All creator pages are self-contained (own nav + footer), no layout wrapper needed
+- Ready for deployment once preview is verified

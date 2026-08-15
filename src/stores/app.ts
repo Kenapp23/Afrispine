@@ -17,7 +17,8 @@ export type ViewName =
   | 'send-uk-kenya' | 'send-us-nigeria' | 'send-canada-ghana' | 'send-uk-nigeria' | 'send-dangote-ipo'
   | 'digest-current' | 'digest-archive' | 'digest-issue' | 'digest-story'
   | 'digest-advertise' | 'digest-subscribe'
-  | 'admin-digest';
+  | 'admin-digest'
+  | 'watch' | 'creator-apply';
 
 interface AppState {
   currentView: ViewName;
