@@ -737,3 +737,19 @@ Stage Summary:
 - For You feed: 4-dimension weighted scoring algorithm (V2)
 - Domain split: explained and confirmed no code changes needed
 - All changes pass ESLint clean
+---
+Task ID: download-github-vercel
+Agent: Main Agent
+Task: Generate fresh source zip, push to GitHub, deploy to Vercel
+
+Work Log:
+- Generated fresh afri-spine-source.zip (11 MB) excluding node_modules, .next, .git, .env, mini-services, examples, uploads, tool-results, skills
+- Placed zip at public/afri-spine-source.zip (gitignored, served locally)
+- Verified creator-landing-page.tsx already has download link in footer (line 378-384)
+- Force-pushed latest code to GitHub Kenapp23/Afrispine main branch (42f3544..ac54971)
+- Vercel CLI not authenticated in sandbox - cannot deploy directly
+
+Stage Summary:
+- Source zip regenerated with all latest code (11 MB)
+- GitHub repo updated with latest code
+- Vercel: No CLI token available. If Vercel is connected to the GitHub repo, the push should trigger auto-deploy. User needs to verify Vercel dashboard or provide a VERCEL_TOKEN.
