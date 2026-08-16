@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AfriSpine — Transfer Money to Africa",
+  title: "AfriSpine — African Creator Content Marketplace",
   description:
-    "Transfer money from the UK, US, and Canada to Kenya, Nigeria, Ghana. Low 1.5% fees, fast delivery.",
+    "Discover and unlock premium content from Africa's top creators. Pay with M-Pesa. Support African talent directly.",
   icons: {
     icon: [
       { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
@@ -25,13 +25,14 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
   openGraph: {
-    title: "AfriSpine — Transfer Money to Africa",
-    description: "Low 1.5% fees, fast delivery to Kenya, Nigeria, Ghana.",
+    title: "AfriSpine — African Creator Content Marketplace",
+    description: "Discover and unlock premium content from Africa's top creators. Pay with M-Pesa. Support African talent directly.",
     siteName: "AfriSpine",
     type: "website",
     locale: "en_US",
   },
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || "https://www.afri-spine.com"),
+  keywords: ["AfriSpine", "African creators", "content marketplace", "M-Pesa", "African content", "premium content", "creator economy", "Kenya", "Nigeria", "Ghana"],
 };
 
 export default function RootLayout({

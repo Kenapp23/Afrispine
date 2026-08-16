@@ -776,3 +776,27 @@ Stage Summary:
 - Pushed to GitHub as cfbbadc
 - All 4 sections (§0-§3) complete
 - Lint clean, all admin pages now discoverable, watch page trailer-as-bait model live
+
+---
+Task ID: 1
+Agent: Main
+Task: Update Google search metadata from remittance to content marketplace
+
+Work Log:
+- Audited all references to remittance/money transfer across the codebase (60+ hits)
+- Updated `src/app/layout.tsx` root metadata:
+  - Title: "AfriSpine — Transfer Money to Africa" → "AfriSpine — African Creator Content Marketplace"
+  - Description: remittance copy → "Discover and unlock premium content from Africa's top creators. Pay with M-Pesa. Support African talent directly."
+  - OG title + description updated to match
+  - Added keywords meta tag with marketplace-relevant terms
+- Updated `src/components/afrispine/common/footer.tsx`:
+  - Tagline: "transfer money home" → "Africa's creator content marketplace"
+  - Product links: replaced remittance links (Transfer Money, Business FX, Wealth, Gifts) with marketplace links (Explore Content, For Creators, For Brands, AfriSpine Digest)
+- Verified with agent-browser: all 5 metadata fields render correctly
+- Confirmed creator landing page (`CreatorLandingPage`) was already content-marketplace themed (no remittance text)
+
+Stage Summary:
+- Root layout metadata now reflects content marketplace positioning
+- Google will index the new title/description on next crawl
+- Footer product links updated for all pages that use the shared footer
+- Old remittance SEO pages (seo-send-uk-kenya, etc.) still exist but don't affect homepage search result

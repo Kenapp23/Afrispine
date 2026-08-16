@@ -18,10 +18,10 @@ const companyLinks: FooterLink[] = [
 ];
 
 const productLinks: FooterLink[] = [
-  { label: 'Transfer Money', view: 'send' },
-  { label: 'Business FX', view: 'business' },
-  { label: 'Wealth', view: 'wealth-landing' },
-  { label: 'Gifts & Occasions', view: 'gifts' },
+  { label: 'Explore Content', view: 'landing' },
+  { label: 'For Creators', view: 'creator-apply' },
+  { label: 'For Brands', view: 'sponsor-landing' },
+  { label: 'AfriSpine Digest', view: 'digest-current' },
 ];
 
 const resourceLinks: FooterLink[] = [
@@ -92,8 +92,8 @@ export function Footer() {
               AfriSpine
             </button>
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-              The modern way for the African diaspora to transfer money home. Fast,
-              fair, and built for Africans, by Africans.
+              Africa's creator content marketplace. Discover premium content,
+              support talented creators, and pay seamlessly with M-Pesa.
             </p>
             {/* Social Icons */}
             <div className="mt-5 flex items-center gap-2">
