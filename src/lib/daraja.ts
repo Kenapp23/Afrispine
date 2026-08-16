@@ -315,6 +315,149 @@ export async function initiateB2BPayment(
   };
 }
 
+// ─── Lipa Na M-Pesa Online — STK Push ─────────────────────────────
+
+/** Response type for STK Push initiation */
+export interface StkPushResponse {
+  success: boolean;
+  checkoutRequestId?: string;
+  merchantRequestId?: string;
+  responseCode?: string;
+  responseDescription?: string;
+  error?: string;
+}
+
+/**
+ * Initiate a Lipa Na M-Pesa Online STK Push.
+ *
+ * Prompts the customer's phone to enter their M-Pesa PIN to complete
+ * payment. Daraja sends the result asynchronously to the callbackUrl.
+ */
+export async function initiateStkPush(
+  phone: string,
+  amount: number,
+  accountRef: string,
+  callbackUrl: string,
+): Promise<StkPushResponse> {
+  const token = await generateDarajaToken();
+
+  const timestamp = new Date().toISOString().replace(/[-:.]/g, '').slice(0, 14);
+  const password = Buffer.from(`${B2B_SHORTCODE}${PASSKEY}${timestamp}`).toString('base64');
+
+  const body = {
+    BusinessShortCode: B2B_SHORTCODE,
+    Password: password,
+    Timestamp: timestamp,
+    TransactionType: 'CustomerPayBillOnline',
+    Amount: Math.round(amount),
+    PartyA: phone,        // format: 254...
+    PartyB: B2B_SHORTCODE,
+    PhoneNumber: phone,
+    AccountReference: accountRef,
+    TransactionDesc: accountRef,
+    CallbackURL: callbackUrl,
+  };
+
+  const res = await fetch(`${DARAJA_BASE_URL}/mpesa/stkpush/v1/processrequest`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+  const data = await res.json();
+
+  if (res.ok && data.ResponseCode === '0') {
+    return {
+      success: true,
+      checkoutRequestId: data.CheckoutRequestID,
+      merchantRequestId: data.MerchantRequestID,
+      responseCode: data.ResponseCode,
+      responseDescription: data.ResponseDescription,
+    };
+  }
+
+  return {
+    success: false,
+    responseCode: data.ResponseCode ?? '-1',
+    responseDescription: data.ResponseDescription ?? `STK Push error: ${res.status}`,
+    error: data.errorMessage ?? data.ResponseDescription ?? `Daraja STK Push error (${res.status})`,
+  };
+}
+
+// ─── B2C Payout — Disburse funds to a creator's phone ───────────
+
+/** Response type for B2C payout initiation */
+export interface B2CPayoutResponse {
+  success: boolean;
+  conversationId?: string;
+  originatorConversationId?: string;
+  responseCode?: string;
+  responseDescription?: string;
+  error?: string;
+}
+
+/**
+ * Initiate a B2C (Business-to-Customer) payout via M-Pesa.
+ *
+ * Sends money from the business shortcode to a creator's M-Pesa phone.
+ * Daraja sends the result asynchronously to the callback URLs.
+ */
+export async function initiateB2CPayout(
+  phone: string,
+  amount: number,
+  remarks: string,
+  callbackUrl: string,
+): Promise<B2CPayoutResponse> {
+  const token = await generateDarajaToken();
+
+  const timestamp = new Date().toISOString().replace(/[-:.]/g, '').slice(0, 14);
+  const securityCredential = generateSecurityCredential(timestamp);
+
+  const body = {
+    InitiatorName: 'apitest',
+    SecurityCredential: securityCredential,
+    CommandID: 'BusinessPayment',
+    Amount: Math.round(amount),
+    PartyA: B2B_SHORTCODE,
+    PartyB: phone,          // format: 254...
+    Remarks: remarks,
+    QueueTimeOutURL: callbackUrl,
+    ResultURL: callbackUrl,
+    Occasion: remarks,
+  };
+
+  const res = await fetch(`${DARAJA_BASE_URL}/mpesa/b2c/v3/paymentrequest`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+  const data = await res.json();
+
+  if (res.ok && data.ResponseCode === '0') {
+    return {
+      success: true,
+      conversationId: data.ConversationID,
+      originatorConversationId: data.OriginatorConversationID,
+      responseCode: data.ResponseCode,
+      responseDescription: data.ResponseDescription,
+    };
+  }
+
+  return {
+    success: false,
+    responseCode: data.ResponseCode ?? '-1',
+    responseDescription: data.ResponseDescription ?? `B2C error: ${res.status}`,
+    error: data.ResponseDescription ?? `Daraja B2C payout error (${res.status})`,
+  };
+}
+
 // ─── Utility: Determine Daraja command from payout method ─────────
 
 /**

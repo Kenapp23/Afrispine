@@ -28,6 +28,11 @@ const CreatorTermsPage = d(() => import('@/components/creator/creator-terms-page
 const CreatorPrivacyPage = d(() => import('@/components/creator/creator-privacy-page').then(m => ({ default: m.CreatorPrivacyPage })));
 const CreatorWatchPage = d(() => import('@/components/creator/creator-watch-page').then(m => ({ default: m.CreatorWatchPage })));
 const CreatorApplyPage = d(() => import('@/components/creator/creator-apply-page').then(m => ({ default: m.CreatorApplyPage })));
+const SponsorLandingPage = d(() => import('@/components/creator/sponsor-landing-page').then(m => ({ default: m.SponsorLandingPage })));
+const SponsorDashboardPage = d(() => import('@/components/creator/sponsor-dashboard-page').then(m => ({ default: m.SponsorDashboardPage })));
+const SponsorCampaignDetailPage = d(() => import('@/components/creator/sponsor-campaign-detail-page').then(m => ({ default: m.SponsorCampaignDetailPage })));
+const CreatorDashboardPage = d(() => import('@/components/creator/creator-dashboard-page').then(m => ({ default: m.CreatorDashboardPage })));
+const AdminSponsorBrandsPage = d(() => import('@/components/afrispine/admin/admin-sponsor-brands-page').then(m => ({ default: m.AdminSponsorBrandsPage })));
 
 // Auth Pages
 const LoginPage = d(() => import('@/components/afrispine/auth/login-page').then(m => ({ default: m.LoginPage })));
@@ -125,6 +130,7 @@ const SenderLayout = d(() => import('@/components/afrispine/common/layout').then
 const AdminLayout = d(() => import('@/components/afrispine/common/layout').then(m => ({ default: m.AdminLayout })));
 
 // ─── URL-to-View mapping ─────────────────────────────────────
+// TODO(kennedy-decision): remittance routes should move under /transfer or a subdomain
 const URL_VIEW_MAP: Record<string, ViewName> = {
   '/': 'landing',
   '/login': 'login', '/signup': 'signup', '/forgot-password': 'forgot-password',
@@ -162,6 +168,10 @@ const URL_VIEW_MAP: Record<string, ViewName> = {
   '/admin/gift-cards': 'admin-gift-cards', '/admin/testing': 'admin-testing',
   '/admin/partners': 'admin-partners',
   '/watch': 'watch', '/apply': 'creator-apply',
+  '/sponsor': 'sponsor-landing', '/sponsor/dashboard': 'sponsor-dashboard',
+  '/sponsor/campaign': 'sponsor-campaign-detail',
+  '/creator/dashboard': 'creator-dashboard',
+  '/admin/sponsor-brands': 'admin-sponsor-brands',
 };
 
 const ADMIN_VIEWS: ViewName[] = [
@@ -169,6 +179,7 @@ const ADMIN_VIEWS: ViewName[] = [
   'admin-revenue', 'admin-billing', 'admin-settlement', 'admin-compliance',
   'admin-settings', 'admin-business', 'admin-wealth', 'admin-digest',
   'admin-gift-providers', 'admin-gift-cards', 'admin-testing', 'admin-partners',
+  'admin-sponsor-brands',
 ];
 
 const SENDER_VIEWS: ViewName[] = [
@@ -181,7 +192,7 @@ const SENDER_VIEWS: ViewName[] = [
 ];
 
 const AUTH_VIEWS: ViewName[] = ['login', 'signup', 'forgot-password', 'onboarding', 'verify'];
-const CREATOR_VIEWS: ViewName[] = ['landing', 'about', 'contact', 'terms', 'privacy', 'watch', 'creator-apply'];
+const CREATOR_VIEWS: ViewName[] = ['landing', 'about', 'contact', 'terms', 'privacy', 'watch', 'creator-apply', 'sponsor-landing', 'sponsor-dashboard', 'sponsor-campaign-detail', 'creator-dashboard'];
 
 function renderCreatorPage(view: ViewName): React.ReactNode {
   switch (view) {
@@ -192,6 +203,10 @@ function renderCreatorPage(view: ViewName): React.ReactNode {
     case 'privacy': return <CreatorPrivacyPage />;
     case 'watch': return <CreatorWatchPage />;
     case 'creator-apply': return <CreatorApplyPage />;
+    case 'sponsor-landing': return <SponsorLandingPage />;
+    case 'sponsor-dashboard': return <SponsorDashboardPage />;
+    case 'sponsor-campaign-detail': return <SponsorCampaignDetailPage />;
+    case 'creator-dashboard': return <CreatorDashboardPage />;
     default: return null;
   }
 }
@@ -278,6 +293,7 @@ function renderAdminPage(view: ViewName): React.ReactNode {
     case 'admin-gift-cards': return <AdminGiftCardsPage />;
     case 'admin-testing': return <AdminTestingDashboard />;
     case 'admin-partners': return <AdminPartnersPage />;
+    case 'admin-sponsor-brands': return <AdminSponsorBrandsPage />;
     default: return null;
   }
 }

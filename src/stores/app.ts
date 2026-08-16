@@ -18,7 +18,10 @@ export type ViewName =
   | 'digest-current' | 'digest-archive' | 'digest-issue' | 'digest-story'
   | 'digest-advertise' | 'digest-subscribe'
   | 'admin-digest'
-  | 'watch' | 'creator-apply';
+  | 'watch' | 'creator-apply'
+  | 'sponsor-landing' | 'sponsor-dashboard' | 'sponsor-campaign-detail'
+  | 'creator-dashboard'
+  | 'admin-sponsor-brands';
 
 interface AppState {
   currentView: ViewName;

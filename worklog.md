@@ -426,3 +426,139 @@ Stage Summary:
 - Server running at http://localhost:3000/ (HTTP 200 confirmed)
 - Monitoring loop active: checks ss -tlnp every 15s, auto-restarts on failure
 
+---
+Task ID: 0.5-routing
+Agent: Sub-agent
+Task: Phase 0.5 — routing + store update for content platform pivot
+
+Work Log:
+- Added 5 new ViewNames to stores/app.ts union type: sponsor-landing, sponsor-dashboard, sponsor-campaign-detail, creator-dashboard, admin-sponsor-brands
+- Added 5 dynamic imports to page.tsx (all using next/dynamic via helper `d()`): SponsorLandingPage, SponsorDashboardPage, SponsorCampaignDetailPage, CreatorDashboardPage, AdminSponsorBrandsPage
+- Added 5 URL-to-view mappings: /sponsor, /sponsor/dashboard, /sponsor/campaign, /creator/dashboard, /admin/sponsor-brands
+- Added 4 new entries to CREATOR_VIEWS array: sponsor-landing, sponsor-dashboard, sponsor-campaign-detail, creator-dashboard
+- Added admin-sponsor-brands to ADMIN_VIEWS array
+- Added 4 cases to renderCreatorPage switch
+- Added 1 case to renderAdminPage switch
+- Added TODO(kennedy-decision) comment above URL_VIEW_MAP re: remittance routes moving to /transfer or subdomain
+- Verified type-check passes (only pre-existing errors in unrelated files)
+- No remittance code touched
+
+Stage Summary:
+- 2 files modified: src/stores/app.ts, src/app/page.tsx
+- 5 new views wired end-to-end (import → URL map → view array → render switch)
+- All imports remain dynamic via next/dynamic
+
+---
+Task ID: 1-payment
+Agent: Main Agent
+Task: Phase 1: Payment Plumbing — Content Platform API routes & Daraja extensions
+
+Work Log:
+- Extended src/lib/daraja.ts with two new exported functions:
+  - `initiateStkPush(phone, amount, accountRef, callbackUrl)` → StkPushResponse
+    - POSTs to Daraja /mpesa/stkpush/v1/processrequest with Lipa Na M-Pesa Online
+    - Reuses existing generateDarajaToken() and generateSecurityCredential()
+  - `initiateB2CPayout(phone, amount, remarks, callbackUrl)` → B2CPayoutResponse
+    - POSTs to Daraja /mpesa/b2c/v3/paymentrequest for BusinessPayment
+    - Used by the content payout processor to disburse creator earnings
+- Created 11 new API route files and 1 payout processor:
+  1. `/api/content/checkout/initiate` (POST) — Validates phone (254...), looks up video price, creates PendingContentCheckout, fires STK Push. Uses IdempotencyRecord pattern from send/initialize.
+  2. `/api/content/checkout/status/[merchantRequestId]` (GET) — Polls checkout status: pending/expired.
+  3. `/api/webhooks/mpesa-content-callback` (POST) — Daraja webhook handler. On success: atomic $transaction inserts ContentTicket (60/40 split), increments viewCount, credits creator balance, auto-queues OutboundCreatorPayout when balance >= KES 1000, deletes PendingContentCheckout. Handles referral tracking (stub for kennedy-decision). Always returns 200 to Daraja.
+  4. `/lib/payments/content-payout-processor.ts` — `processCreatorPayouts()` drain function. Queries queued OutboundCreatorPayout (limit 10), calls initiateB2CPayout, updates status to completed/failed. Designed for cron/interval invocation.
+  5. `/api/content/feed` (GET) — Returns live videos with creator info, ordered by createdAt desc, limit 20.
+  6. `/api/content/foryou` (GET) — V1: same as feed with optional ?userId= and ?category= params for future personalization.
+  7. `/api/content/search` (POST) — Simple Prisma contains-based search on title/description/category. Includes TODO comment for embedding-based semantic search (§5.2 open decision).
+  8. `/api/content/follow` (POST/DELETE) — Create/delete Follow. Optimistic insert, P2002 caught for idempotency. Updates creator followerCount.
+  9. `/api/content/like` (POST/DELETE) — Create/delete Like with Video.likeCount increment/decrement. P2002 caught.
+  10. `/api/content/share` (POST) — Creates ShareEvent, generates/reuses referralCode, increments shareCount, returns shareable URL.
+  11. `/api/content/comments` (GET/POST) — Read comments for video (?videoId=), post new comment.
+- All routes follow existing adapter pattern: check dbReady, try/catch with graceful degradation, consistent error responses.
+- No remittance code was touched (eversend.ts, send/ routes, Sender/Transaction models).
+- Lint passes clean with zero errors.
+- All existing Prisma models (CreatorProfile, Video, ContentTicket, PendingContentCheckout, OutboundCreatorPayout, Follow, Like, Comment, WatchEvent, ShareEvent, IdempotencyRecord) already existed in schema — no schema changes needed.
+
+Stage Summary:
+- 1 file modified: src/lib/daraja.ts (+150 lines: initiateStkPush, initiateB2CPayout, types)
+- 11 new files created:
+  - src/app/api/content/checkout/initiate/route.ts
+  - src/app/api/content/checkout/status/[merchantRequestId]/route.ts
+  - src/app/api/webhooks/mpesa-content-callback/route.ts
+  - src/lib/payments/content-payout-processor.ts
+  - src/app/api/content/feed/route.ts
+  - src/app/api/content/foryou/route.ts
+  - src/app/api/content/search/route.ts
+  - src/app/api/content/follow/route.ts
+  - src/app/api/content/like/route.ts
+  - src/app/api/content/share/route.ts
+  - src/app/api/content/comments/route.ts
+
+---
+Task ID: 3-sponsor
+Agent: Main Agent
+Task: Create 4 new page components for the brand self-onboarding sponsorship system
+
+Work Log:
+- Created sponsor-landing-page.tsx: public marketing page for brands with navigation (AfriSpine logo, About, Watch, Contact, "For Brands" button in emerald), hero section ("Reach Millions of African Content Consumers" headline with Get Started + Contact Sales CTAs), rate card section (4 slot types: Backdrop Banner KES 15K, Smart Chyron KES 10K, Intro Splash KES 25K, Feed Native Card KES 8K), how-it-works 3 steps (Create Account → Launch Campaign → Track Results), trust strip, and footer
+- Created sponsor-dashboard-page.tsx: multi-step self-serve brand dashboard — Step 1: brand registration form (Company Name, Contact Email, Contact Name, Website, Billing Phone, POST to /api/sponsor/onboard), Step 2: campaign builder (Campaign Name, Objective dropdown, Budget, Start/End Date, Category selection, Slot type checkboxes, Creative URL, POST to /api/sponsor/campaigns), Step 3: campaign list sidebar showing each campaign with status badge, budget vs spent, impressions, clicks
+- Created sponsor-campaign-detail-page.tsx: single campaign view with campaign name/objective/status/budget progress bar, metric cards (Total Impressions, Total Clicks, CTR, Remaining Budget), ad slot list with per-slot impressions/clicks/CTR. Falls back to demo data if API unreachable
+- Created admin-sponsor-brands-page.tsx: admin KYB review page with stats cards (Total Brands, Pending Review, Verified), search + status filter, data table with Company Name, Email, KYB Status badge, Campaigns count, Created Date, Approve/Reject action buttons
+- Created API routes:
+  - src/app/api/sponsor/onboard/route.ts (POST: creates SponsorBrand with kybStatus='unverified'; GET: lists brands with search/status filter for admin)
+  - src/app/api/sponsor/campaigns/route.ts (POST: creates SponsorCampaign + SponsorSlots; GET: lists campaigns or single campaign by campaignId)
+  - src/app/api/sponsor/brands/[id]/approve/route.ts (POST: updates kybStatus to 'verified')
+  - src/app/api/sponsor/brands/[id]/reject/route.ts (POST: updates kybStatus to 'rejected')
+- All pages use 'use client', shadcn/ui components, lucide-react icons, useAppStore for navigation
+- Consistent emerald/white color scheme matching existing creator pages
+- All API calls wrapped in try/catch with dbReady check
+- ESLint passes clean
+
+Stage Summary:
+- 4 new page components created
+- 4 new API routes created
+- Routing already configured in page.tsx and app store (was pre-existing)
+- Prisma schema for SponsorBrand/SponsorCampaign/SponsorSlot already existed in schema.prisma
+
+---
+Task ID: 3b-placeholder-pages
+Agent: Main Agent
+Task: Create creator dashboard page and check sponsor campaign detail page
+
+Work Log:
+- Checked sponsor-campaign-detail-page.tsx: already fully implemented with exports (377 lines), skipped per instructions
+- Created src/components/creator/creator-dashboard-page.tsx with CreatorDashboardPage export
+- Features: emerald/white nav bar (AfriSpine logo, Watch link, Dashboard active, Exit/logout button)
+- 4 stat cards in 2x2 responsive grid: Total Views, Total Likes, Total Earnings (KES), Videos Posted
+- My Videos section: mobile card list + desktop Table, 6 demo entries with title/category/views/likes/earnings/status badges
+- Upload New Video button with disabled state + Tooltip showing "Coming soon"
+- Uses shadcn/ui (Card, Badge, Button, Table, Tooltip), lucide-react icons, useAppStore for navigation
+- Fixed JSX comment syntax error (missing closing `}`) caught by ESLint
+- ESLint passes clean
+
+Stage Summary:
+- 1 new file: src/components/creator/creator-dashboard-page.tsx
+- 1 file skipped: src/components/creator/sponsor-campaign-detail-page.tsx (already complete)
+
+---
+Task ID: content-platform-pivot
+Agent: Main (orchestrated multiple subagents)
+Task: Implement comprehensive AfriSpine content platform pivot per build prompt
+
+Work Log:
+- Phase 0: Added 12 new Prisma models (CreatorProfile, Video, ContentTicket, PendingContentCheckout, OutboundCreatorPayout, Follow, Like, Comment, WatchEvent, ShareEvent, SponsorBrand, SponsorCampaign, SponsorSlot) to schema.prisma
+- Phase 0.5: Added 5 new ViewNames (sponsor-landing, sponsor-dashboard, sponsor-campaign-detail, creator-dashboard, admin-sponsor-brands), wired routing in page.tsx and stores/app.ts
+- Phase 1: Extended daraja.ts with initiateStkPush + initiateB2CPayout, created 12 API routes (checkout initiate/status, mpesa webhook, feed, foryou, search, follow, like, share, comments, sponsor onboard/campaigns/brand approve/reject), created content-payout-processor.ts
+- Phase 2.1: Rewrote creator-watch-page.tsx (603 lines) with real data fetch, Cloudflare Stream HLS video, category-tinted gradients, real STK Push unlock flow, double-tap-to-like, comments drawer, share sheet, category filter chips, search, verified badges, follow buttons
+- Phase 2.2: Search API with keyword fallback, foryou API with category filtering
+- Phase 3: Created sponsor-landing-page.tsx, sponsor-dashboard-page.tsx, sponsor-campaign-detail-page.tsx, admin-sponsor-brands-page.tsx, plus 4 sponsor API routes
+- Phase 4: Share with referral codes, Web Share API integration, share sheet with WhatsApp/X/copy-link
+- Footer update: Added 'AfriSpine is fully owned by Rech Fish Market, a company registered in Kenya.' to all 6 creator pages
+- added allowedDevOrigins to next.config.ts for cross-origin preview
+
+Stage Summary:
+- Total new files: ~20 (pages + API routes + lib)
+- Total modified files: ~10 (schema, daraja.ts, page.tsx, stores/app.ts, 6 footer edits, next.config.ts)
+- All code follows existing patterns, no remittance code touched
+- Lint passes clean
+- Page compiled and served HTTP 200 successfully
+- Known environmental issue: 4GB RAM limit causes Turbopack OOM when compiling 100+ dynamic imports + watch page simultaneously — requires production deployment (Vercel) or more RAM to run stably

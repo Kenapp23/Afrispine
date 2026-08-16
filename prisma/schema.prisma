@@ -823,3 +823,209 @@ model Post {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// ─── Content Platform: Creators & Videos ───────────────────────
+// Added: content_platform_foundation migration
+// TODO(kennedy-decision): userId FK targets a lightweight content-viewer auth model,
+//   NOT the remittance Sender model — content viewers must not be forced through
+//   KYC-heavy remittance onboarding just to buy a KES 50 ticket.
+
+model CreatorProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  stageName         String
+  handle            String   @unique
+  bio               String?
+  avatarUrl         String?
+  mpesaPayoutNumber String
+  verified          Boolean  @default(false)
+  followerCount     Int      @default(0)
+  balanceKes        Float    @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  videos            Video[]
+  follows           Follow[]        @relation("CreatorFollows")
+
+  @@index([handle])
+}
+
+model Video {
+  id                  String   @id @default(cuid())
+  creatorId           String
+  title               String
+  description         String?
+  category            String
+  ticketPriceKes      Float
+  cfPreviewStreamId   String?
+  cfPremiumStreamId   String?
+  durationSeconds     Int?
+  thumbnailUrl        String?
+  status              String   @default("draft")   // draft | processing | live | takedown
+  viewCount           Int      @default(0)
+  likeCount           Int      @default(0)
+  shareCount          Int      @default(0)
+  embeddingVector     String?                            // JSON string for cosine-similarity search
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  creator             CreatorProfile @relation(fields: [creatorId], references: [id])
+  tickets             ContentTicket[]
+  sponsorSlots        SponsorSlot[]
+  likes               Like[]
+  comments            Comment[]
+  watchEvents         WatchEvent[]
+
+  @@index([category])
+  @@index([status])
+}
+
+model ContentTicket {
+  id                  String   @id @default(cuid())
+  videoId             String
+  viewerPhone         String
+  viewerUserId        String?
+  mpesaReceiptNumber  String   @unique
+  amountPaid          Float
+  creatorShare        Float
+  platformShare       Float
+  referralCode        String?
+  purchasedAt         DateTime @default(now())
+
+  video               Video @relation(fields: [videoId], references: [id])
+
+  @@index([viewerPhone])
+  @@index([referralCode])
+}
+
+model PendingContentCheckout {
+  merchantRequestId String   @id
+  videoId           String
+  creatorId         String
+  viewerPhone       String
+  referralCode      String?
+  createdAt         DateTime @default(now())
+  expiresAt         DateTime
+}
+
+model OutboundCreatorPayout {
+  id           String   @id @default(cuid())
+  creatorId    String
+  amountToPay  Float
+  phoneTarget  String
+  status       String   @default("queued")   // queued | processing | completed | failed
+  errorLog     String?
+  meta         String?                            // JSON
+  createdAt    DateTime @default(now())
+
+  @@index([status])
+}
+
+// ─── Social layer ───────────────────────────────────────────────
+
+model Follow {
+  id         String   @id @default(cuid())
+  followerId String
+  creatorId  String
+  createdAt  DateTime @default(now())
+
+  creator    CreatorProfile @relation("CreatorFollows", fields: [creatorId], references: [id])
+
+  @@unique([followerId, creatorId])
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  userId    String
+  videoId   String
+  createdAt DateTime @default(now())
+
+  video     Video @relation(fields: [videoId], references: [id])
+
+  @@unique([userId, videoId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  userId    String
+  videoId   String
+  body      String
+  createdAt DateTime @default(now())
+
+  video     Video @relation(fields: [videoId], references: [id])
+  @@index([videoId])
+}
+
+model WatchEvent {
+  id             String   @id @default(cuid())
+  userId         String?
+  videoId        String
+  watchSeconds   Int
+  completed      Boolean  @default(false)
+  source         String?                            // 'foryou' | 'search' | 'following' | 'share' | 'trending'
+  createdAt      DateTime @default(now())
+
+  video          Video @relation(fields: [videoId], references: [id])
+  @@index([userId])
+  @@index([videoId])
+}
+
+model ShareEvent {
+  id           String   @id @default(cuid())
+  userId       String?
+  videoId      String
+  channel      String                            // 'whatsapp' | 'instagram' | 'tiktok' | 'x' | 'copy_link'
+  referralCode String
+  createdAt    DateTime @default(now())
+
+  @@index([referralCode])
+}
+
+// ─── Brand self-onboarding sponsorship ──────────────────────────
+
+model SponsorBrand {
+  id            String   @id @default(cuid())
+  companyName   String
+  contactEmail  String   @unique
+  contactName   String?
+  website       String?
+  logoUrl       String?
+  kybStatus     String   @default("unverified")  // unverified | pending | verified | rejected
+  billingPhone  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  campaigns     SponsorCampaign[]
+}
+
+model SponsorCampaign {
+  id              String   @id @default(cuid())
+  brandId         String
+  name            String
+  objective       String                            // 'awareness' | 'category_takeover' | 'creator_boost'
+  budgetKes       Float
+  spentKes        Float    @default(0)
+  status          String   @default("pending_review")  // pending_review | active | paused | completed | rejected
+  startDate       DateTime?
+  endDate         DateTime?
+  createdAt       DateTime @default(now())
+
+  brand           SponsorBrand @relation(fields: [brandId], references: [id])
+  slots           SponsorSlot[]
+}
+
+model SponsorSlot {
+  id                 String   @id @default(cuid())
+  campaignId         String
+  videoId            String?
+  category           String?
+  slotType           String                            // 'backdrop_banner' | 'smart_chyron' | 'intro_splash' | 'feed_native_card'
+  creativeUrl        String
+  impressionLimit    Int
+  currentImpressions Int      @default(0)
+  clickCount         Int      @default(0)
+  status             String   @default("pending")   // pending | active | completed | rejected
+
+  campaign           SponsorCampaign @relation(fields: [campaignId], references: [id])
+  video              Video? @relation(fields: [videoId], references: [id])
+}
