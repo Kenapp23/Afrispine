@@ -40,12 +40,6 @@ export function CreatorLandingPage() {
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-8">
             <button
-              onClick={() => navigate('about')}
-              className="text-sm font-medium text-gray-600 hover:text-emerald-600 transition-colors"
-            >
-              About
-            </button>
-            <button
               onClick={() => navigate('watch')}
               className="text-sm font-medium text-gray-600 hover:text-emerald-600 transition-colors"
             >
@@ -56,6 +50,12 @@ export function CreatorLandingPage() {
               className="text-sm font-medium text-gray-600 hover:text-emerald-600 transition-colors"
             >
               For Brands
+            </button>
+            <button
+              onClick={() => navigate('about')}
+              className="text-sm font-medium text-gray-600 hover:text-emerald-600 transition-colors"
+            >
+              About
             </button>
             <button
               onClick={() => navigate('contact')}
@@ -86,12 +86,6 @@ export function CreatorLandingPage() {
           <div className="md:hidden border-t border-gray-100 bg-white px-4 pb-4 pt-2">
             <nav className="flex flex-col gap-1">
               <button
-                onClick={() => { navigate('about'); setMobileMenuOpen(false); }}
-                className="rounded-md px-3 py-2.5 text-left text-sm font-medium text-gray-600 hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
-              >
-                About
-              </button>
-              <button
                 onClick={() => { navigate('watch'); setMobileMenuOpen(false); }}
                 className="rounded-md px-3 py-2.5 text-left text-sm font-medium text-gray-600 hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
               >
@@ -102,6 +96,12 @@ export function CreatorLandingPage() {
                 className="rounded-md px-3 py-2.5 text-left text-sm font-medium text-gray-600 hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
               >
                 For Brands
+              </button>
+              <button
+                onClick={() => { navigate('about'); setMobileMenuOpen(false); }}
+                className="rounded-md px-3 py-2.5 text-left text-sm font-medium text-gray-600 hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
+              >
+                About
               </button>
               <button
                 onClick={() => { navigate('contact'); setMobileMenuOpen(false); }}
