@@ -410,3 +410,19 @@ Work Log:
 - Auto-restart on crash enabled
 
 ---
+
+---
+Task ID: keep-alive-2
+Agent: Keep-Alive Agent
+Task: Keep Next.js dev server running persistently on port 3000
+
+Work Log:
+- Killed any pre-existing processes on port 3000
+- Started dev server via: `setsid bun node_modules/.bin/next dev -p 3000 > dev.log 2>&1 &`
+- Confirmed server listening on port 3000 (HTTP 200)
+- Entering persistent monitoring loop (15-second interval)
+
+Stage Summary:
+- Server running at http://localhost:3000/ (HTTP 200 confirmed)
+- Monitoring loop active: checks ss -tlnp every 15s, auto-restarts on failure
+
