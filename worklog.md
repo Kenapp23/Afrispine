@@ -753,3 +753,26 @@ Stage Summary:
 - Source zip regenerated with all latest code (11 MB)
 - GitHub repo updated with latest code
 - Vercel: No CLI token available. If Vercel is connected to the GitHub repo, the push should trigger auto-deploy. User needs to verify Vercel dashboard or provide a VERCEL_TOKEN.
+---
+Task ID: visibility-fixes-watch-redesign-trailer-engine
+Agent: Main Agent
+Task: §0 visibility fixes, §1 watch redesign, §2 AI trailer engine, §3 audit
+
+Work Log:
+- §0.1: Added 'admin-sponsor-brands' to adminLinks in layout.tsx with Megaphone icon + i18n keys (EN/FR)
+- §0.2: Added 'For Brands' nav item, mobile menu entry, footer link, and sponsor CTA banner on creator-landing-page.tsx
+- §0.3/§1: Complete rewrite of creator-watch-page.tsx — removed full-screen blur overlay, rebuilt z-index layering (z-0 video, z-10 gradient, z-20 info+actions, z-30 controls, z-40 transient, z-50 modals)
+- §1.3: Added shimmer unlock bar, social proof (follower count, views), progressive image-to-video reveal, active:scale-90 on all buttons
+- §1.4: Created /w/[videoId]/page.tsx with generateMetadata for OG unfurling; added ?v= deep-link handling in page.tsx
+- §2.1: Created POST /api/creator/videos/upload-url (Cloudflare Stream TUS direct upload)
+- §2.1: Created POST /api/webhooks/cloudflare-stream-ready (webhook creates Video row, triggers trailer gen)
+- §2.2: Built src/lib/trailer-engine/index.ts — ffmpeg pipeline: RMS energy analysis, segment stitching, loudness norm (-14 LUFS), 720p upscale, CF Stream re-upload
+- §2.2: Created POST /api/creator/videos/[videoId]/trailer (regenerate AI or set custom trailer)
+- §2.3: Added trailerSource field to Video model in Prisma schema, pushed to DB
+- §3: Ran discoverability audit — adminLinks (17) vs renderAdminPage (17): 100% match, zero issues
+
+Stage Summary:
+- 11 files changed, 1038 insertions, 122 deletions
+- Pushed to GitHub as cfbbadc
+- All 4 sections (§0-§3) complete
+- Lint clean, all admin pages now discoverable, watch page trailer-as-bait model live
