@@ -3,9 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
+  provider  = "sqlite"
   url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
 }
 
 // ─── Auth Models ───────────────────────────────────────────────
@@ -884,7 +883,7 @@ model ContentTicket {
   id                  String   @id @default(cuid())
   videoId             String
   viewerPhone         String
-  viewerUserId        String?
+  viewerId            String?                            // FK to ContentViewer (nullable for anonymous viewers)
   mpesaReceiptNumber  String   @unique
   amountPaid          Float
   creatorShare        Float
@@ -893,9 +892,12 @@ model ContentTicket {
   purchasedAt         DateTime @default(now())
 
   video               Video @relation(fields: [videoId], references: [id])
+  referralRewards     ReferralReward[]
+  viewer              ContentViewer? @relation(fields: [viewerId], references: [id])
 
   @@index([viewerPhone])
   @@index([referralCode])
+  @@index([viewerId])
 }
 
 model PendingContentCheckout {
@@ -930,6 +932,7 @@ model Follow {
   createdAt  DateTime @default(now())
 
   creator    CreatorProfile @relation("CreatorFollows", fields: [creatorId], references: [id])
+  follower   ContentViewer  @relation(fields: [followerId], references: [id])
 
   @@unique([followerId, creatorId])
 }
@@ -941,6 +944,7 @@ model Like {
   createdAt DateTime @default(now())
 
   video     Video @relation(fields: [videoId], references: [id])
+  viewer    ContentViewer @relation(fields: [userId], references: [id])
 
   @@unique([userId, videoId])
 }
@@ -953,6 +957,7 @@ model Comment {
   createdAt DateTime @default(now())
 
   video     Video @relation(fields: [videoId], references: [id])
+  viewer    ContentViewer @relation(fields: [userId], references: [id])
   @@index([videoId])
 }
 
@@ -966,6 +971,7 @@ model WatchEvent {
   createdAt      DateTime @default(now())
 
   video          Video @relation(fields: [videoId], references: [id])
+  viewer         ContentViewer? @relation(fields: [userId], references: [id])
   @@index([userId])
   @@index([videoId])
 }
@@ -978,10 +984,60 @@ model ShareEvent {
   referralCode String
   createdAt    DateTime @default(now())
 
+  viewer       ContentViewer? @relation(fields: [userId], references: [id])
   @@index([referralCode])
 }
 
+// ─── Content Viewer (lightweight — no KYC, separate from Sender) ────
+
+model ContentViewer {
+  id        String   @id @default(cuid())
+  phone     String   @unique                       // M-Pesa phone, primary identifier
+  nickname  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  likes           Like[]
+  comments        Comment[]
+  watchEvents     WatchEvent[]
+  shareEvents     ShareEvent[]
+  follows         Follow[]
+  contentTickets  ContentTicket[]
+  referralRewards ReferralReward[] @relation("ViewerReferrals")
+}
+
+// ─── Referral Rewards (percentage-based) ────────────────────────
+
+model ReferralReward {
+  id               String   @id @default(cuid())
+  referrerPhone    String                             // phone of person who shared the link
+  ticketId         String                             // the ContentTicket that generated this reward
+  videoId          String
+  amountKes        Float                              // 5% of ticket price
+  commissionPct    Float    @default(0.05)             // 5%
+  paidOut          Boolean  @default(false)
+  paidAt           DateTime?
+  createdAt        DateTime @default(now())
+
+  ticket           ContentTicket @relation(fields: [ticketId], references: [id])
+ referrer         ContentViewer? @relation("ViewerReferrals", fields: [referrerPhone], references: [phone])
+
+  @@index([referrerPhone])
+  @@index([paidOut])
+}
+
 // ─── Brand self-onboarding sponsorship ──────────────────────────
+
+model SponsorPricing {
+  id             String   @id @default(cuid())
+  slotType       String   @unique                    // 'backdrop_banner' | 'smart_chyron' | 'intro_splash' | 'feed_native_card'
+  label          String                              // human-readable name
+  priceKes       Float                              // flat-rate price per slot
+  impressionsIncluded Int @default(10000)             // impressions included at this price
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
 
 model SponsorBrand {
   id            String   @id @default(cuid())
@@ -999,19 +1055,25 @@ model SponsorBrand {
 }
 
 model SponsorCampaign {
-  id              String   @id @default(cuid())
-  brandId         String
-  name            String
-  objective       String                            // 'awareness' | 'category_takeover' | 'creator_boost'
-  budgetKes       Float
-  spentKes        Float    @default(0)
-  status          String   @default("pending_review")  // pending_review | active | paused | completed | rejected
-  startDate       DateTime?
-  endDate         DateTime?
-  createdAt       DateTime @default(now())
+  id                String   @id @default(cuid())
+  brandId           String
+  name              String
+  objective         String                            // 'awareness' | 'category_takeover' | 'creator_boost'
+  budgetKes         Float
+  spentKes          Float    @default(0)
+  status            String   @default("pending_review")  // pending_review | awaiting_payment | active | paused | completed | rejected
+  paymentStatus     String   @default("unpaid")          // unpaid | pending | paid | failed
+  paymentPhone      String?                             // M-Pesa phone for STK push
+  mpesaReceiptNumber String?                            // M-Pesa receipt after payment
+  merchantRequestId String?                            // for STK push correlation
+  approvedAt        DateTime?
+  paidAt            DateTime?
+  startDate         DateTime?
+  endDate           DateTime?
+  createdAt         DateTime @default(now())
 
-  brand           SponsorBrand @relation(fields: [brandId], references: [id])
-  slots           SponsorSlot[]
+  brand             SponsorBrand @relation(fields: [brandId], references: [id])
+  slots             SponsorSlot[]
 }
 
 model SponsorSlot {

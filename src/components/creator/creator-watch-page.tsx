@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAppStore } from '@/stores/app';
+import { toast } from 'sonner';
 import {
   Lock, Unlock, Heart, Play, ArrowLeft, Loader2, MessageCircle,
   Share2, Search, BadgeCheck, X, Send, Copy, Check, VolumeX, Volume2,
@@ -102,6 +103,9 @@ export function CreatorWatchPage() {
   const [phoneInput, setPhoneInput] = useState('254');
   const [checkoutError, setCheckoutError] = useState('');
 
+  // ─── Referral code from deep link ───
+  const [activeReferralCode, setActiveReferralCode] = useState<string | null>(null);
+
   // ─── Share sheet ───
   const [shareSheetVideoId, setShareSheetVideoId] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState('');
@@ -129,9 +133,16 @@ export function CreatorWatchPage() {
 
   // ─── Fetch feed on mount ───
   useEffect(() => {
+    // Capture referral code from URL hash (e.g. #watch?ref=REF_xxx)
+    try {
+      const hash = window.location.hash;
+      const refMatch = hash.match(/[?&]ref=([^&]+)/);
+      if (refMatch?.[1]) setActiveReferralCode(refMatch[1]);
+    } catch {}
+
     (async () => {
       try {
-        const res = await fetch('/api/content/feed');
+        const res = await fetch('/api/content/foryou');
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {
@@ -215,7 +226,7 @@ export function CreatorWatchPage() {
     try {
       const res = await fetch('/api/content/checkout/initiate', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ videoId, phone }),
+        body: JSON.stringify({ videoId, phone, referralCode: activeReferralCode || undefined }),
       });
       const data = await res.json();
       if (!res.ok || !data.merchantRequestId) throw new Error(data.error || 'Checkout failed');
@@ -545,16 +556,28 @@ export function CreatorWatchPage() {
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center" onClick={() => setShareSheetVideoId(null)}>
           <div className="w-full max-w-md rounded-t-2xl bg-gray-900 p-6 sm:rounded-2xl" onClick={e => e.stopPropagation()}>
             <h3 className="text-lg font-bold text-white">Share</h3>
-            <div className="mt-4 grid grid-cols-4 gap-4">
+            <div className="mt-4 grid grid-cols-5 gap-3">
               <a href={`https://wa.me/?text=${encodeURIComponent(`Watch on AfriSpine: ${shareUrl}`)}`} target="_blank" rel="noopener"
                 className="flex flex-col items-center gap-2 rounded-xl p-3 hover:bg-white/5 transition-colors">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-600/20 text-green-500 text-xl">W</div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-600/20 text-green-500 text-xl font-bold">W</div>
                 <span className="text-xs text-white/70">WhatsApp</span>
               </a>
               <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent('Check this out on AfriSpine')}&url=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener"
                 className="flex flex-col items-center gap-2 rounded-xl p-3 hover:bg-white/5 transition-colors">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-sky-600/20 text-sky-500 text-xl">X</div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-sky-600/20 text-sky-500 text-xl font-bold">X</div>
                 <span className="text-xs text-white/70">X/Twitter</span>
+              </a>
+              <a href={`https://www.instagram.com/`}
+                onClick={async (e) => { e.preventDefault(); try { await navigator.clipboard.writeText(shareUrl); } catch {} if (navigator.share) { try { await navigator.share({ title: 'AfriSpine', text: 'Check out this video on AfriSpine!', url: shareUrl }); setShareSheetVideoId(null); return; } catch {} } window.open('https://www.instagram.com/', '_blank'); toast.success('Link copied — paste it in Instagram Stories!'); }}
+                className="flex flex-col items-center gap-2 rounded-xl p-3 hover:bg-white/5 transition-colors">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-pink-600/20 text-pink-500 text-xl font-bold">IG</div>
+                <span className="text-xs text-white/70">Instagram</span>
+              </a>
+              <a href={`https://www.tiktok.com/`}
+                onClick={async (e) => { e.preventDefault(); try { await navigator.clipboard.writeText(shareUrl); } catch {} if (navigator.share) { try { await navigator.share({ title: 'AfriSpine', text: 'Check out this video on AfriSpine!', url: shareUrl }); setShareSheetVideoId(null); return; } catch {} } window.open('https://www.tiktok.com/', '_blank'); toast.success('Link copied — share it on TikTok!'); }}
+                className="flex flex-col items-center gap-2 rounded-xl p-3 hover:bg-white/5 transition-colors">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white text-xl font-bold">TT</div>
+                <span className="text-xs text-white/70">TikTok</span>
               </a>
               <button onClick={copyShareLink} className="flex flex-col items-center gap-2 rounded-xl p-3 hover:bg-white/5 transition-colors">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white">

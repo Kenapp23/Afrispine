@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -27,6 +27,10 @@ import {
   Wallet,
   ArrowLeft,
   Plus,
+  Clock,
+  AlertCircle,
+  Info,
+  CreditCard,
 } from 'lucide-react';
 
 /* ── Constants ────────────────────────────────────────────── */
@@ -46,6 +50,8 @@ const OBJECTIVES = [
   { value: 'creator_boost', label: 'Creator Boost' },
 ] as const;
 
+const DEFAULT_SLOT_PRICE_KES = 5000;
+
 /* ── Types ───────────────────────────────────────────────── */
 
 interface SponsorBrandData {
@@ -57,6 +63,27 @@ interface SponsorBrandData {
   createdAt: string;
 }
 
+interface SponsorPricingData {
+  slotType: string;
+  label: string;
+  priceKes: number;
+  impressionsIncluded: number;
+  isActive: boolean;
+}
+
+interface PricingBreakdownItem {
+  slotType: string;
+  priceKes: number;
+  label?: string;
+}
+
+interface CampaignSlotData {
+  id: string;
+  slotType: string;
+  currentImpressions: number;
+  clickCount: number;
+}
+
 interface CampaignData {
   id: string;
   name: string;
@@ -64,10 +91,13 @@ interface CampaignData {
   budgetKes: number;
   spentKes: number;
   status: string;
+  paymentStatus: string;
   startDate: string | null;
   endDate: string | null;
   createdAt: string;
-  slots: { id: string; slotType: string; currentImpressions: number; clickCount: number }[];
+  slots: CampaignSlotData[];
+  totalCost?: number;
+  pricingBreakdown?: PricingBreakdownItem[];
 }
 
 /* ── Component ───────────────────────────────────────────── */
@@ -83,6 +113,10 @@ export function SponsorDashboardPage() {
   const [campaigns, setCampaigns] = useState<CampaignData[]>([]);
   const [loadingCampaigns, setLoadingCampaigns] = useState(false);
 
+  // Pricing state
+  const [pricings, setPricings] = useState<SponsorPricingData[]>([]);
+  const [loadingPricing, setLoadingPricing] = useState(false);
+
   // Brand form state
   const [companyName, setCompanyName] = useState('');
   const [contactEmail, setContactEmail] = useState('');
@@ -94,13 +128,56 @@ export function SponsorDashboardPage() {
   // Campaign form state
   const [campaignName, setCampaignName] = useState('');
   const [objective, setObjective] = useState('');
-  const [budgetKes, setBudgetKes] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
   const [creativeUrl, setCreativeUrl] = useState('');
   const [submittingCampaign, setSubmittingCampaign] = useState(false);
+
+  /* ── Build pricing map ─── */
+  const pricingMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const p of pricings) {
+      if (p.isActive) {
+        map.set(p.slotType, p.priceKes);
+      }
+    }
+    return map;
+  }, [pricings]);
+
+  const hasPricing = pricings.length > 0;
+
+  /* ── Calculate estimated cost ─── */
+  const estimatedTotal = useMemo(() => {
+    if (selectedSlots.length === 0) return 0;
+    let total = 0;
+    for (const slotKey of selectedSlots) {
+      total += pricingMap.get(slotKey) ?? DEFAULT_SLOT_PRICE_KES;
+    }
+    return Math.round(total * 100) / 100;
+  }, [selectedSlots, pricingMap]);
+
+  const getSlotPrice = (slotKey: string): number | null => {
+    return pricingMap.get(slotKey) ?? null;
+  };
+
+  /* ── Fetch pricing ─── */
+
+  const fetchPricing = useCallback(async () => {
+    setLoadingPricing(true);
+    try {
+      const res = await fetch('/api/admin/sponsor-pricing');
+      if (res.ok) {
+        const data = await res.json();
+        setPricings(data.pricings || []);
+      }
+    } catch {
+      // Silently fail — slot costs will use defaults
+    } finally {
+      setLoadingPricing(false);
+    }
+  }, []);
 
   /* ── Fetch campaigns on brand change ─── */
 
@@ -112,6 +189,10 @@ export function SponsorDashboardPage() {
       if (res.ok) {
         const data = await res.json();
         setCampaigns(data.campaigns || []);
+        // Also capture pricings from campaigns response if available
+        if (data.pricings && data.pricings.length > 0) {
+          setPricings(data.pricings);
+        }
       }
     } catch {
       // Silently fail — show empty state
@@ -119,6 +200,10 @@ export function SponsorDashboardPage() {
       setLoadingCampaigns(false);
     }
   }, [brandId]);
+
+  useEffect(() => {
+    fetchPricing();
+  }, [fetchPricing]);
 
   useEffect(() => {
     if (brandId) {
@@ -164,8 +249,12 @@ export function SponsorDashboardPage() {
   };
 
   const handleCampaignSubmit = async () => {
-    if (!campaignName.trim() || !objective || !budgetKes) {
-      toast.error('Please fill in Campaign Name, Objective, and Budget.');
+    if (!campaignName.trim() || !objective) {
+      toast.error('Please fill in Campaign Name and Objective.');
+      return;
+    }
+    if (selectedSlots.length === 0) {
+      toast.error('Please select at least one ad slot type.');
       return;
     }
     if (!brandId) return;
@@ -178,7 +267,6 @@ export function SponsorDashboardPage() {
           brandId,
           name: campaignName.trim(),
           objective,
-          budgetKes: parseFloat(budgetKes),
           startDate: startDate || null,
           endDate: endDate || null,
           categories: selectedCategories,
@@ -190,10 +278,13 @@ export function SponsorDashboardPage() {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || 'Failed to launch campaign.');
       }
-      toast.success('Campaign submitted for review!');
+      const data = await res.json();
+      const returnedCost = data.totalCost || estimatedTotal;
+      toast.success(
+        `Campaign submitted! Estimated cost: KES ${returnedCost.toLocaleString()}. You'll receive an M-Pesa prompt after admin approval.`,
+      );
       setCampaignName('');
       setObjective('');
-      setBudgetKes('');
       setStartDate('');
       setEndDate('');
       setSelectedCategories([]);
@@ -219,20 +310,72 @@ export function SponsorDashboardPage() {
     );
   };
 
+  /* ── Status badge helpers ─── */
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
         return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+      case 'awaiting_payment':
+        return 'bg-orange-100 text-orange-700 border-orange-200';
       case 'pending_review':
         return 'bg-amber-100 text-amber-700 border-amber-200';
       case 'paused':
         return 'bg-gray-100 text-gray-600 border-gray-200';
       case 'completed':
-        return 'bg-blue-100 text-blue-700 border-blue-200';
+        return 'bg-gray-100 text-gray-600 border-gray-200';
       case 'rejected':
         return 'bg-red-100 text-red-700 border-red-200';
       default:
         return 'bg-gray-100 text-gray-600 border-gray-200';
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'Live';
+      case 'awaiting_payment':
+        return 'Awaiting Payment';
+      case 'pending_review':
+        return 'Under Review';
+      case 'paused':
+        return 'Paused';
+      case 'completed':
+        return 'Completed';
+      case 'rejected':
+        return 'Rejected';
+      default:
+        return status.replace(/_/g, ' ');
+    }
+  };
+
+  const getPaymentStatusBadge = (paymentStatus: string) => {
+    switch (paymentStatus) {
+      case 'paid':
+        return (
+          <Badge variant="outline" className="text-[10px] shrink-0 bg-emerald-100 text-emerald-700 border-emerald-200">
+            Paid
+          </Badge>
+        );
+      case 'pending':
+        return (
+          <Badge variant="outline" className="text-[10px] shrink-0 bg-amber-100 text-amber-700 border-amber-200">
+            Payment Pending
+          </Badge>
+        );
+      case 'failed':
+        return (
+          <Badge variant="outline" className="text-[10px] shrink-0 bg-red-100 text-red-700 border-red-200">
+            Payment Failed
+          </Badge>
+        );
+      default: // unpaid
+        return (
+          <Badge variant="outline" className="text-[10px] shrink-0 bg-amber-100 text-amber-700 border-amber-200">
+            Pending Review
+          </Badge>
+        );
     }
   };
 
@@ -344,7 +487,7 @@ export function SponsorDashboardPage() {
                   <Label htmlFor="billingPhone">Billing Phone (M-Pesa)</Label>
                   <Input
                     id="billingPhone"
-                    placeholder="+254 7XX XXX XXX"
+                    placeholder=" +254 7XX XXX XXX"
                     value={billingPhone}
                     onChange={(e) => setBillingPhone(e.target.value)}
                   />
@@ -410,19 +553,6 @@ export function SponsorDashboardPage() {
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="budget">Budget (KES)</Label>
-                        <Input
-                          id="budget"
-                          type="number"
-                          placeholder="50000"
-                          value={budgetKes}
-                          onChange={(e) => setBudgetKes(e.target.value)}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div className="space-y-2">
                         <Label htmlFor="startDate">Start Date</Label>
                         <Input
                           id="startDate"
@@ -431,15 +561,16 @@ export function SponsorDashboardPage() {
                           onChange={(e) => setStartDate(e.target.value)}
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="endDate">End Date</Label>
-                        <Input
-                          id="endDate"
-                          type="date"
-                          value={endDate}
-                          onChange={(e) => setEndDate(e.target.value)}
-                        />
-                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="endDate">End Date</Label>
+                      <Input
+                        id="endDate"
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                      />
                     </div>
 
                     {/* Categories */}
@@ -463,23 +594,62 @@ export function SponsorDashboardPage() {
                       </div>
                     </div>
 
-                    {/* Slot Types */}
-                    <div className="space-y-2">
-                      <Label>Ad Slot Types</Label>
-                      <div className="grid gap-2 sm:grid-cols-2">
-                        {SLOT_TYPES.map((slot) => (
-                          <label
-                            key={slot.key}
-                            className="flex items-center gap-2.5 rounded-lg border border-gray-100 p-3 cursor-pointer hover:bg-gray-50 transition-colors"
-                          >
-                            <Checkbox
-                              checked={selectedSlots.includes(slot.key)}
-                              onCheckedChange={() => toggleSlot(slot.key)}
-                            />
-                            <span className="text-sm font-medium text-gray-700">{slot.label}</span>
-                          </label>
-                        ))}
+                    {/* Slot Types with pricing */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label>Ad Slot Types</Label>
+                        {loadingPricing && (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin text-gray-400" />
+                        )}
                       </div>
+
+                      {!hasPricing && !loadingPricing && (
+                        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5">
+                          <AlertCircle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                          <p className="text-xs text-amber-700">
+                            Pricing pending — admin will set the rate
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {SLOT_TYPES.map((slot) => {
+                          const price = getSlotPrice(slot.key);
+                          const displayPrice = hasPricing
+                            ? (price !== null ? `KES ${price.toLocaleString()}` : `KES ${DEFAULT_SLOT_PRICE_KES.toLocaleString()}`)
+                            : null;
+                          return (
+                            <label
+                              key={slot.key}
+                              className="flex items-center gap-2.5 rounded-lg border border-gray-100 p-3 cursor-pointer hover:bg-gray-50 transition-colors"
+                            >
+                              <Checkbox
+                                checked={selectedSlots.includes(slot.key)}
+                                onCheckedChange={() => toggleSlot(slot.key)}
+                              />
+                              <span className="text-sm font-medium text-gray-700 flex-1">{slot.label}</span>
+                              {displayPrice && (
+                                <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+                                  {displayPrice}
+                                </span>
+                              )}
+                            </label>
+                          );
+                        })}
+                      </div>
+
+                      {/* Total Estimated Cost */}
+                      {selectedSlots.length > 0 && (
+                        <div className="flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <Wallet className="h-4 w-4 text-emerald-600" />
+                            <span className="text-sm font-semibold text-emerald-800">Total Estimated Cost</span>
+                          </div>
+                          <span className="text-lg font-extrabold text-emerald-700">
+                            KES {estimatedTotal.toLocaleString()}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Creative URL */}
@@ -510,6 +680,14 @@ export function SponsorDashboardPage() {
                         </>
                       )}
                     </Button>
+
+                    {/* Payment flow note */}
+                    <div className="flex items-start gap-2.5 rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+                      <Info className="h-4 w-4 text-gray-400 shrink-0 mt-0.5" />
+                      <p className="text-xs text-gray-500 leading-relaxed">
+                        After submission, your campaign will be reviewed. Once approved, you&apos;ll receive an M-Pesa prompt to pay.
+                      </p>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -544,14 +722,35 @@ export function SponsorDashboardPage() {
                           >
                             <div className="flex items-center justify-between gap-2">
                               <h4 className="text-sm font-semibold text-gray-900 truncate">{c.name}</h4>
-                              <Badge variant="outline" className={`text-[10px] shrink-0 ${getStatusColor(c.status)}`}>
-                                {c.status.replace(/_/g, ' ')}
-                              </Badge>
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                {/* Payment status badge */}
+                                {c.status !== 'pending_review' && getPaymentStatusBadge(c.paymentStatus || 'unpaid')}
+                                {/* Campaign status badge */}
+                                <Badge variant="outline" className={`text-[10px] shrink-0 ${getStatusColor(c.status)}`}>
+                                  {getStatusLabel(c.status)}
+                                </Badge>
+                              </div>
                             </div>
+
+                            {/* Payment pending message for awaiting_payment campaigns */}
+                            {c.status === 'awaiting_payment' && (
+                              <div className="flex items-center gap-2 rounded-md bg-orange-50 border border-orange-100 px-2.5 py-2">
+                                <CreditCard className="h-3.5 w-3.5 text-orange-500 shrink-0" />
+                                <div className="flex items-center justify-between flex-1 gap-2">
+                                  <span className="text-[11px] text-orange-700 font-medium">Payment Pending</span>
+                                  <span className="text-[11px] font-bold text-orange-800">
+                                    KES {(c.totalCost || c.budgetKes || 0).toLocaleString()}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+
                             <div className="grid grid-cols-3 gap-2 text-center">
                               <div>
-                                <p className="text-[10px] uppercase tracking-wide text-gray-400">Budget</p>
-                                <p className="text-xs font-bold text-gray-700">KES {c.budgetKes.toLocaleString()}</p>
+                                <p className="text-[10px] uppercase tracking-wide text-gray-400">Cost</p>
+                                <p className="text-xs font-bold text-gray-700">
+                                  KES {(c.totalCost || c.budgetKes || 0).toLocaleString()}
+                                </p>
                               </div>
                               <div>
                                 <p className="text-[10px] uppercase tracking-wide text-gray-400">Impressions</p>

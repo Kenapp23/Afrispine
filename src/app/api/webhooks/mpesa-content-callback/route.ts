@@ -8,7 +8,8 @@
  *   - Increment Video.viewCount
  *   - Credit creator balance
  *   - Auto-queue payout if balance >= KES 1000
- *   - Handle referral tracking
+ *   - Handle referral tracking (5% commission from platform share)
+ *   - Upsert ContentViewer for buyer & referrer
  *
  * Daraja ALWAYS expects a 200 response.
  */
@@ -16,8 +17,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, dbReady } from '@/lib/db';
 
-const CREATOR_SHARE_PCT = 0.6;  // 60% to creator
-const PLATFORM_SHARE_PCT = 0.4; // 40% to platform
+const CREATOR_SHARE_PCT = 0.6;   // 60% to creator
+const PLATFORM_SHARE_PCT = 0.4;  // 40% to platform
+const REFERRAL_COMMISSION_PCT = 0.05; // 5% referral commission (deducted from platform share)
 const PAYOUT_THRESHOLD_KES = 1000;
 
 interface StkCallbackItem {
@@ -105,15 +107,26 @@ export async function POST(req: NextRequest) {
     // Calculate shares
     const creatorShare = Math.round(amountPaid * CREATOR_SHARE_PCT * 100) / 100;
     const platformShare = Math.round(amountPaid * PLATFORM_SHARE_PCT * 100) / 100;
+    const referralCommission = pending.referralCode
+      ? Math.round(amountPaid * REFERRAL_COMMISSION_PCT * 100) / 100
+      : 0;
 
     // ── Atomic transaction ──────────────────────────────────────
     try {
       await db.$transaction(async (tx) => {
-        // a) Insert ContentTicket
-        await tx.contentTicket.create({
+        // a) Upsert ContentViewer for buyer
+        const buyerViewer = await tx.contentViewer.upsert({
+          where: { phone: pending.viewerPhone },
+          update: {},
+          create: { phone: pending.viewerPhone },
+        });
+
+        // b) Insert ContentTicket with viewerId
+        const ticket = await tx.contentTicket.create({
           data: {
             videoId: pending.videoId,
             viewerPhone: pending.viewerPhone,
+            viewerId: buyerViewer.id,
             mpesaReceiptNumber,
             amountPaid,
             creatorShare,
@@ -122,19 +135,65 @@ export async function POST(req: NextRequest) {
           },
         });
 
-        // b) Increment Video.viewCount
+        // c) Handle referral commission (5% from platform share)
+        if (pending.referralCode && referralCommission > 0) {
+          // Find the ShareEvent that generated this referral code
+          const shareEvent = await tx.shareEvent.findFirst({
+            where: { referralCode: pending.referralCode },
+            include: { viewer: { select: { id: true, phone: true } } },
+          });
+
+          if (shareEvent) {
+            const referrerPhone = shareEvent.viewer?.phone;
+
+            if (referrerPhone) {
+              // Ensure referrer has a ContentViewer record
+              await tx.contentViewer.upsert({
+                where: { phone: referrerPhone },
+                update: {},
+                create: { phone: referrerPhone },
+              });
+
+              // Create the ReferralReward record
+              await tx.referralReward.create({
+                data: {
+                  referrerPhone,
+                  ticketId: ticket.id,
+                  videoId: pending.videoId,
+                  amountKes: referralCommission,
+                  commissionPct: REFERRAL_COMMISSION_PCT,
+                  paidOut: false,
+                },
+              });
+
+              console.log(
+                `[mpesa-content-callback] Referral commission: KES ${referralCommission} (${REFERRAL_COMMISSION_PCT * 100}%) credited to ${referrerPhone}`,
+              );
+            } else {
+              console.warn(
+                `[mpesa-content-callback] ShareEvent found for code=${pending.referralCode} but no viewer phone linked`,
+              );
+            }
+          } else {
+            console.warn(
+              `[mpesa-content-callback] No ShareEvent found for referral code=${pending.referralCode}`,
+            );
+          }
+        }
+
+        // d) Increment Video.viewCount
         await tx.video.update({
           where: { id: pending.videoId },
           data: { viewCount: { increment: 1 } },
         });
 
-        // c) Credit creator balance
+        // e) Credit creator balance
         const updatedCreator = await tx.creatorProfile.update({
           where: { id: pending.creatorId },
           data: { balanceKes: { increment: creatorShare } },
         });
 
-        // d) Auto-queue payout if balance >= threshold
+        // f) Auto-queue payout if balance >= threshold
         if (updatedCreator.balanceKes >= PAYOUT_THRESHOLD_KES) {
           // Fetch payout phone from creator profile
           const creator = await tx.creatorProfile.findUnique({
@@ -164,40 +223,18 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        // e) Delete PendingContentCheckout
+        // g) Delete PendingContentCheckout
         await tx.pendingContentCheckout.delete({
           where: { merchantRequestId: MerchantRequestID },
         });
       });
 
-      // ── Referral handling ──────────────────────────────────────
-      if (pending.referralCode) {
-        try {
-          // Check if this is a first purchase from this phone (simple record)
-          const existingRef = await db.contentTicket.findFirst({
-            where: {
-              viewerPhone: pending.viewerPhone,
-              referralCode: pending.referralCode,
-            },
-            select: { id: true },
-          });
-
-          if (!existingRef) {
-            // First purchase via this referral code — credit the referrer.
-            // TODO: Actual reward mechanic is pending kennedy-decision.
-            // For now, just ensure the referral code is tracked on the ticket
-            // (already done above via referralCode on ContentTicket).
-            console.log(
-              `[mpesa-content-callback] Referral tracked: code=${pending.referralCode}, phone=${pending.viewerPhone}`,
-            );
-          }
-        } catch (refErr) {
-          console.error('[mpesa-content-callback] Referral handling error:', refErr);
-        }
-      }
+      const commissionNote = referralCommission > 0
+        ? ` (referral commission: KES ${referralCommission})`
+        : '';
 
       console.log(
-        `[mpesa-content-callback] SUCCESS: ticket created for ${pending.videoId}, KES ${amountPaid} (${creatorShare}/${platformShare} split)`,
+        `[mpesa-content-callback] SUCCESS: ticket created for ${pending.videoId}, KES ${amountPaid} (${creatorShare}/${platformShare} split)${commissionNote}`,
       );
     } catch (txErr) {
       console.error('[mpesa-content-callback] Transaction error:', txErr);

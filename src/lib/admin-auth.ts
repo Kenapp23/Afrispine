@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminFromRequest, AdminJwtPayload } from './auth';
 
+/** Convenience function: returns admin payload or null */
+export async function adminAuth(req: NextRequest): Promise<AdminJwtPayload | null> {
+  const admin = getAdminFromRequest(req);
+  if (!admin || admin.role !== 'admin') return null;
+  return admin;
+}
+
 export async function requireAdmin(req: NextRequest): Promise<{
   error: string | null;
   res: NextResponse | null;

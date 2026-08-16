@@ -562,3 +562,178 @@ Stage Summary:
 - Lint passes clean
 - Page compiled and served HTTP 200 successfully
 - Known environmental issue: 4GB RAM limit causes Turbopack OOM when compiling 100+ dynamic imports + watch page simultaneously — requires production deployment (Vercel) or more RAM to run stably
+
+---
+Task ID: 2
+Agent: Referral System Agent
+Task: Implement 5% percentage-based referral commission system
+
+Work Log:
+- Read existing worklog and understood project context (AfriSpine content platform with M-Pesa payments)
+- Analyzed existing Prisma schema: ContentTicket, ReferralReward, ShareEvent, ContentViewer, PendingContentCheckout, OutboundCreatorPayout models already defined
+- Reviewed existing M-Pesa content callback route (had TODO placeholder for referral rewards)
+- Updated `/src/app/api/webhooks/mpesa-content-callback/route.ts`:
+  - Added `REFERRAL_COMMISSION_PCT = 0.05` constant
+  - Moved referral logic inside the Prisma `$transaction` block for atomicity
+  - Added ContentViewer upsert for the buyer (viewerPhone) — sets `viewerId` on ContentTicket
+  - Added 5% commission calculation: `Math.round(amountPaid * 0.05 * 100) / 100`
+  - Added ShareEvent lookup by referralCode to find the referrer's phone
+  - Added ContentViewer upsert for referrer (if phone found from ShareEvent)
+  - Added ReferralReward creation with all required fields: referrerPhone, ticketId, videoId, amountKes, commissionPct, paidOut
+  - Commission is deducted from platform's 40% share (creator still gets full 60%)
+  - Removed old TODO referral block that was outside the transaction
+  - Added logging for referral commission events
+- Created `/src/app/api/content/referral/stats/route.ts`:
+  - GET handler accepting `?phone=254XXX` query parameter
+  - Validates phone format (must match `254XXXXXXXXX`)
+  - Returns aggregated stats: totalEarnings, totalPaid, totalUnpaid, totalReferrals
+  - Returns recentRewards list (last 20) with video title, creator name, amounts, dates
+  - Proper error handling with appropriate HTTP status codes
+- Ran `bun run lint` — passed clean with no errors
+
+Stage Summary:
+- 2 files modified/created:
+  - `src/app/api/webhooks/mpesa-content-callback/route.ts` — updated with 5% referral commission inside Prisma transaction
+  - `src/app/api/content/referral/stats/route.ts` — new endpoint for referral earnings stats
+- Commission flow: buyer pays → ticket created (60/40 split) → if referralCode exists → lookup ShareEvent → create ReferralReward (5% of total, deducted from platform's 40%)
+- ContentViewer records are auto-upserted for both buyer and referrer
+- viewerId is now set on every ContentTicket (was previously null)
+- Lint passes clean
+
+---
+Task ID: 3
+Agent: Payment API Agent
+Task: Sponsor flat-rate prepaid payment system
+
+Work Log:
+- Added `adminAuth(req)` convenience function to `src/lib/admin-auth.ts` — returns `AdminJwtPayload | null` for simple auth checks
+- Created `src/app/api/admin/sponsor-pricing/route.ts` — GET returns all SponsorPricing ordered by slotType; POST (admin-only) upserts pricing records from `{ pricings: Array<{ slotType, label, priceKes, impressionsIncluded? }> }`
+- Created `src/app/api/sponsor/campaigns/[id]/approve/route.ts` — Admin approves campaign: validates pending_review status, calculates total cost from SponsorPricing per slot (defaults to KES 5000), sets awaiting_payment status, generates merchantRequestId, fires M-Pesa STK Push via `initiateStkPush()`, reverts on STK failure
+- Created `src/app/api/webhooks/mpesa-sponsor-callback/route.ts` — Daraja STK callback: always returns 200, on success (ResultCode 0) activates campaign + all pending slots in a transaction, on failure marks paymentStatus=failed
+- Updated `src/app/api/sponsor/campaigns/route.ts` — GET now includes SponsorPricing list + totalCost/pricingBreakdown per campaign; POST calculates totalCost from pricing and returns it with the created campaign
+
+Stage Summary:
+- 3 new files: admin/sponsor-pricing, sponsor/campaigns/[id]/approve, webhooks/mpesa-sponsor-callback
+- 2 files modified: admin-auth.ts (added adminAuth export), sponsor/campaigns/route.ts (pricing enrichment)
+- Lint passes clean with zero errors
+
+---
+Task ID: 4
+Agent: Main Agent
+Task: Upgrade search and For You feed APIs with hybrid search and weighted scoring
+
+Work Log:
+- Read existing worklog, schema (CreatorProfile, Video, Follow, WatchEvent, Like models), and db.ts patterns
+- Upgraded `src/app/api/content/search/route.ts` (V1 → V2):
+  - Implemented hybrid search: keyword matching via Prisma `contains` + trigram-like fuzzy matching
+  - Added `generateTrigrams()` to produce all 3+ char substrings of query for fuzzy matching
+  - Added `hasTrigramMatch()` to check if any trigram appears in target string
+  - Fuzzy phase fetches remaining live videos (excluding keyword hits) and filters in-memory
+  - Implemented relevance scoring: title match (3x), category match (2x), description match (1x), engagement bonus (viewCount*0.01 + likeCount*0.05 + shareCount*0.1)
+  - Trigram-only hits get partial credit proportional to hit ratio (capped at 1.5)
+  - Results sorted by relevance score descending, top 30 returned
+  - Internal `_relevanceScore` field stripped before response
+- Upgraded `src/app/api/content/foryou/route.ts` (V1 → V2):
+  - Implemented 4-dimension composite scoring algorithm:
+    - Recency (0-30 pts): 30 * (1 - age_in_hours / 168), linear 7-day decay
+    - Engagement (0-45 pts): 30 * normalized likes + 15 * min(likeCount/viewCount, 1)
+    - Social proof (0-20 pts): 10 * min(followerCount/100K, 1) + 10 * min(shareCount/100, 1)
+    - Follow affinity (0-30 pts): +20 if user follows creator, +10 if user has watched creator's videos before
+  - Follow affinity only computed when `userId` query param is provided
+  - Fetches Follow records and WatchEvent history (with distinct videoId) for user
+  - Fetches up to 500 live videos, scores in-memory, returns top 20
+  - Graceful degradation: affinity lookups wrapped in try/catch, non-DB errors return empty array
+- Both files follow existing coding style: same select shape, same error handling, same dbReady guard
+- ESLint passes with zero errors
+
+Stage Summary:
+- 2 files modified: src/app/api/content/search/route.ts, src/app/api/content/foryou/route.ts
+- Search: simple `contains` → hybrid keyword + fuzzy trigram matching with relevance ranking
+- ForYou: chronological → 4-dimension weighted scoring (recency, engagement, social proof, affinity)
+- No schema changes required — uses existing Follow and WatchEvent models
+- Lint passes clean with zero errors
+
+---
+Task ID: 6
+Agent: Main Agent
+Task: Add sponsor pricing management section to admin sponsor brands page
+
+Work Log:
+- Read existing admin-sponsor-brands-page.tsx to understand structure, styling patterns, and imports
+- Verified SponsorPricing Prisma model already exists (slotType unique, label, priceKes, impressionsIncluded, isActive)
+- Verified GET/POST API route already exists at /api/admin/sponsor-pricing/route.ts (GET returns pricings array, POST upserts with admin auth)
+- Added PricingRow interface and SLOT_DEFAULTS constant for the 4 slot types (backdrop_banner, smart_chyron, intro_splash, feed_native_card)
+- Added pricing state: pricingRows, pricingLoaded, pricingSaving
+- Added useEffect to fetch pricing on mount from /api/admin/sponsor-pricing, merging with defaults
+- Added handleSavePricing function that POSTs all 4 rows to the API with toast feedback
+- Added updatePricingField helper for controlled input updates
+- Inserted "Ad Slot Pricing" Card section ABOVE the Filters card, with: DollarSign icon in header, "Save Pricing" button, Table with 3 columns (Slot Type label+monospace, Price KES input, Impressions input)
+- Loading state uses Skeleton (4 rows) matching existing pattern
+- Styled consistently: border-gray-100 cards, emerald-100 icon bg, h-9 w-36 inputs, text-xs uppercase tracking-wide table headers
+- ESLint passes clean with zero errors
+
+Stage Summary:
+- 1 file modified: src/components/afrispine/admin/admin-sponsor-brands-page.tsx
+- Added Ad Slot Pricing management card above brand list filters
+- 4 slot types with editable price (KES) and impressions included fields
+- Fetches existing pricing on load, saves via POST to existing API endpoint
+- No new API routes or schema changes needed — all infrastructure pre-existed
+
+---
+Task ID: 7
+Agent: Main Agent
+Task: Update sponsor dashboard to show pricing tiers and new payment flow (flat-rate prepaid with STK push after admin approval)
+
+Work Log:
+- Read existing sponsor-dashboard-page.tsx, campaigns API route, sponsor-pricing API route, and prisma schema to understand full context
+- Added SponsorPricingData and PricingBreakdownItem interfaces for typing
+- Updated CampaignData to include paymentStatus, totalCost, and pricingBreakdown fields
+- Added pricing state (pricings array, loadingPricing) and fetchPricing callback that calls GET /api/admin/sponsor-pricing on page load
+- Also captures pricings from campaigns GET response (which already returns pricings array)
+- Built pricingMap via useMemo for efficient slot cost lookups
+- Removed budgetKes state variable and the budget input field entirely — cost is now auto-calculated from slot pricing
+- Each slot type checkbox now shows its estimated cost as a green pill badge (e.g. "KES 5,000") when pricing is configured
+- Added "Pricing pending — admin will set the rate" amber warning note when no pricing records exist
+- Added real-time "Total Estimated Cost: KES X" summary bar (emerald-50 bg, Wallet icon) below slot checkboxes that updates as slots are selected/deselected
+- Updated handleCampaignSubmit: removed budgetKes from validation, added selectedSlots.length check, removed budgetKes from POST payload, shows totalCost from API response in success toast
+- Added payment flow note below form: "After submission, your campaign will be reviewed. Once approved, you'll receive an M-Pesa prompt to pay."
+- Updated campaign list status badges with new flow: pending_review→Under Review (amber), awaiting_payment→Awaiting Payment (orange), active→Live (green), completed→Completed (gray), rejected→Rejected (red), paused→Paused (gray)
+- Added getPaymentStatusBadge helper for payment status: unpaid→Pending Review (amber), pending→Payment Pending (amber), paid→Paid (green), failed→Payment Failed (red)
+- Campaign cards now show both payment status badge and campaign status badge side by side
+- For awaiting_payment campaigns, show orange "Payment Pending" message with estimated cost in a highlighted bar
+- Changed campaign list "Budget" column to "Cost" column using totalCost from API (falls back to budgetKes)
+- Added new imports: useMemo, Clock, AlertCircle, Info, CreditCard from lucide-react
+- Reorganized date fields layout (start date in objective row, end date in its own row) since budget field removed
+- ESLint passes clean with zero errors
+
+Stage Summary:
+- 1 file modified: src/components/creator/sponsor-dashboard-page.tsx
+- Sponsor dashboard now shows flat-rate pricing per slot type fetched from /api/admin/sponsor-pricing
+- Budget field removed; cost auto-calculated and shown in real-time
+- Campaign list shows new status flow (Under Review → Awaiting Payment → Live → Completed) with payment status badges
+- Payment pending campaigns display estimated cost in highlighted orange bar
+- M-Pesa payment flow note added below campaign creation form
+---
+Task ID: main
+Agent: Main Orchestrator
+Task: Implement BUILD PROMPT decisions (referral %, sponsor flat-rate, semantic search, domain split)
+
+Work Log:
+- Analyzed user 4 decisions on pending questions
+- Explained domain/subdomain split: no action needed (already decoupled via hash routing)
+- Updated Prisma schema: added ContentViewer, ReferralReward, SponsorPricing models
+- Updated SponsorCampaign with payment fields (paymentStatus, mpesaReceiptNumber, merchantRequestId, etc.)
+- Fixed SQLite provider for dev environment
+- Launched parallel subagents for backend and frontend work
+- Added admin campaign review queue with STK trigger and reject flow
+- Updated watch page: Web Share API with 5 channels (WhatsApp, X, Instagram, TikTok, Copy Link)
+- Added referral deep link capture from URL hash params
+- Browser-verified: landing page, watch page, share sheet, sponsor landing all render correctly
+
+Stage Summary:
+- 5% referral commission: webhook updated, ReferralReward model, stats endpoint
+- Sponsor flat-rate prepaid: SponsorPricing model, admin pricing UI, campaign approval with STK, sponsor callback webhook
+- Semantic search: hybrid keyword+trigram search with relevance ranking (V2)
+- For You feed: 4-dimension weighted scoring algorithm (V2)
+- Domain split: explained and confirmed no code changes needed
+- All changes pass ESLint clean

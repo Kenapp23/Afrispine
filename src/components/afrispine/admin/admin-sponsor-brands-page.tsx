@@ -33,9 +33,26 @@ import {
   Mail,
   Calendar,
   Users,
+  Clock,
+  DollarSign,
+  Rocket,
 } from 'lucide-react';
 
 /* ── Types ───────────────────────────────────────────────── */
+
+interface PricingRow {
+  slotType: string;
+  label: string;
+  priceKes: string;
+  impressionsIncluded: string;
+}
+
+const SLOT_DEFAULTS: PricingRow[] = [
+  { slotType: 'backdrop_banner', label: 'Backdrop Banner', priceKes: '', impressionsIncluded: '10000' },
+  { slotType: 'smart_chyron', label: 'Smart Chyron', priceKes: '', impressionsIncluded: '10000' },
+  { slotType: 'intro_splash', label: 'Intro Splash', priceKes: '', impressionsIncluded: '10000' },
+  { slotType: 'feed_native_card', label: 'Feed Native Card', priceKes: '', impressionsIncluded: '10000' },
+];
 
 interface SponsorBrandRow {
   id: string;
@@ -87,6 +104,11 @@ export function AdminSponsorBrandsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
+  /* ── Pricing state ── */
+  const [pricingRows, setPricingRows] = useState<PricingRow[]>(SLOT_DEFAULTS);
+  const [pricingLoaded, setPricingLoaded] = useState(false);
+  const [pricingSaving, setPricingSaving] = useState(false);
+
   const fetchBrands = useCallback(async () => {
     setLoading(true);
     try {
@@ -112,6 +134,44 @@ export function AdminSponsorBrandsPage() {
     fetchBrands();
   }, [fetchBrands]);
 
+  /* ── Fetch pricing on mount ── */
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/admin/sponsor-pricing');
+        if (res.ok) {
+          const data = await res.json();
+          const existing = (data.pricings || []) as Array<{
+            slotType: string;
+            label: string;
+            priceKes: number;
+            impressionsIncluded: number;
+          }>;
+          if (existing.length > 0) {
+            setPricingRows(
+              SLOT_DEFAULTS.map((def) => {
+                const found = existing.find((e) => e.slotType === def.slotType);
+                if (found) {
+                  return {
+                    slotType: found.slotType,
+                    label: found.label,
+                    priceKes: String(found.priceKes),
+                    impressionsIncluded: String(found.impressionsIncluded),
+                  };
+                }
+                return { ...def };
+              }),
+            );
+          }
+        }
+      } catch {
+        // silently ignore — defaults remain
+      } finally {
+        setPricingLoaded(true);
+      }
+    })();
+  }, []);
+
   const handleApprove = async (brandId: string) => {
     setActionLoading(brandId);
     try {
@@ -127,6 +187,44 @@ export function AdminSponsorBrandsPage() {
     } finally {
       setActionLoading(null);
     }
+  };
+
+  /* ── Save pricing ── */
+  const handleSavePricing = async () => {
+    setPricingSaving(true);
+    try {
+      const payload = pricingRows.map((r) => ({
+        slotType: r.slotType,
+        label: r.label,
+        priceKes: parseFloat(r.priceKes) || 0,
+        impressionsIncluded: parseInt(r.impressionsIncluded, 10) || 10000,
+      }));
+
+      const res = await fetch('/api/admin/sponsor-pricing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pricings: payload }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to save pricing.');
+      }
+
+      toast.success('Pricing updated successfully.');
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to save pricing.');
+    } finally {
+      setPricingSaving(false);
+    }
+  };
+
+  const updatePricingField = (index: number, field: keyof PricingRow, value: string) => {
+    setPricingRows((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], [field]: value };
+      return next;
+    });
   };
 
   const handleReject = async (brandId: string) => {
@@ -150,6 +248,65 @@ export function AdminSponsorBrandsPage() {
   const totalBrands = brands.length;
   const pendingCount = brands.filter((b) => b.kybStatus === 'unverified' || b.kybStatus === 'pending').length;
   const verifiedCount = brands.filter((b) => b.kybStatus === 'verified').length;
+
+  /* ── Campaigns review state ── */
+  const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [campaignsLoading, setCampaignsLoading] = useState(false);
+  const [approvingCampaignId, setApprovingCampaignId] = useState<string | null>(null);
+
+  const fetchCampaigns = useCallback(async () => {
+    setCampaignsLoading(true);
+    try {
+      const res = await fetch('/api/sponsor/campaigns');
+      if (res.ok) {
+        const data = await res.json();
+        setCampaigns(data.campaigns || []);
+      }
+    } catch { /* ignore */ }
+    finally { setCampaignsLoading(false); }
+  }, []);
+
+  useEffect(() => { fetchCampaigns(); }, [fetchCampaigns]);
+
+  const handleApproveCampaign = async (campaignId: string) => {
+    setApprovingCampaignId(campaignId);
+    try {
+      const res = await fetch(`/api/sponsor/campaigns/${campaignId}/approve`, { method: 'POST' });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to approve campaign.');
+      }
+      const data = await res.json();
+      toast.success(`STK Push sent! Total: KES ${data.totalCost?.toLocaleString()}`);
+      fetchCampaigns();
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to approve campaign.');
+    } finally {
+      setApprovingCampaignId(null);
+    }
+  };
+
+  const handleRejectCampaign = async (campaignId: string) => {
+    setApprovingCampaignId(campaignId);
+    try {
+      const res = await fetch(`/api/sponsor/campaigns/${campaignId}/reject`, { method: 'POST' });
+      if (res.ok) { toast.success('Campaign rejected.'); fetchCampaigns(); }
+    } catch { toast.error('Failed to reject campaign.'); }
+    finally { setApprovingCampaignId(null); }
+  };
+
+  const pendingCampaigns = campaigns.filter(c => c.status === 'pending_review');
+
+  function getCampaignStatusBadge(status: string, paymentStatus?: string) {
+    if (status === 'active') return <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-xs font-semibold">Live</Badge>;
+    if (status === 'awaiting_payment') return <Badge className="bg-orange-100 text-orange-700 border-orange-200 text-xs font-semibold">Awaiting Payment</Badge>;
+    if (status === 'pending_review') return <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-xs font-semibold">Under Review</Badge>;
+    if (status === 'rejected') return <Badge className="bg-red-100 text-red-700 border-red-200 text-xs font-semibold">Rejected</Badge>;
+    if (status === 'completed') return <Badge className="bg-gray-100 text-gray-600 border-gray-200 text-xs font-semibold">Completed</Badge>;
+    if (status === 'paused') return <Badge className="bg-gray-100 text-gray-600 border-gray-200 text-xs font-semibold">Paused</Badge>;
+    if (paymentStatus === 'failed') return <Badge className="bg-red-100 text-red-700 border-red-200 text-xs font-semibold">Payment Failed</Badge>;
+    return <Badge className="bg-gray-100 text-gray-600 border-gray-200 text-xs font-semibold">{status}</Badge>;
+  }
 
   return (
     <div className="space-y-6">
@@ -201,6 +358,86 @@ export function AdminSponsorBrandsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Ad Slot Pricing */}
+      <Card className="border-gray-100">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 shrink-0">
+                <DollarSign className="h-5 w-5" />
+              </div>
+              <CardTitle className="text-base font-bold text-gray-900">Ad Slot Pricing</CardTitle>
+            </div>
+            <Button
+              size="sm"
+              onClick={handleSavePricing}
+              disabled={pricingSaving}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white h-8 px-4 text-xs font-semibold"
+            >
+              {pricingSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
+              Save Pricing
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0">
+          {!pricingLoaded ? (
+            <div className="space-y-3 py-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full rounded" />
+              ))}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-b border-gray-100">
+                    <TableHead className="text-xs uppercase tracking-wide text-gray-500 font-semibold">Slot Type</TableHead>
+                    <TableHead className="text-xs uppercase tracking-wide text-gray-500 font-semibold">Price (KES)</TableHead>
+                    <TableHead className="text-xs uppercase tracking-wide text-gray-500 font-semibold">Impressions Included</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pricingRows.map((row, idx) => (
+                    <TableRow key={row.slotType} className="border-b border-gray-50">
+                      <TableCell>
+                        <span className="text-sm font-semibold text-gray-900">{row.label}</span>
+                        <br />
+                        <span className="text-xs text-gray-400 font-mono">{row.slotType}</span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs text-gray-400 font-medium">KES</span>
+                          <Input
+                            type="number"
+                            min={0}
+                            step={1000}
+                            value={row.priceKes}
+                            onChange={(e) => updatePricingField(idx, 'priceKes', e.target.value)}
+                            className="h-9 w-36 text-sm"
+                            placeholder="0"
+                          />
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          min={0}
+                          step={1000}
+                          value={row.impressionsIncluded}
+                          onChange={(e) => updatePricingField(idx, 'impressionsIncluded', e.target.value)}
+                          className="h-9 w-36 text-sm"
+                          placeholder="10000"
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Filters */}
       <Card className="border-gray-100">
@@ -329,6 +566,97 @@ export function AdminSponsorBrandsPage() {
                   })}
                 </TableBody>
               </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ── Campaign Review Queue ── */}
+      <Card className="border-gray-100">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100 text-amber-600 shrink-0">
+                <Rocket className="h-5 w-5" />
+              </div>
+              <div>
+                <CardTitle className="text-base font-bold text-gray-900">Campaign Review</CardTitle>
+                <p className="text-xs text-gray-500 mt-0.5">Approve campaigns to trigger M-Pesa payment</p>
+              </div>
+            </div>
+            <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700 font-semibold text-xs">
+              {pendingCampaigns.length} pending
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0">
+          {campaignsLoading ? (
+            <div className="space-y-3 py-2">
+              {Array.from({ length: 2 }).map((_, i) => (
+                <Skeleton key={i} className="h-16 w-full rounded" />
+              ))}
+            </div>
+          ) : campaigns.length === 0 ? (
+            <div className="text-center py-10">
+              <Rocket className="h-10 w-10 mx-auto text-gray-300 mb-3" />
+              <p className="text-sm text-gray-500">No campaigns submitted yet.</p>
+            </div>
+          ) : (
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {campaigns.map((c) => (
+                <div key={c.id} className="rounded-lg border border-gray-100 p-4 space-y-3 hover:bg-gray-50/50 transition-colors">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h4 className="text-sm font-semibold text-gray-900 truncate">{c.name}</h4>
+                      <p className="text-xs text-gray-500 mt-0.5">{c.brand?.companyName || 'Unknown Brand'}</p>
+                    </div>
+                    {getCampaignStatusBadge(c.status, c.paymentStatus)}
+                  </div>
+                  <div className="grid grid-cols-3 gap-3 text-center">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wide text-gray-400">Objective</p>
+                      <p className="text-xs font-bold text-gray-700 capitalize">{c.objective?.replace(/_/g, ' ')}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wide text-gray-400">Slots</p>
+                      <p className="text-xs font-bold text-gray-700">{c.slots?.length || 0}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wide text-gray-400">Cost</p>
+                      <p className="text-xs font-bold text-emerald-600">KES {c.totalCost?.toLocaleString() || c.budgetKes?.toLocaleString() || '—'}</p>
+                    </div>
+                  </div>
+                  {c.status === 'pending_review' && (
+                    <div className="flex items-center gap-2 pt-1">
+                      <Button
+                        size="sm"
+                        onClick={() => handleApproveCampaign(c.id)}
+                        disabled={approvingCampaignId === c.id}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white h-8 px-3 text-xs font-semibold"
+                      >
+                        {approvingCampaignId === c.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5 mr-1" />}
+                        Approve & Send STK
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleRejectCampaign(c.id)}
+                        disabled={approvingCampaignId === c.id}
+                        className="border-red-300 text-red-600 hover:bg-red-50 h-8 px-3 text-xs font-semibold"
+                      >
+                        <XCircle className="h-3.5 w-3.5 mr-1" />
+                        Reject
+                      </Button>
+                    </div>
+                  )}
+                  {c.status === 'awaiting_payment' && (
+                    <p className="text-xs text-orange-600 font-medium flex items-center gap-1">
+                      <Clock className="h-3.5 w-3.5" />
+                      Waiting for M-Pesa payment from {c.paymentPhone || 'brand'}
+                    </p>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </CardContent>
