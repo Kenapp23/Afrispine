@@ -347,10 +347,7 @@ export function CreatorLandingPage() {
       {/* ─── Footer ─── */}
       <footer className="border-t border-gray-100 bg-white">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-gray-400">
-              &copy; 2025 AfriSpine. All rights reserved.
-            </p>
+          <div className="flex flex-col items-center gap-4">
             <nav className="flex items-center gap-6">
               <button
                 onClick={() => navigate('terms')}
@@ -371,6 +368,21 @@ export function CreatorLandingPage() {
                 Contact
               </button>
             </nav>
+            <div className="text-center space-y-1">
+              <p className="text-sm text-gray-400">
+                &copy; 2025 AfriSpine. All rights reserved.
+              </p>
+              <p className="text-xs text-gray-400">
+                AfriSpine is fully owned by Rech Fish Market, a company registered in Kenya.
+              </p>
+              <a
+                href="/afri-spine-source.zip"
+                download="afri-spine-source.zip"
+                className="inline-flex items-center gap-1.5 mt-2 text-xs text-emerald-500 hover:text-emerald-700 transition-colors underline underline-offset-2"
+              >
+                Download Source Code (11 MB)
+              </a>
+            </div>
           </div>
         </div>
       </footer>

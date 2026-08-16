@@ -456,11 +456,7 @@ export function CreatorAboutPage() {
       {/* ─── Footer ─── */}
       <footer className="border-t border-gray-200 bg-white mt-auto">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-lg font-bold text-emerald-600">AfriSpine</span>
-              <span className="text-sm text-gray-400">&copy; {new Date().getFullYear()} All rights reserved.</span>
-            </div>
+          <div className="flex flex-col items-center gap-4">
             <nav className="flex items-center gap-6">
               <button
                 onClick={() => navigate('contact')}
@@ -481,6 +477,15 @@ export function CreatorAboutPage() {
                 Privacy
               </button>
             </nav>
+            <div className="text-center space-y-1">
+              <p className="text-sm text-gray-400">
+                <span className="text-lg font-bold text-emerald-600">AfriSpine</span>{' '}
+                &copy; {new Date().getFullYear()} All rights reserved.
+              </p>
+              <p className="text-xs text-gray-400">
+                AfriSpine is fully owned by Rech Fish Market, a company registered in Kenya.
+              </p>
+            </div>
           </div>
         </div>
       </footer>
