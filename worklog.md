@@ -887,3 +887,28 @@ Stage Summary:
 - Demo videos use Google's publicly available sample MP4s (rights-cleared for testing)
 - Sponsor preview is OFF by default — only activates with `?sponsorPreview=1`
 - All existing functionality preserved (like, follow, share, comments, STK push, premiere reveal, spine rail, etc.)
+
+---
+Task ID: demo-content-sponsor
+Agent: Main + full-stack-developer subagent
+Task: AI demo content with playable videos + sponsor overlay preview system
+
+Work Log:
+- Added isHouseContent (Boolean) + demoVideoUrl (String?) to Prisma Video model, pushed schema
+- Generated 4 AI images via z-ai CLI: demo-poster-nairobi.png (cityscape), demo-poster-savanna.png (golden hour), demo-poster-fashion.png (Ankara fabric), demo-brand-afircorp.png (logo)
+- Updated PREVIEW_CARDS with thumbnailUrl (AI posters) + demoVideoUrl (Google sample MP4s)
+- Added demoVideoUrl support to watch page: native <video> element when no CF Stream
+- Fixed critical bug: demo video error handler was setting hasStreamError=true, which permanently blocked video rendering. Removed error handler from demo videos.
+- Built SponsorOverlayDemo inline component with 4 slot types: backdrop_banner, smart_chyron, intro_splash, feed_native_card
+- Built placeholder brand kit: AfriCorp logo + wordmark for sponsor preview
+- Sponsor preview activates via #/watch?sponsorPreview=1 (parsed from hash)
+- Created /api/content/seed-house for DB-based house content seeding (for production)
+- Updated /api/content/foryou to return demoVideoUrl + isHouseContent fields
+- VLM audit: 8/10 visual quality, real video content playing behind AI posters
+- Pushed to GitHub
+
+Stage Summary:
+- Watch page now shows 3 demo videos with AI-generated poster thumbnails and real playable content
+- Sponsor overlay demo infrastructure complete (4 slot types, brand kit, auto-cycling)
+- isHouseContent flag ready for filtering in production
+- seed-house API ready for production DB deployment
