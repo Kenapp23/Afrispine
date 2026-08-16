@@ -800,3 +800,59 @@ Stage Summary:
 - Google will index the new title/description on next crawl
 - Footer product links updated for all pages that use the shared footer
 - Old remittance SEO pages (seo-send-uk-kenya, etc.) still exist but don't affect homepage search result
+---
+Task ID: visual-redesign-watch-page
+Agent: Main Agent
+Task: Complete visual redesign of AfriSpine Watch page (creator-watch-page.tsx) — data layer preserved
+
+Work Log:
+- Read original 656-line file to understand all state, API calls, handlers, and z-index layering
+- Replaced DEMO_CONTENT with PREVIEW_CARDS: 3 honestly-labeled preview cards (preview-1/2/3) with isPreview flag, no fake stream IDs, titles like 'Nairobi Nights — A Short Film'
+- Added isPreview?: boolean to VideoItem interface
+- Created inline PosterCard component: full-bleed gradient background from CATEGORY_SOLID_GRADIENTS, centered avatar initials circle, bold white title, 'Premiering Soon' tag with Film icon
+- Added empty-state handling: when displayVideos is empty after loading, shows full-screen 'Content Coming Soon' poster with AfriSpine logo text and film-strip decorative element
+- Added streamErrorMap state: video error events set streamErrorMap[id]=true, triggering PosterCard treatment instead of black rectangle
+- Created FilmSpineRail component replacing scroll progress dots: 40px vertical strip on right edge, sprocket-hole notches (8x12px) with active notch glowing emerald-500 with box-shadow, dim white/15 for inactive, horizontal separator lines between notches
+- Added spring animation on active card change: motion.div with y:6→0, opacity:0.95→1, spring stiffness:300 damping:30 for 'notch snap' feel
+- Replaced SkeletonCard Loader2 spinner with FilmLeaderCountdown: AnimatePresence cycling numbers 3,2,1 in large white text (600ms each), with decorative sprocket-hole elements
+- Implemented Premiere Reveal Sequence: (1) Ken Burns zoom on thumbnail via CSS @keyframes over 20s, (2) Spotlight sweep diagonal gradient overlay (300-600ms) via framer-motion translateX(-100%)→(100%), (3) Curtain-open reveal with clipPath:inset(0 50% 0 50%)→inset(0 0% 0 0%) over 400ms with ease-out, tracked via revealedMap state to fire only once per card
+- Replaced shimmer unlock bar with TicketStubUnlock: ticket-stub clip-path polygon with torn-bottom-edge, bg-gray-900/80 backdrop-blur-md, 3px solid emerald-500 left border, KES price badge, Ticket icon
+- On unlock success: ticket stub tears away with rotateX(15deg), y+20, opacity 0 via AnimatePresence exit, then emerald flash plays
+- Reskinned phone-input modal to dark theater tones (bg-gray-950), added torn-ticket header decoration with emerald-500/20 zigzag perforation pattern SVG
+- Added 'X watching now' social chip: pill in top-right with Eye icon, derived from viewCount/500 heuristic, fade-in on card activation via AnimatePresence
+- Added '🔥 Trending' chip: emerald pill below creator name when likeCount>100, shows formatted count
+- Added trending flare: pulsing flame emoji (CSS flamePulse keyframe) next to view count when likeCount>5000
+- All existing functionality preserved: fetch feed, like, follow, share, comments, STK push unlock flow, search, double-tap like with heart burst, scroll-snap container with IntersectionObserver, category filter, mute toggle
+- Cleaned up unused imports (useMemo, Play, ChevronRight)
+- Lint passes clean, compiles successfully
+
+Stage Summary:
+- Single file rewrite: /src/components/creator/creator-watch-page.tsx
+- All data layer, API calls, handlers, and z-index layering preserved exactly
+- New visual features: FilmSpineRail, FilmLeaderCountdown, PosterCard, Ken Burns, spotlight sweep, curtain reveal, ticket stub unlock, social presence chips
+- Framer-motion used for all choreographed animations (premiere reveal, ticket tear, spine transitions, watching chip)
+- CSS keyframes for Ken Burns, heartBurst, and flamePulse
+
+---
+Task ID: spine-redesign-1-5
+Agent: Main + full-stack-developer subagent
+Task: Complete "The Spine" redesign of AfriSpine Watch page (§1, §2, §4, §5, §6)
+
+Work Log:
+- Read and analyzed full 656-line creator-watch-page.tsx
+- Delegated complete rewrite to full-stack-developer agent with detailed spec for all 5 sections
+- Agent produced 955-line rewrite with all features
+- Verified lint passes clean
+- Fixed spine rail: increased notch size (10×14px), added vertical border lines, adjusted positioning (right-1)
+- Fixed bottom info overlap: added pr-14 to push action buttons left of spine rail
+- Enhanced PosterCard: added radial highlight, film-strip decorative rows (top/bottom), animated pulsing ring around avatar, larger avatar circle (24×24), drop shadow on title
+- Added slowPulse keyframe animation
+- Verified via agent-browser + VLM analysis: 8.5/10 visual quality, all elements rendering correctly
+
+Stage Summary:
+- §6 NEVER BLANK: Preview cards replace DEMO_CONTENT (honestly labeled), PosterCard for no-thumbnail/stream states, Content Coming Soon empty state, streamErrorMap for failed loads
+- §1 THE SPINE: FilmSpineRail with 3 sprocket notches, emerald glow on active, film strip border lines, spring animation on card activation, FilmLeaderCountdown (3-2-1) in skeleton state
+- §2 PREMIERE REVEAL: Ken Burns zoom on thumbnails (scale 1→1.06), spotlight sweep (diagonal gradient, 500ms), curtain-open reveal (clipPath inset animation, 400ms), tracked via revealedMap
+- §5 TICKET STUB: torn-edge clip-path polygon, dark theater background, emerald left border, tear-away exit animation via AnimatePresence, dark theater modal (bg-gray-950) with zigzag perforation header
+- §4 SOCIAL PRESENCE: "X watching now" chip (viewCount/500 heuristic, hidden for previews), "🔥 Trending" emerald chip (likeCount > 100), pulsing flame emoji on hot trending cards (likeCount > 5000)
+- All existing functionality preserved: API calls, STK push, comments, share, double-tap like, category filters, search

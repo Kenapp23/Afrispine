@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAppStore } from '@/stores/app';
 import { toast } from 'sonner';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Unlock, Heart, Play, ArrowLeft, Loader2, MessageCircle,
+  Unlock, Heart, ArrowLeft, Loader2, MessageCircle,
   Share2, Search, BadgeCheck, X, Send, Copy, Check, VolumeX, Volume2,
-  ChevronRight, Users, Eye,
+  Users, Eye, Film, Ticket,
 } from 'lucide-react';
 
 // ─── Category system (§5.3 seed taxonomy) ───────────────────────
@@ -29,6 +30,20 @@ const CATEGORY_GRADIENTS: Record<string, string> = {
   beauty_lifestyle: 'from-fuchsia-900/50',
 };
 
+// Solid gradient backgrounds for PosterCard
+const CATEGORY_SOLID_GRADIENTS: Record<string, string> = {
+  music: 'linear-gradient(135deg, #581c87, #3b0764, #1e1b4b)',
+  comedy: 'linear-gradient(135deg, #92400e, #78350f, #451a03)',
+  film: 'linear-gradient(135deg, #9f1239, #881337, #4c0519)',
+  fashion: 'linear-gradient(135deg, #9d174d, #831843, #500724)',
+  sports: 'linear-gradient(135deg, #065f46, #064e3b, #022c22)',
+  education: 'linear-gradient(135deg, #075985, #0c4a6e, #082f49)',
+  spirituality: 'linear-gradient(135deg, #3730a3, #312e81, #1e1b4b)',
+  news_culture: 'linear-gradient(135deg, #1e293b, #0f172a, #020617)',
+  food: 'linear-gradient(135deg, #9a3412, #7c2d12, #431407)',
+  beauty_lifestyle: 'linear-gradient(135deg, #86198f, #701a75, #4a044e)',
+};
+
 // ─── Types ───────────────────────────────────────────────────────
 interface VideoCreator {
   stageName: string; handle: string; avatarUrl?: string;
@@ -42,17 +57,31 @@ interface VideoItem {
   viewCount: number; likeCount: number; shareCount: number;
   status: string; createdAt: string; creatorId?: string;
   creator: VideoCreator;
+  isPreview?: boolean;
 }
 
 type UnlockStatus = 'locked' | 'processing' | 'unlocked';
 
-// ─── Fallback demo content (used when API is unreachable) ───────
-const DEMO_CONTENT: VideoItem[] = [
-  { id: 'demo1', title: 'Behind the Scenes: My Nairobi Fashion Shoot', description: 'Exclusive BTS from my latest collaboration with a top Kenyan designer.', category: 'fashion', ticketPriceKes: 100, viewCount: 2340, likeCount: 890, shareCount: 120, status: 'live', createdAt: new Date().toISOString(), creator: { stageName: 'Wanjiku Kariuki', handle: '@wanjiku_creates', verified: true, followerCount: 45000, id: 'c1' } },
-  { id: 'demo2', title: 'How I Produce a Track in 30 Minutes', description: 'My full production workflow from sample selection to final mix.', category: 'music', ticketPriceKes: 150, viewCount: 5100, likeCount: 2100, shareCount: 340, status: 'live', createdAt: new Date().toISOString(), creator: { stageName: 'DJ Muthoni', handle: '@dj_muthoni', verified: true, followerCount: 82000, id: 'c2' } },
-  { id: 'demo3', title: 'Nyama Choma: The Perfect Recipe', description: 'The recipe that got me 100K followers.', category: 'food', ticketPriceKes: 0, viewCount: 12000, likeCount: 5600, shareCount: 890, status: 'live', createdAt: new Date().toISOString(), creator: { stageName: 'Chef Otieno', handle: '@chef_otieno', verified: false, followerCount: 105000, id: 'c3' } },
-  { id: 'demo4', title: '30-Day Transformation Guide', description: 'The exact workout and meal plan I used.', category: 'sports', ticketPriceKes: 200, viewCount: 8900, likeCount: 3200, shareCount: 560, status: 'live', createdAt: new Date().toISOString(), creator: { stageName: 'Amina Daudi', handle: '@amina_fitness', verified: true, followerCount: 67000, id: 'c4' } },
-  { id: 'demo5', title: 'How I Write Skits That Go Viral', description: 'My creative process, from idea to 1M views.', category: 'comedy', ticketPriceKes: 50, viewCount: 45000, likeCount: 18000, shareCount: 3200, status: 'live', createdAt: new Date().toISOString(), creator: { stageName: 'Bryan Mwangi', handle: '@bryan_comedy', verified: true, followerCount: 340000, id: 'c5' } },
+// ─── Preview cards (replace DEMO_CONTENT — honestly labeled, no fake stream IDs) ───
+const PREVIEW_CARDS: VideoItem[] = [
+  {
+    id: 'preview-1', title: 'Nairobi Nights — A Short Film', description: 'A cinematic journey through the vibrant streets of Nairobi after dark.',
+    category: 'film', ticketPriceKes: 150, viewCount: 4200, likeCount: 1800, shareCount: 240,
+    status: 'live', createdAt: new Date().toISOString(), isPreview: true,
+    creator: { stageName: 'AfriSpine Studios', handle: '@afrispine_studios', verified: true, followerCount: 120000, id: 'as-studios' },
+  },
+  {
+    id: 'preview-2', title: 'Sounds of the Savanna', description: 'An immersive audio-visual experience blending traditional Kenyan music with modern beats.',
+    category: 'music', ticketPriceKes: 100, viewCount: 8900, likeCount: 4300, shareCount: 670,
+    status: 'live', createdAt: new Date().toISOString(), isPreview: true,
+    creator: { stageName: 'AfriSpine Studios', handle: '@afrispine_studios', verified: true, followerCount: 120000, id: 'as-studios' },
+  },
+  {
+    id: 'preview-3', title: 'The Art of Kenyan Cuisine', description: 'From farm to table — exploring the rich culinary heritage of Kenya.',
+    category: 'food', ticketPriceKes: 0, viewCount: 15600, likeCount: 7800, shareCount: 1200,
+    status: 'live', createdAt: new Date().toISOString(), isPreview: true,
+    creator: { stageName: 'AfriSpine Studios', handle: '@afrispine_studios', verified: true, followerCount: 120000, id: 'as-studios' },
+  },
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────
@@ -65,16 +94,176 @@ function formatCount(n: number): string {
   return n.toString();
 }
 
-// ─── Skeleton Card ───────────────────────────────────────────────
-function SkeletonCard() {
+// ─── Inline: Film Leader Countdown (replaces Loader2 spinner) ───
+function FilmLeaderCountdown() {
+  const [num, setNum] = useState(3);
+  useEffect(() => {
+    const t = setInterval(() => setNum(p => p <= 1 ? 3 : p - 1), 600);
+    return () => clearInterval(t);
+  }, []);
   return (
     <div className="relative h-dvh w-full snap-start snap-always flex-shrink-0 bg-gray-950 flex items-center justify-center">
-      <div className="flex flex-col items-center gap-4 animate-pulse">
-        <div className="h-24 w-24 rounded-full bg-gray-800" />
-        <div className="h-4 w-48 rounded bg-gray-800" />
-        <div className="h-3 w-32 rounded bg-gray-800" />
+      <div className="relative flex flex-col items-center gap-6">
+        {/* Sprocket holes decoration */}
+        <div className="absolute -top-20 left-1/2 -translate-x-1/2 flex gap-3 opacity-20">
+          {[0, 1, 2, 3, 4].map(i => (
+            <div key={i} className="h-3 w-2 rounded-sm bg-white" />
+          ))}
+        </div>
+        <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 flex gap-3 opacity-20">
+          {[0, 1, 2, 3, 4].map(i => (
+            <div key={i} className="h-3 w-2 rounded-sm bg-white" />
+          ))}
+        </div>
+        <AnimatePresence mode="wait">
+          <motion.span
+            key={num}
+            initial={{ opacity: 0, scale: 0.8, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 1.2, y: -8 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            className="text-7xl font-black text-white tabular-nums"
+          >
+            {num}
+          </motion.span>
+        </AnimatePresence>
+        <div className="h-px w-32 bg-white/20" />
+        <p className="text-xs font-medium tracking-widest text-white/40 uppercase">AfriSpine</p>
       </div>
     </div>
+  );
+}
+
+// ─── Inline: PosterCard (shown when no thumbnail AND no streamId, or stream error) ───
+function PosterCard({
+  title, creatorName, category, isContentComingSoon,
+}: {
+  title?: string; creatorName?: string; category?: string; isContentComingSoon?: boolean;
+}) {
+  const gradient = category
+    ? (CATEGORY_SOLID_GRADIENTS[category.toLowerCase().replace(' ', '_')] ?? CATEGORY_SOLID_GRADIENTS[category.toLowerCase()] ?? 'linear-gradient(135deg, #065f46, #022c22)')
+    : 'linear-gradient(135deg, #065f46, #022c22)';
+
+  if (isContentComingSoon) {
+    return (
+      <div className="absolute inset-0 z-0 flex flex-col items-center justify-center" style={{ background: gradient }}>
+        {/* Film strip decorative element */}
+        <div className="absolute inset-x-0 top-0 h-full flex flex-col justify-between py-8 pointer-events-none">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div key={i} className="flex justify-center gap-6">
+              {Array.from({ length: 8 }).map((_, j) => (
+                <div key={j} className="w-3 h-4 rounded-sm bg-white/5" />
+              ))}
+            </div>
+          ))}
+        </div>
+        <div className="relative z-10 flex flex-col items-center gap-4">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm">
+            <Film className="h-10 w-10 text-white/60" />
+          </div>
+          <h1 className="text-2xl font-black text-white tracking-tight">AfriSpine</h1>
+          <div className="flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-sm px-4 py-1.5">
+            <Film className="h-3.5 w-3.5 text-emerald-400" />
+            <span className="text-sm font-semibold text-white/80">Content Coming Soon</span>
+          </div>
+          <p className="mt-2 text-sm text-white/40 text-center max-w-xs">Premiere content is being curated for you. Stay tuned.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="absolute inset-0 z-0 flex flex-col items-center justify-center overflow-hidden" style={{ background: gradient }}>
+      {/* Subtle radial highlight */}
+      <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 40%, rgba(255,255,255,0.06) 0%, transparent 60%)' }} />
+      {/* Film strip decorative rows at top and bottom */}
+      <div className="absolute inset-x-0 top-3 pointer-events-none opacity-20">
+        <div className="flex justify-center gap-3">
+          {Array.from({ length: 10 }).map((_, j) => (
+            <div key={j} className="w-2.5 h-3.5 rounded-[2px] bg-white/40" />
+          ))}
+        </div>
+      </div>
+      <div className="absolute inset-x-0 bottom-3 pointer-events-none opacity-20">
+        <div className="flex justify-center gap-3">
+          {Array.from({ length: 10 }).map((_, j) => (
+            <div key={j} className="w-2.5 h-3.5 rounded-[2px] bg-white/40" />
+          ))}
+        </div>
+      </div>
+      {/* Creator avatar with animated ring */}
+      {creatorName && (
+        <div className="relative">
+          <div className="absolute -inset-1.5 rounded-full border border-white/10" style={{ animation: 'slowPulse 3s ease-in-out infinite' }} />
+          <div className="flex h-24 w-24 items-center justify-center rounded-full bg-white/15 backdrop-blur-md ring-2 ring-white/25">
+            <span className="text-2xl font-bold text-white tracking-tight">{getInitials(creatorName)}</span>
+          </div>
+        </div>
+      )}
+      {/* Title */}
+      {title && <h2 className="mt-5 px-8 text-center text-xl font-bold leading-snug text-white drop-shadow-lg">{title}</h2>}
+      {/* Premiering Soon tag */}
+      <div className="mt-4 flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-sm px-4 py-1.5">
+        <Film className="h-3.5 w-3.5 text-emerald-400" />
+        <span className="text-xs font-semibold text-white/80">Premiering Soon</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Inline: FilmSpineRail (replaces scroll progress dots) ───
+function FilmSpineRail({ count, activeIndex }: { count: number; activeIndex: number }) {
+  if (count <= 1) return null;
+  const notchGap = Math.min(32, Math.max(16, 400 / count));
+  const totalHeight = count * notchGap;
+
+  return (
+    <div className="pointer-events-none absolute right-1 top-1/2 z-30 -translate-y-1/2">
+      {/* Vertical film-strip border lines */}
+      <div className="absolute left-0 top-2 bottom-2 w-px bg-white/10" />
+      <div className="absolute right-0 top-2 bottom-2 w-px bg-white/10" />
+      <div
+        className="relative flex flex-col items-center rounded-l-lg bg-black/30 backdrop-blur-sm py-3 px-2"
+        style={{ height: totalHeight + 24 }}
+      >
+        {Array.from({ length: count }).map((_, idx) => (
+          <div key={idx} className="flex flex-col items-center" style={{ gap: notchGap - 14 }}>
+            {/* Sprocket notch */}
+            <motion.div
+              className="rounded-[2px]"
+              style={{ width: 10, height: 14 }}
+              animate={{
+                backgroundColor: idx === activeIndex ? '#10b981' : 'rgba(255,255,255,0.12)',
+                boxShadow: idx === activeIndex ? '0 0 10px 3px rgba(16,185,129,0.45)' : '0 0 0px 0px transparent',
+              }}
+              transition={{ duration: 0.3, ease: 'easeInOut' }}
+            />
+            {/* Separator line between notches */}
+            {idx < count - 1 && <div className="w-5 h-px bg-white/8" />}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Inline: TicketStubUnlock (replaces shimmer unlock bar) ───
+function TicketStubUnlock({ price, onClick, isProcessing }: { price: number; onClick: () => void; isProcessing: boolean }) {
+  return (
+    <button
+      onClick={onClick}
+      className="mt-2.5 flex items-center gap-3 rounded-none text-left transition-all duration-200 active:scale-[0.97] relative overflow-hidden"
+      style={{
+        background: 'rgba(17,24,39,0.8)',
+        borderLeft: '3px solid #10b981',
+        clipPath: 'polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 6px) 100%, 0 100%, 0 calc(100% - 8px))',
+        padding: '10px 16px',
+      }}
+    >
+      <span className="rounded-md bg-emerald-500 px-2 py-0.5 text-xs font-bold text-white">KES {price}</span>
+      <span className="text-xs font-medium text-white/80 flex-1">Unlock full video</span>
+      <Ticket className="h-4 w-4 text-emerald-400/60" />
+    </button>
   );
 }
 
@@ -99,6 +288,16 @@ export function CreatorWatchPage() {
   const [mutedMap, setMutedMap] = useState<Record<string, boolean>>(() => ({}));
   const [flashMap, setFlashMap] = useState<Record<string, boolean>>({});
   const [videoReadyMap, setVideoReadyMap] = useState<Record<string, boolean>>({});
+
+  // ─── §6: Stream error tracking ───
+  const [streamErrorMap, setStreamErrorMap] = useState<Record<string, boolean>>({});
+
+  // ─── §2: Premiere reveal tracking ───
+  const [revealedMap, setRevealedMap] = useState<Record<string, boolean>>({});
+  const prevActiveIndexRef = useRef(0);
+
+  // ─── §5: Ticket tear animation ───
+  const [tearingMap, setTearingMap] = useState<Record<string, boolean>>({});
 
   // ─── Phone input for unlock ───
   const [unlockModalVideoId, setUnlockModalVideoId] = useState<string | null>(null);
@@ -135,7 +334,6 @@ export function CreatorWatchPage() {
 
   // ─── Fetch feed on mount ───
   useEffect(() => {
-    // Capture referral code from URL hash (e.g. #watch?ref=REF_xxx)
     try {
       const hash = window.location.hash;
       const refMatch = hash.match(/[?&]ref=([^&]+)/);
@@ -159,13 +357,13 @@ export function CreatorWatchPage() {
             setUnlockMap(um);
           }
         }
-      } catch { /* fallback to demo */ }
-      // Fallback to demo
+      } catch { /* fallback to preview */ }
+      // Fallback to preview cards
       if (videos.length === 0) {
-        setVideos(DEMO_CONTENT);
+        setVideos(PREVIEW_CARDS);
         const lm: Record<string, number> = {};
         const um: Record<string, UnlockStatus> = {};
-        for (const v of DEMO_CONTENT) {
+        for (const v of PREVIEW_CARDS) {
           lm[v.id] = v.likeCount;
           um[v.id] = v.ticketPriceKes === 0 ? 'unlocked' : 'locked';
         }
@@ -175,6 +373,21 @@ export function CreatorWatchPage() {
       setLoading(false);
     })();
   }, []);
+
+  // ─── Track active index changes for spring animation and reveal ───
+  useEffect(() => {
+    if (activeIndex !== prevActiveIndexRef.current) {
+      prevActiveIndexRef.current = activeIndex;
+      const vid = displayVideos[activeIndex];
+      if (vid && !revealedMap[vid.id]) {
+        // Mark as revealed after the premiere sequence window
+        const timer = setTimeout(() => {
+          setRevealedMap(p => ({ ...p, [vid.id]: true }));
+        }, 1200);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [activeIndex, displayVideos, revealedMap]);
 
   // ─── IntersectionObserver for active card + video play/pause ───
   const handleIntersect = useCallback((entries: IntersectionObserverEntry[]) => {
@@ -238,10 +451,15 @@ export function CreatorWatchPage() {
           const s = await fetch(`/api/content/checkout/status/${mrId}`);
           const d = await s.json();
           if (d.status === 'completed') {
-            setUnlockMap(p => ({ ...p, [videoId]: 'unlocked' }));
-            setFlashMap(p => ({ ...p, [videoId]: true }));
-            setTimeout(() => setFlashMap(p => ({ ...p, [videoId]: false })), 1500);
-            setUnlockModalVideoId(null);
+            // §5: Tear away ticket stub, then flash
+            setTearingMap(p => ({ ...p, [videoId]: true }));
+            setTimeout(() => {
+              setUnlockMap(p => ({ ...p, [videoId]: 'unlocked' }));
+              setFlashMap(p => ({ ...p, [videoId]: true }));
+              setTimeout(() => setFlashMap(p => ({ ...p, [videoId]: false })), 1500);
+              setTearingMap(p => ({ ...p, [videoId]: false }));
+              setUnlockModalVideoId(null);
+            }, 500);
           } else if (d.status === 'expired') {
             setUnlockMap(p => ({ ...p, [videoId]: 'locked' }));
             setCheckoutError('Payment expired. Try again.');
@@ -316,19 +534,32 @@ export function CreatorWatchPage() {
     if (el) cardRefs.current.set(id, el); else cardRefs.current.delete(id);
   }, []);
 
+  // ─── Handle video error ───
+  const handleVideoError = useCallback((videoId: string) => {
+    setStreamErrorMap(p => ({ ...p, [videoId]: true }));
+  }, []);
+
   // ─── Render ───
   return (
     <div className="relative h-dvh w-full overflow-hidden bg-black">
-      {/* Inline keyframes for shimmer + heartBurst */}
+      {/* Inline keyframes for heartBurst + kenBurns */}
       <style>{`
-        @keyframes shimmer {
-          0% { background-position: -200% center; }
-          100% { background-position: 200% center; }
-        }
         @keyframes heartBurst {
           0% { transform: scale(0.5); opacity: 1; }
           50% { transform: scale(1.3); opacity: 0.8; }
           100% { transform: scale(1.6); opacity: 0; }
+        }
+        @keyframes kenBurns {
+          from { transform: scale(1); }
+          to { transform: scale(1.06); }
+        }
+        @keyframes flamePulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.2); }
+        }
+        @keyframes slowPulse {
+          0%, 100% { transform: scale(1); opacity: 0.3; }
+          50% { transform: scale(1.15); opacity: 0.6; }
         }
       `}</style>
 
@@ -370,9 +601,11 @@ export function CreatorWatchPage() {
       {/* ─── Scroll-snap container ─── */}
       <div ref={containerRef} className="h-full w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth pt-12" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
         {loading ? (
-          <>{[0, 1, 2].map(i => <SkeletonCard key={i} />)}</>
+          <><FilmLeaderCountdown /><FilmLeaderCountdown /><FilmLeaderCountdown /></>
         ) : displayVideos.length === 0 ? (
-          <div className="h-dvh flex items-center justify-center text-white/50 text-sm">No videos found</div>
+          <div className="h-dvh w-full snap-start snap-always flex-shrink-0 relative">
+            <PosterCard isContentComingSoon />
+          </div>
         ) : (
           displayVideos.map((video, idx) => {
             const isActive = activeIndex === idx;
@@ -386,34 +619,74 @@ export function CreatorWatchPage() {
             const gradientColor = CATEGORY_GRADIENTS[video.category.toLowerCase().replace(' ', '_')] ?? CATEGORY_GRADIENTS[video.category.toLowerCase()] ?? 'from-gray-900/40';
             const isMuted = mutedMap[video.id] !== false;
             const videoReady = !!videoReadyMap[video.id];
+            const hasStreamError = !!streamErrorMap[video.id];
             // Use preview stream always; swap to premium when unlocked
             const streamId = isUnlocked && video.cfPremiumStreamId ? video.cfPremiumStreamId : video.cfPreviewStreamId;
+            const needsPosterCard = (!video.thumbnailUrl && !streamId) || hasStreamError;
+            const isRevealed = !!revealedMap[video.id];
+            // §4: Social presence
+            const watchingNow = Math.max(1, Math.floor(video.viewCount / 500));
+            const isTrending = video.likeCount > 100;
+            const isHotTrending = video.likeCount > 5000;
 
             return (
               <div key={video.id} ref={el => setCardRef(video.id, el)} data-index={idx}
                 className="relative h-dvh w-full snap-start snap-always flex-shrink-0 select-none"
                 onClick={e => handleCardTap(video.id, e)}>
 
-                {/* ─── z-0: Thumbnail (shown until video is ready) ─── */}
-                {video.thumbnailUrl && (
-                  <div className={`absolute inset-0 z-0 transition-opacity duration-700 ${videoReady ? 'opacity-0' : 'opacity-100'}`}>
-                    <Image src={video.thumbnailUrl} alt={video.title} fill className="object-cover" priority={idx < 2} />
+                {/* ─── z-0: PosterCard (no thumbnail, no stream, or stream error) ─── */}
+                {needsPosterCard && (
+                  <div className={`absolute inset-0 z-0 transition-opacity duration-700 ${videoReady && !hasStreamError ? 'opacity-0' : 'opacity-100'}`}>
+                    <PosterCard
+                      title={video.title}
+                      creatorName={video.creator.stageName}
+                      category={video.category}
+                    />
                   </div>
                 )}
 
+                {/* ─── z-0: Thumbnail (shown until video is ready, with Ken Burns) ─── */}
+                {video.thumbnailUrl && !hasStreamError && (
+                  <div className={`absolute inset-0 z-0 transition-opacity duration-700 ${videoReady ? 'opacity-0' : 'opacity-100'}`}>
+                    <Image
+                      src={video.thumbnailUrl} alt={video.title} fill className="object-cover"
+                      priority={idx < 2}
+                      style={isActive && !isRevealed ? { animation: 'kenBurns 20s ease-out forwards' } : undefined}
+                    />
+                  </div>
+                )}
+
+                {/* ─── §2: Spotlight sweep (300-600ms, only on first activation) ─── */}
+                {isActive && !isRevealed && (video.thumbnailUrl || needsPosterCard) && (
+                  <motion.div
+                    className="absolute inset-0 z-[5] pointer-events-none"
+                    initial={{ opacity: 1, x: '-100%' }}
+                    animate={{ x: '100%' }}
+                    transition={{ duration: 0.5, delay: 0.3, ease: 'easeInOut' }}
+                    onAnimationComplete={() => { /* let it disappear via AnimatePresence exit */ }}
+                    style={{
+                      background: 'linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.1) 40%, rgba(255,255,255,0.1) 60%, transparent 100%)',
+                    }}
+                  />
+                )}
+
                 {/* ─── z-0: Video element (trailer or premium) ─── */}
-                {streamId && (
+                {streamId && !hasStreamError && (
                   <video
                     ref={el => {
                       if (el) {
                         videoRefs.current.set(video.id, el);
-                        // Progressive reveal: once video can play, fade it in
                         if (!videoReadyMap[video.id]) {
                           const onReady = () => {
                             setVideoReadyMap(p => ({ ...p, [video.id]: true }));
                             el.removeEventListener('canplay', onReady);
                           };
                           el.addEventListener('canplay', onReady);
+                          const onError = () => {
+                            handleVideoError(video.id);
+                            el.removeEventListener('error', onError);
+                          };
+                          el.addEventListener('error', onError);
                         }
                       } else { videoRefs.current.delete(video.id); }
                     }}
@@ -422,18 +695,37 @@ export function CreatorWatchPage() {
                     src={`https://customer-c4f5c4f4.cloudflarestream.com/${streamId}/manifest/video.m3u8`} />
                 )}
 
+                {/* ─── §2: Curtain-open reveal overlay (400-800ms, z-10) ─── */}
+                {isActive && !isRevealed && streamId && !hasStreamError && (
+                  <motion.div
+                    className="absolute inset-0 z-[8] pointer-events-none"
+                    initial={{ clipPath: 'inset(0 50% 0 50%)' }}
+                    animate={{ clipPath: 'inset(0 0% 0 0%)' }}
+                    transition={{ duration: 0.4, delay: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+                    style={{ background: `linear-gradient(to bottom right, var(--tw-gradient-stops))` }}
+                  >
+                    <div className={`absolute inset-0 bg-gradient-to-br ${gradientColor} to-gray-950/80`} />
+                  </motion.div>
+                )}
+
                 {/* ─── z-10: Ambient gradient overlay (decorative, no pointer events) ───*/}
-                <div className={`absolute inset-0 z-10 pointer-events-none bg-gradient-to-br ${gradientColor} to-gray-950/80`}>
+                <div className={`absolute inset-0 z-10 pointer-events-none bg-gradient-to-br ${gradientColor} to-gray-950/80 ${isRevealed || !isActive ? '' : 'opacity-0'}`}>
                   <div className={`absolute inset-0 transition-opacity duration-700 ${isActive ? 'opacity-100' : 'opacity-40'}`}
                     style={{ backgroundImage: 'radial-gradient(ellipse at 30% 50%, rgba(255,255,255,0.04) 0%, transparent 70%)' }} />
                 </div>
 
                 {/* ─── z-20: Bottom info bar + action rail ─── */}
-                <div className="absolute inset-x-0 bottom-0 z-20" onClick={e => e.stopPropagation()}>
+                <motion.div
+                  className="absolute inset-x-0 bottom-0 z-20"
+                  onClick={e => e.stopPropagation()}
+                  initial={false}
+                  animate={isActive && idx !== 0 ? { y: 6, opacity: 0.95 } : { y: 0, opacity: 1 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                >
                   {/* Scrim gradient */}
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 h-80 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
 
-                  <div className="relative flex items-end justify-between px-5 pb-6 pt-24">
+                  <div className="relative flex items-end justify-between px-5 pr-14 pb-6 pt-24">
                     {/* Left: Creator info + title + unlock bar */}
                     <div className="flex max-w-[70%] flex-col gap-1">
                       {/* Creator row */}
@@ -453,6 +745,16 @@ export function CreatorWatchPage() {
                         )}
                       </div>
 
+                      {/* §4: Trending chip below creator name */}
+                      {isTrending && (
+                        <div className="mt-0.5">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">
+                            🔥 Trending
+                            {video.likeCount > 100 && <span className="text-emerald-400/70">· {formatCount(video.likeCount)}</span>}
+                          </span>
+                        </div>
+                      )}
+
                       {/* Social proof line */}
                       <div className="flex items-center gap-3 mt-0.5">
                         <span className="flex items-center gap-1 text-[11px] text-white/50">
@@ -460,6 +762,7 @@ export function CreatorWatchPage() {
                         </span>
                         <span className="flex items-center gap-1 text-[11px] text-white/50">
                           <Eye className="h-3 w-3" />{formatCount(video.viewCount)} views
+                          {isHotTrending && <span style={{ animation: 'flamePulse 1.5s ease-in-out infinite', display: 'inline-block' }}>🔥</span>}
                         </span>
                       </div>
 
@@ -469,23 +772,21 @@ export function CreatorWatchPage() {
                       {/* Description (only when unlocked) */}
                       <p className={`mt-0.5 text-xs leading-relaxed text-white/70 transition-all duration-500 ${isUnlocked ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>{video.description}</p>
 
-                      {/* ─── Compact unlock bar (z-20, always visible for locked videos) ───*/}
-                      {isLocked && (
-                        <button
-                          onClick={() => { setUnlockModalVideoId(video.id); setPhoneInput('254'); setCheckoutError(''); }}
-                          className="mt-2.5 flex items-center gap-2 rounded-xl px-4 py-2.5 text-left transition-all duration-200 active:scale-[0.97]"
-                          style={{
-                            background: 'linear-gradient(90deg, rgba(16,185,129,0.15) 0%, rgba(16,185,129,0.25) 50%, rgba(16,185,129,0.15) 100%)',
-                            backgroundSize: '200% 100%',
-                            animation: 'shimmer 3s ease-in-out infinite',
-                            border: '1px solid rgba(16,185,129,0.3)',
-                          }}
-                        >
-                          <span className="rounded-lg bg-emerald-500 px-2 py-0.5 text-xs font-bold text-white">KES {video.ticketPriceKes}</span>
-                          <span className="text-xs font-medium text-emerald-300">Unlock full video</span>
-                          <ChevronRight className="h-4 w-4 text-emerald-400/70" />
-                        </button>
-                      )}
+                      {/* ─── §5: Ticket Stub Unlock bar ───*/}
+                      <AnimatePresence>
+                        {isLocked && !tearingMap[video.id] && (
+                          <motion.div
+                            initial={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 20, rotateX: 15, transition: { duration: 0.5, ease: 'easeIn' } }}
+                          >
+                            <TicketStubUnlock
+                              price={video.ticketPriceKes}
+                              onClick={() => { setUnlockModalVideoId(video.id); setPhoneInput('254'); setCheckoutError(''); }}
+                              isProcessing={false}
+                            />
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
 
                       {/* Processing indicator */}
                       {isProcessing && (
@@ -524,10 +825,26 @@ export function CreatorWatchPage() {
                       </button>
                     </div>
                   </div>
-                </div>
+                </motion.div>
+
+                {/* ─── §4: 'X watching now' chip (top-right area, below header) ─── */}
+                <AnimatePresence>
+                  {isActive && !video.isPreview && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.3, delay: 0.2 }}
+                      className="absolute top-32 right-4 z-30 flex items-center gap-1.5 rounded-full bg-white/10 backdrop-blur-sm px-3 py-1 pointer-events-none"
+                    >
+                      <Eye className="h-3 w-3 text-white/70" />
+                      <span className="text-[11px] font-medium text-white/80">{watchingNow} watching</span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 {/* ─── z-30: Mute toggle ───*/}
-                {streamId && (
+                {streamId && !hasStreamError && (
                   <button onClick={e => { e.stopPropagation(); setMutedMap(p => ({ ...p, [video.id]: !isMuted })); }}
                     className="absolute right-4 bottom-48 z-30 flex h-9 w-9 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm">
                     {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
@@ -554,28 +871,38 @@ export function CreatorWatchPage() {
         )}
       </div>
 
-      {/* ─── z-30: Scroll progress dots ───*/}
-      <div className="pointer-events-none absolute right-2 top-1/2 z-30 -translate-y-1/2 flex flex-col items-center gap-1.5">
-        {displayVideos.map((_, idx) => (
-          <div key={idx} className={`rounded-full transition-all duration-300 ${activeIndex === idx ? 'h-3 w-1.5 bg-white' : 'h-1.5 w-1.5 bg-white/30'}`} />
-        ))}
-      </div>
+      {/* ─── §1: FilmSpineRail (replaces scroll progress dots) ───*/}
+      {!loading && displayVideos.length > 1 && (
+        <FilmSpineRail count={displayVideos.length} activeIndex={activeIndex} />
+      )}
 
       {/* ═══════ z-50: MODALS (nothing below this blocks the screen) ═══════ */}
 
-      {/* ─── z-50: Phone Input Modal ───*/}
+      {/* ─── z-50: Phone Input Modal (§5: dark theater tones) ───*/}
       {unlockModalVideoId && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center" onClick={() => setUnlockModalVideoId(null)}>
-          <div className="w-full max-w-md rounded-t-2xl bg-gray-900 p-6 sm:rounded-2xl" onClick={e => e.stopPropagation()}>
-            <h3 className="text-lg font-bold text-white">Unlock with M-Pesa</h3>
-            <p className="mt-1 text-sm text-white/60">Enter your M-Pesa phone number to pay KES {videos.find(v => v.id === unlockModalVideoId)?.ticketPriceKes ?? 0}</p>
-            <Input value={phoneInput} onChange={e => setPhoneInput(e.target.value)} placeholder="2547XXXXXXXX" className="mt-4 h-12 bg-white/5 border-white/10 text-white text-lg placeholder:text-white/30" />
-            {checkoutError && <p className="mt-2 text-sm text-rose-400">{checkoutError}</p>}
-            <Button onClick={() => initiateCheckout(unlockModalVideoId)} disabled={phoneInput.length < 12}
-              className="mt-4 h-12 w-full rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-base">
-              Pay Now
-            </Button>
-            <Button variant="ghost" onClick={() => setUnlockModalVideoId(null)} className="mt-2 w-full text-white/50 hover:text-white hover:bg-white/5">Cancel</Button>
+          <div className="w-full max-w-md rounded-t-2xl sm:rounded-2xl overflow-hidden" onClick={e => e.stopPropagation()} style={{ background: '#030712' }}>
+            {/* §5: Torn-ticket header decoration */}
+            <div className="relative h-2 overflow-hidden">
+              <div className="absolute inset-0" style={{
+                background: 'repeating-linear-gradient(90deg, rgba(16,185,129,0.2) 0px, rgba(16,185,129,0.2) 8px, transparent 8px, transparent 12px)',
+              }} />
+              {/* Zigzag bottom edge */}
+              <svg className="absolute -bottom-1 left-0 w-full" height="6" preserveAspectRatio="none" viewBox="0 0 400 6">
+                <path d="M0,0 L6,6 L12,0 L18,6 L24,0 L30,6 L36,0 L42,6 L48,0 L54,6 L60,0 L66,6 L72,0 L78,6 L84,0 L90,6 L96,0 L102,6 L108,0 L114,6 L120,0 L126,6 L132,0 L138,6 L144,0 L150,6 L156,0 L162,6 L168,0 L174,6 L180,0 L186,6 L192,0 L198,6 L204,0 L210,6 L216,0 L222,6 L228,0 L234,6 L240,0 L246,6 L252,0 L258,6 L264,0 L270,6 L276,0 L282,6 L288,0 L294,6 L300,0 L306,6 L312,0 L318,6 L324,0 L330,6 L336,0 L342,6 L348,0 L354,6 L360,0 L366,6 L372,0 L378,6 L384,0 L390,6 L396,0 L400,0" fill="#030712" stroke="none" />
+              </svg>
+            </div>
+            <div className="p-6 pt-4">
+              <h3 className="text-lg font-bold text-white">Unlock with M-Pesa</h3>
+              <p className="mt-1 text-sm text-white/60">Enter your M-Pesa phone number to pay KES {videos.find(v => v.id === unlockModalVideoId)?.ticketPriceKes ?? 0}</p>
+              <Input value={phoneInput} onChange={e => setPhoneInput(e.target.value)} placeholder="2547XXXXXXXX" className="mt-4 h-12 bg-white/5 border-white/10 text-white text-lg placeholder:text-white/30" />
+              {checkoutError && <p className="mt-2 text-sm text-rose-400">{checkoutError}</p>}
+              <Button onClick={() => initiateCheckout(unlockModalVideoId)} disabled={phoneInput.length < 12}
+                className="mt-4 h-12 w-full rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-base">
+                Pay Now
+              </Button>
+              <Button variant="ghost" onClick={() => setUnlockModalVideoId(null)} className="mt-2 w-full text-white/50 hover:text-white hover:bg-white/5">Cancel</Button>
+            </div>
           </div>
         </div>
       )}
