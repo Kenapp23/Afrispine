@@ -15,6 +15,8 @@ import {
   ChevronRight,
   Menu,
   X,
+  Megaphone,
+  Eye,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -48,6 +50,12 @@ export function CreatorLandingPage() {
               className="text-sm font-medium text-gray-600 hover:text-emerald-600 transition-colors"
             >
               Watch
+            </button>
+            <button
+              onClick={() => navigate('sponsor-landing')}
+              className="text-sm font-medium text-gray-600 hover:text-emerald-600 transition-colors"
+            >
+              For Brands
             </button>
             <button
               onClick={() => navigate('contact')}
@@ -88,6 +96,12 @@ export function CreatorLandingPage() {
                 className="rounded-md px-3 py-2.5 text-left text-sm font-medium text-gray-600 hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
               >
                 Watch
+              </button>
+              <button
+                onClick={() => { navigate('sponsor-landing'); setMobileMenuOpen(false); }}
+                className="rounded-md px-3 py-2.5 text-left text-sm font-medium text-gray-600 hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
+              >
+                For Brands
               </button>
               <button
                 onClick={() => { navigate('contact'); setMobileMenuOpen(false); }}
@@ -322,6 +336,35 @@ export function CreatorLandingPage() {
           </div>
         </section>
 
+        {/* ─── Sponsor a Creator CTA ─── */}
+        <section className="border-t border-gray-100 bg-gradient-to-r from-amber-50/80 via-white to-emerald-50/80">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-14 sm:py-16">
+            <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-10">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-600">
+                <Megaphone className="h-7 w-7" />
+              </div>
+              <div className="flex-1 text-center sm:text-left">
+                <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900">
+                  Advertise on AfriSpine
+                </h2>
+                <p className="mt-2 text-gray-500 max-w-lg leading-relaxed">
+                  Put your brand in front of millions of engaged African content consumers.
+                  Self-serve ad slots from <span className="font-semibold text-amber-600">KES 8,000/week</span>.
+                </p>
+              </div>
+              <Button
+                size="lg"
+                onClick={() => navigate('sponsor-landing')}
+                className="shrink-0 bg-amber-500 hover:bg-amber-600 text-white font-semibold text-base px-6 py-5 shadow-lg shadow-amber-500/20 active:scale-[0.97] transition-transform"
+              >
+                <Eye className="mr-1.5 h-5 w-5" />
+                For Brands
+                <ChevronRight className="ml-1.5 h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </section>
+
         {/* ─── Trust / Safety Strip ─── */}
         <section className="border-t border-gray-100 bg-emerald-600">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
@@ -360,6 +403,12 @@ export function CreatorLandingPage() {
                 className="text-sm text-gray-400 hover:text-emerald-600 transition-colors"
               >
                 Privacy
+              </button>
+              <button
+                onClick={() => navigate('sponsor-landing')}
+                className="text-sm text-gray-400 hover:text-emerald-600 transition-colors"
+              >
+                For Brands
               </button>
               <button
                 onClick={() => navigate('contact')}

@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input';
 import { useAppStore } from '@/stores/app';
 import { toast } from 'sonner';
 import {
-  Lock, Unlock, Heart, Play, ArrowLeft, Loader2, MessageCircle,
+  Unlock, Heart, Play, ArrowLeft, Loader2, MessageCircle,
   Share2, Search, BadgeCheck, X, Send, Copy, Check, VolumeX, Volume2,
+  ChevronRight, Users, Eye,
 } from 'lucide-react';
 
 // ─── Category system (§5.3 seed taxonomy) ───────────────────────
@@ -16,16 +17,16 @@ const CATEGORIES = ['All', 'Music', 'Comedy', 'Film', 'Fashion', 'Sports', 'Educ
 type Category = typeof CATEGORIES[number];
 
 const CATEGORY_GRADIENTS: Record<string, string> = {
-  music: 'bg-gradient-to-br from-purple-900/60 to-gray-950',
-  comedy: 'bg-gradient-to-br from-amber-900/60 to-gray-950',
-  film: 'bg-gradient-to-br from-rose-900/60 to-gray-950',
-  fashion: 'bg-gradient-to-br from-pink-900/60 to-gray-950',
-  sports: 'bg-gradient-to-br from-emerald-900/60 to-gray-950',
-  education: 'bg-gradient-to-br from-sky-900/60 to-gray-950',
-  spirituality: 'bg-gradient-to-br from-indigo-900/60 to-gray-950',
-  news_culture: 'bg-gradient-to-br from-slate-800/60 to-gray-950',
-  food: 'bg-gradient-to-br from-orange-900/60 to-gray-950',
-  beauty_lifestyle: 'bg-gradient-to-br from-fuchsia-900/60 to-gray-950',
+  music: 'from-purple-900/50',
+  comedy: 'from-amber-900/50',
+  film: 'from-rose-900/50',
+  fashion: 'from-pink-900/50',
+  sports: 'from-emerald-900/50',
+  education: 'from-sky-900/50',
+  spirituality: 'from-indigo-900/50',
+  news_culture: 'from-slate-800/50',
+  food: 'from-orange-900/50',
+  beauty_lifestyle: 'from-fuchsia-900/50',
 };
 
 // ─── Types ───────────────────────────────────────────────────────
@@ -47,11 +48,11 @@ type UnlockStatus = 'locked' | 'processing' | 'unlocked';
 
 // ─── Fallback demo content (used when API is unreachable) ───────
 const DEMO_CONTENT: VideoItem[] = [
-  { id: 'demo1', title: 'Behind the Scenes: My Nairobi Fashion Shoot', description: 'Exclusive BTS from my latest collaboration with a top Kenyan designer.', category: 'fashion', ticketPriceKes: 100, viewCount: 2340, likeCount: 890, shareCount: 120, status: 'live', createdAt: new Date().toISOString(), creator: { stageName: 'Wanjiku Kariuki', handle: '@wanjiku_creates', verified: true, followerCount: 45000 } },
-  { id: 'demo2', title: 'How I Produce a Track in 30 Minutes', description: 'My full production workflow from sample selection to final mix.', category: 'music', ticketPriceKes: 150, viewCount: 5100, likeCount: 2100, shareCount: 340, status: 'live', createdAt: new Date().toISOString(), creator: { stageName: 'DJ Muthoni', handle: '@dj_muthoni', verified: true, followerCount: 82000 } },
-  { id: 'demo3', title: 'Nyama Choma: The Perfect Recipe', description: 'The recipe that got me 100K followers.', category: 'food', ticketPriceKes: 0, viewCount: 12000, likeCount: 5600, shareCount: 890, status: 'live', createdAt: new Date().toISOString(), creator: { stageName: 'Chef Otieno', handle: '@chef_otieno', verified: false, followerCount: 105000 } },
-  { id: 'demo4', title: '30-Day Transformation Guide', description: 'The exact workout and meal plan I used.', category: 'sports', ticketPriceKes: 200, viewCount: 8900, likeCount: 3200, shareCount: 560, status: 'live', createdAt: new Date().toISOString(), creator: { stageName: 'Amina Daudi', handle: '@amina_fitness', verified: true, followerCount: 67000 } },
-  { id: 'demo5', title: 'How I Write Skits That Go Viral', description: 'My creative process, from idea to 1M views.', category: 'comedy', ticketPriceKes: 50, viewCount: 45000, likeCount: 18000, shareCount: 3200, status: 'live', createdAt: new Date().toISOString(), creator: { stageName: 'Bryan Mwangi', handle: '@bryan_comedy', verified: true, followerCount: 340000 } },
+  { id: 'demo1', title: 'Behind the Scenes: My Nairobi Fashion Shoot', description: 'Exclusive BTS from my latest collaboration with a top Kenyan designer.', category: 'fashion', ticketPriceKes: 100, viewCount: 2340, likeCount: 890, shareCount: 120, status: 'live', createdAt: new Date().toISOString(), creator: { stageName: 'Wanjiku Kariuki', handle: '@wanjiku_creates', verified: true, followerCount: 45000, id: 'c1' } },
+  { id: 'demo2', title: 'How I Produce a Track in 30 Minutes', description: 'My full production workflow from sample selection to final mix.', category: 'music', ticketPriceKes: 150, viewCount: 5100, likeCount: 2100, shareCount: 340, status: 'live', createdAt: new Date().toISOString(), creator: { stageName: 'DJ Muthoni', handle: '@dj_muthoni', verified: true, followerCount: 82000, id: 'c2' } },
+  { id: 'demo3', title: 'Nyama Choma: The Perfect Recipe', description: 'The recipe that got me 100K followers.', category: 'food', ticketPriceKes: 0, viewCount: 12000, likeCount: 5600, shareCount: 890, status: 'live', createdAt: new Date().toISOString(), creator: { stageName: 'Chef Otieno', handle: '@chef_otieno', verified: false, followerCount: 105000, id: 'c3' } },
+  { id: 'demo4', title: '30-Day Transformation Guide', description: 'The exact workout and meal plan I used.', category: 'sports', ticketPriceKes: 200, viewCount: 8900, likeCount: 3200, shareCount: 560, status: 'live', createdAt: new Date().toISOString(), creator: { stageName: 'Amina Daudi', handle: '@amina_fitness', verified: true, followerCount: 67000, id: 'c4' } },
+  { id: 'demo5', title: 'How I Write Skits That Go Viral', description: 'My creative process, from idea to 1M views.', category: 'comedy', ticketPriceKes: 50, viewCount: 45000, likeCount: 18000, shareCount: 3200, status: 'live', createdAt: new Date().toISOString(), creator: { stageName: 'Bryan Mwangi', handle: '@bryan_comedy', verified: true, followerCount: 340000, id: 'c5' } },
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────
@@ -97,6 +98,7 @@ export function CreatorWatchPage() {
   const [followMap, setFollowMap] = useState<Record<string, boolean>>({});
   const [mutedMap, setMutedMap] = useState<Record<string, boolean>>(() => ({}));
   const [flashMap, setFlashMap] = useState<Record<string, boolean>>({});
+  const [videoReadyMap, setVideoReadyMap] = useState<Record<string, boolean>>({});
 
   // ─── Phone input for unlock ───
   const [unlockModalVideoId, setUnlockModalVideoId] = useState<string | null>(null);
@@ -184,7 +186,6 @@ export function CreatorWatchPage() {
 
       if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
         setActiveIndex(idx);
-        // Play video if active
         const videoEl = videoRefs.current.get(vid.id);
         if (videoEl) { videoEl.currentTime = 0; videoEl.play().catch(() => {}); }
       } else {
@@ -230,7 +231,6 @@ export function CreatorWatchPage() {
       });
       const data = await res.json();
       if (!res.ok || !data.merchantRequestId) throw new Error(data.error || 'Checkout failed');
-      // Poll for completion
       const poll = async (mrId: string, attempts = 0) => {
         if (attempts > 40) { setUnlockMap(p => ({ ...p, [videoId]: 'locked' })); setCheckoutError('Payment timed out. Try again.'); return; }
         await new Promise(r => setTimeout(r, 3000));
@@ -253,7 +253,7 @@ export function CreatorWatchPage() {
       setUnlockMap(p => ({ ...p, [videoId]: 'locked' }));
       setCheckoutError(e.message || 'Something went wrong');
     }
-  }, [phoneInput]);
+  }, [phoneInput, activeReferralCode]);
 
   // ─── Search ───
   const handleSearch = useCallback(async () => {
@@ -272,9 +272,8 @@ export function CreatorWatchPage() {
       const url = data.shareUrl || `https://www.afri-spine.com/w/${video.id}`;
       setShareUrl(url);
       setShareSheetVideoId(video.id);
-      // Try native share
       if (navigator.share) {
-        await navigator.share({ title: video.title, text: `Watch "${video.title}" by ${video.creator.stageName} on AfriSpine`, url });
+        await navigator.share({ title: video.title, text: `Watch \"${video.title}\" by ${video.creator.stageName} on AfriSpine`, url });
         setShareSheetVideoId(null);
       }
     } catch { /* fallback to sheet */ }
@@ -320,7 +319,20 @@ export function CreatorWatchPage() {
   // ─── Render ───
   return (
     <div className="relative h-dvh w-full overflow-hidden bg-black">
-      {/* ─── Top bar ─── */}
+      {/* Inline keyframes for shimmer + heartBurst */}
+      <style>{`
+        @keyframes shimmer {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        @keyframes heartBurst {
+          0% { transform: scale(0.5); opacity: 1; }
+          50% { transform: scale(1.3); opacity: 0.8; }
+          100% { transform: scale(1.6); opacity: 0; }
+        }
+      `}</style>
+
+      {/* ─── z-30: Top bar ─── */}
       <header className="absolute inset-x-0 top-0 z-30 flex items-center justify-between px-4 pt-4 pb-8">
         <Button variant="ghost" size="icon" onClick={() => navigate('landing')}
           className="pointer-events-auto h-10 w-10 rounded-full bg-black/30 text-white backdrop-blur-md hover:bg-black/50 hover:text-white" aria-label="Go back">
@@ -341,7 +353,7 @@ export function CreatorWatchPage() {
         </Button>
       </header>
 
-      {/* ─── Category chips ─── */}
+      {/* ─── z-20: Category chips ─── */}
       {!searchOpen && (
         <div className="absolute inset-x-0 top-16 z-20 flex items-center gap-2 px-4 pt-2 pb-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
           {CATEGORIES.map(cat => (
@@ -371,8 +383,10 @@ export function CreatorWatchPage() {
             const isLiked = !!likedMap[video.id];
             const likeCount = likeCountMap[video.id] ?? video.likeCount;
             const isFollowing = !!followMap[video.creatorId ?? ''];
-            const gradientClass = CATEGORY_GRADIENTS[video.category.toLowerCase().replace(' ', '_')] ?? CATEGORY_GRADIENTS[video.category.toLowerCase()] ?? 'bg-gradient-to-br from-gray-900/80 to-gray-950';
-            const isMuted = mutedMap[video.id] !== false; // default muted
+            const gradientColor = CATEGORY_GRADIENTS[video.category.toLowerCase().replace(' ', '_')] ?? CATEGORY_GRADIENTS[video.category.toLowerCase()] ?? 'from-gray-900/40';
+            const isMuted = mutedMap[video.id] !== false;
+            const videoReady = !!videoReadyMap[video.id];
+            // Use preview stream always; swap to premium when unlocked
             const streamId = isUnlocked && video.cfPremiumStreamId ? video.cfPremiumStreamId : video.cfPreviewStreamId;
 
             return (
@@ -380,85 +394,118 @@ export function CreatorWatchPage() {
                 className="relative h-dvh w-full snap-start snap-always flex-shrink-0 select-none"
                 onClick={e => handleCardTap(video.id, e)}>
 
-                {/* Background */}
-                <div className={`absolute inset-0 ${gradientClass}`}>
+                {/* ─── z-0: Thumbnail (shown until video is ready) ─── */}
+                {video.thumbnailUrl && (
+                  <div className={`absolute inset-0 z-0 transition-opacity duration-700 ${videoReady ? 'opacity-0' : 'opacity-100'}`}>
+                    <Image src={video.thumbnailUrl} alt={video.title} fill className="object-cover" priority={idx < 2} />
+                  </div>
+                )}
+
+                {/* ─── z-0: Video element (trailer or premium) ─── */}
+                {streamId && (
+                  <video
+                    ref={el => {
+                      if (el) {
+                        videoRefs.current.set(video.id, el);
+                        // Progressive reveal: once video can play, fade it in
+                        if (!videoReadyMap[video.id]) {
+                          const onReady = () => {
+                            setVideoReadyMap(p => ({ ...p, [video.id]: true }));
+                            el.removeEventListener('canplay', onReady);
+                          };
+                          el.addEventListener('canplay', onReady);
+                        }
+                      } else { videoRefs.current.delete(video.id); }
+                    }}
+                    muted={isMuted} playsInline loop
+                    className={`absolute inset-0 z-0 h-full w-full object-cover transition-opacity duration-700 ${videoReady ? 'opacity-100' : 'opacity-0'}`}
+                    src={`https://customer-c4f5c4f4.cloudflarestream.com/${streamId}/manifest/video.m3u8`} />
+                )}
+
+                {/* ─── z-10: Ambient gradient overlay (decorative, no pointer events) ───*/}
+                <div className={`absolute inset-0 z-10 pointer-events-none bg-gradient-to-br ${gradientColor} to-gray-950/80`}>
                   <div className={`absolute inset-0 transition-opacity duration-700 ${isActive ? 'opacity-100' : 'opacity-40'}`}
                     style={{ backgroundImage: 'radial-gradient(ellipse at 30% 50%, rgba(255,255,255,0.04) 0%, transparent 70%)' }} />
                 </div>
 
-                {/* Video element */}
-                {streamId && (
-                  <video ref={el => { if (el) videoRefs.current.set(video.id, el); else videoRefs.current.delete(video.id); }}
-                    muted={isMuted} playsInline loop className="absolute inset-0 h-full w-full object-cover"
-                    src={`https://customer-c4f5c4f4.cloudflarestream.com/${streamId}/manifest/video.m3u8`} />
-                )}
-
-                {/* Center play icon (when no video or locked) */}
-                {!streamId && (
-                  <div className={`relative z-10 flex h-full w-full flex-col items-center justify-center`} onClick={e => e.stopPropagation()}>
-                    <div className={`flex flex-col items-center gap-5 transition-all duration-500 ${isActive ? 'scale-100 opacity-100' : 'scale-75 opacity-30'}`}>
-                      {video.creator.avatarUrl ? (
-                        <Image src={video.creator.avatarUrl} alt={video.creator.stageName} width={96} height={96} className="h-24 w-24 rounded-full object-cover shadow-2xl" />
-                      ) : (
-                        <div className="flex h-24 w-24 items-center justify-center rounded-full text-2xl font-bold text-white shadow-2xl" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>{getInitials(video.creator.stageName)}</div>
-                      )}
-                      <div className="relative">
-                        {isActive && <div className="absolute inset-0 animate-ping rounded-full bg-white/10" />}
-                        <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm">
-                          <Play className="h-7 w-7 text-white" fill="currentColor" style={{ transform: 'translateX(2px)' }} />
-                        </div>
-                      </div>
-                      {video.ticketPriceKes === 0 && isUnlocked && (
-                        <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-emerald-400 backdrop-blur-sm">Free</span>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Mute toggle */}
-                {streamId && (
-                  <button onClick={e => { e.stopPropagation(); setMutedMap(p => ({ ...p, [video.id]: !isMuted })); }}
-                    className="absolute right-16 top-20 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm">
-                    {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-                  </button>
-                )}
-
-                {/* Bottom info bar */}
+                {/* ─── z-20: Bottom info bar + action rail ─── */}
                 <div className="absolute inset-x-0 bottom-0 z-20" onClick={e => e.stopPropagation()}>
-                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-72 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
-                  <div className="relative z-10 flex items-end justify-between px-5 pb-8 pt-20">
-                    <div className="flex max-w-[70%] flex-col gap-1.5">
+                  {/* Scrim gradient */}
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-80 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+
+                  <div className="relative flex items-end justify-between px-5 pb-6 pt-24">
+                    {/* Left: Creator info + title + unlock bar */}
+                    <div className="flex max-w-[70%] flex-col gap-1">
+                      {/* Creator row */}
                       <div className="flex items-center gap-2">
                         {video.creator.avatarUrl ? (
-                          <Image src={video.creator.avatarUrl} alt={video.creator.stageName} width={28} height={28} className="h-7 w-7 rounded-full object-cover" />
+                          <Image src={video.creator.avatarUrl} alt={video.creator.stageName} width={32} height={32} className="h-8 w-8 rounded-full object-cover ring-2 ring-white/20" />
                         ) : (
-                          <div className="flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>{getInitials(video.creator.stageName)}</div>
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full text-[10px] font-bold text-white ring-2 ring-white/20" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>{getInitials(video.creator.stageName)}</div>
                         )}
                         <span className="text-sm font-semibold text-white">{video.creator.stageName}</span>
-                        {video.creator.verified && <BadgeCheck className="h-4 w-4 text-blue-400" />}
+                        {video.creator.verified && <BadgeCheck className="h-4 w-4 text-sky-400" />}
+                        {video.creatorId && (
+                          <button onClick={() => toggleFollow(video.creatorId)}
+                            className={`ml-1 rounded-full border px-3 py-0.5 text-[11px] font-semibold transition-all duration-200 active:scale-90 ${isFollowing ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400' : 'border-white/20 bg-white/5 text-white/60 hover:border-white/40'}`}>
+                            {isFollowing ? 'Following' : 'Follow'}
+                          </button>
+                        )}
                       </div>
-                      <p className="text-xs text-white/60">{video.creator.handle}</p>
-                      {video.creatorId && (
-                        <button onClick={() => toggleFollow(video.creatorId)}
-                          className={`mt-0.5 w-fit rounded-full border px-3 py-0.5 text-[11px] font-semibold transition-all ${isFollowing ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400' : 'border-white/20 bg-white/5 text-white/60 hover:border-white/40'}`}>
-                          {isFollowing ? 'Following' : 'Follow'}
+
+                      {/* Social proof line */}
+                      <div className="flex items-center gap-3 mt-0.5">
+                        <span className="flex items-center gap-1 text-[11px] text-white/50">
+                          <Users className="h-3 w-3" />{formatCount(video.creator.followerCount)}
+                        </span>
+                        <span className="flex items-center gap-1 text-[11px] text-white/50">
+                          <Eye className="h-3 w-3" />{formatCount(video.viewCount)} views
+                        </span>
+                      </div>
+
+                      {/* Title */}
+                      <h2 className="mt-1.5 text-base font-bold leading-snug text-white">{video.title}</h2>
+
+                      {/* Description (only when unlocked) */}
+                      <p className={`mt-0.5 text-xs leading-relaxed text-white/70 transition-all duration-500 ${isUnlocked ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>{video.description}</p>
+
+                      {/* ─── Compact unlock bar (z-20, always visible for locked videos) ───*/}
+                      {isLocked && (
+                        <button
+                          onClick={() => { setUnlockModalVideoId(video.id); setPhoneInput('254'); setCheckoutError(''); }}
+                          className="mt-2.5 flex items-center gap-2 rounded-xl px-4 py-2.5 text-left transition-all duration-200 active:scale-[0.97]"
+                          style={{
+                            background: 'linear-gradient(90deg, rgba(16,185,129,0.15) 0%, rgba(16,185,129,0.25) 50%, rgba(16,185,129,0.15) 100%)',
+                            backgroundSize: '200% 100%',
+                            animation: 'shimmer 3s ease-in-out infinite',
+                            border: '1px solid rgba(16,185,129,0.3)',
+                          }}
+                        >
+                          <span className="rounded-lg bg-emerald-500 px-2 py-0.5 text-xs font-bold text-white">KES {video.ticketPriceKes}</span>
+                          <span className="text-xs font-medium text-emerald-300">Unlock full video</span>
+                          <ChevronRight className="h-4 w-4 text-emerald-400/70" />
                         </button>
                       )}
-                      <h2 className="mt-1 text-base font-bold leading-snug text-white">{video.title}</h2>
-                      <p className={`mt-0.5 text-xs leading-relaxed text-white/70 transition-all duration-500 ${isUnlocked ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>{video.description}</p>
-                      {isLocked && (
-                        <div className="mt-2 flex items-center gap-2">
-                          <span className="rounded-md bg-amber-500/20 px-2.5 py-1 text-xs font-bold text-amber-400">KES {video.ticketPriceKes}</span>
-                          <Lock className="h-3.5 w-3.5 text-white/40" />
+
+                      {/* Processing indicator */}
+                      {isProcessing && (
+                        <div className="mt-2.5 flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 px-4 py-2.5">
+                          <Loader2 className="h-4 w-4 animate-spin text-emerald-400" />
+                          <span className="text-xs font-medium text-emerald-300">Processing payment...</span>
                         </div>
                       )}
+
+                      {/* Unlocked badge */}
                       {isUnlocked && video.ticketPriceKes > 0 && (
-                        <div className="mt-1 flex items-center gap-1.5"><Unlock className="h-3.5 w-3.5 text-emerald-400" /><span className="text-xs font-medium text-emerald-400">Unlocked</span></div>
+                        <div className="mt-1.5 flex items-center gap-1.5">
+                          <Unlock className="h-3.5 w-3.5 text-emerald-400" />
+                          <span className="text-xs font-medium text-emerald-400">Unlocked</span>
+                        </div>
                       )}
                     </div>
 
-                    {/* Right action column */}
-                    <div className="flex flex-col items-center gap-5">
+                    {/* Right: Action column — ALWAYS visible */}
+                    <div className="flex flex-col items-center gap-4">
                       <button onClick={() => toggleLike(video.id)} className="flex flex-col items-center gap-1 transition-transform duration-200 active:scale-90" aria-label="Like">
                         <div className={`flex h-11 w-11 items-center justify-center rounded-full backdrop-blur-sm transition-all duration-300 ${isLiked ? 'bg-rose-500/20 text-rose-500' : 'bg-white/10 text-white'}`}>
                           <Heart className={`h-6 w-6 transition-all duration-300 ${isLiked ? 'scale-110' : ''}`} fill={isLiked ? 'currentColor' : 'none'} />
@@ -466,60 +513,40 @@ export function CreatorWatchPage() {
                         <span className="text-xs font-semibold text-white/80">{formatCount(likeCount)}</span>
                       </button>
 
-                      <button onClick={() => openComments(video.id)} className="flex flex-col items-center gap-1" aria-label="Comments">
+                      <button onClick={() => openComments(video.id)} className="flex flex-col items-center gap-1 transition-transform duration-200 active:scale-90" aria-label="Comments">
                         <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm text-white"><MessageCircle className="h-6 w-6" /></div>
                         <span className="text-xs font-semibold text-white/80">{formatCount(video.viewCount)}</span>
                       </button>
 
-                      <button onClick={() => handleShare(video)} className="flex flex-col items-center gap-1" aria-label="Share">
+                      <button onClick={() => handleShare(video)} className="flex flex-col items-center gap-1 transition-transform duration-200 active:scale-90" aria-label="Share">
                         <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm text-white"><Share2 className="h-6 w-6" /></div>
                         <span className="text-xs font-semibold text-white/80">Share</span>
                       </button>
-
-                      {isLocked && (
-                        <button onClick={() => { setUnlockModalVideoId(video.id); setPhoneInput('254'); setCheckoutError(''); }}
-                          className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm transition-all duration-200 active:scale-90" aria-label="Unlock">
-                          <Lock className="h-6 w-6 text-white/80" />
-                        </button>
-                      )}
                     </div>
                   </div>
                 </div>
 
-                {/* Lock overlay */}
-                <div className={`absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm transition-all duration-500 ${isLocked || isProcessing ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`} onClick={e => e.stopPropagation()}>
-                  <div className="flex flex-col items-center gap-4">
-                    <div className="relative">
-                      {!isProcessing && <div className="absolute inset-0 animate-ping rounded-full bg-white/5" />}
-                      <div className={`relative flex h-20 w-20 items-center justify-center rounded-full transition-all duration-300 ${isProcessing ? 'bg-emerald-600/30' : 'bg-white/10'}`}>
-                        {isProcessing ? <Loader2 className="h-9 w-9 animate-spin text-emerald-400" /> : <Lock className="h-9 w-9 text-white/80" />}
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-2xl font-extrabold text-white">KES {video.ticketPriceKes}</p>
-                      <p className="mt-1 text-xs text-white/60">One-time payment</p>
-                    </div>
-                    <Button onClick={() => { setUnlockModalVideoId(video.id); setPhoneInput('254'); setCheckoutError(''); }} disabled={isProcessing}
-                      className={`mt-2 h-12 min-w-[220px] rounded-xl text-base font-bold shadow-lg transition-all duration-300 ${isProcessing ? 'bg-emerald-700 text-white cursor-wait' : 'bg-emerald-600 hover:bg-emerald-500 active:scale-[0.97] text-white shadow-emerald-600/30'}`}>
-                      {isProcessing ? <span className="flex items-center gap-2.5"><Loader2 className="h-5 w-5 animate-spin" />Processing...</span> : <span className="flex items-center gap-2"><Unlock className="h-4 w-4" />Unlock with M-Pesa</span>}
-                    </Button>
-                    {!isProcessing && <p className="mt-3 text-center text-[11px] leading-relaxed text-white/40">Instant unlock via M-Pesa<br />Secure &middot; Powered by Safaricom</p>}
-                  </div>
-                </div>
+                {/* ─── z-30: Mute toggle ───*/}
+                {streamId && (
+                  <button onClick={e => { e.stopPropagation(); setMutedMap(p => ({ ...p, [video.id]: !isMuted })); }}
+                    className="absolute right-4 bottom-48 z-30 flex h-9 w-9 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm">
+                    {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                  </button>
+                )}
 
-                {/* Unlocked flash */}
-                <div className={`absolute inset-0 z-20 flex items-center justify-center bg-emerald-600/20 backdrop-blur-[2px] transition-all duration-700 ${flashMap[video.id] ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                {/* ─── z-40: Unlocked flash (transient, pointer-events-none) ───*/}
+                <div className={`absolute inset-0 z-40 flex items-center justify-center bg-emerald-600/20 backdrop-blur-[2px] transition-all duration-700 pointer-events-none ${flashMap[video.id] ? 'opacity-100' : 'opacity-0'}`}>
                   <div className="flex flex-col items-center gap-2"><div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/20"><Unlock className="h-8 w-8 text-emerald-400" /></div><p className="text-sm font-semibold text-emerald-400">Unlocked ✓</p></div>
                 </div>
 
-                {/* Double-tap heart burst */}
+                {/* ─── z-40: Double-tap heart burst (transient, pointer-events-none) ───*/}
                 {heartBurst?.videoId === video.id && (
                   <div className="absolute z-40 pointer-events-none" style={{ left: heartBurst.x - 40, top: heartBurst.y - 40 }}>
-                    <Heart className="h-20 w-20 text-rose-500 animate-bounce" fill="currentColor" style={{ animation: 'heartBurst 0.8s ease-out forwards' }} />
+                    <Heart className="h-20 w-20 text-rose-500" fill="currentColor" style={{ animation: 'heartBurst 0.8s ease-out forwards' }} />
                   </div>
                 )}
 
-                {/* Scroll indicator (first card) */}
+                {/* ─── z-30: Scroll indicator (first card) ───*/}
                 {idx === 0 && activeIndex === 0 && <div className="absolute bottom-2 left-1/2 z-30 -translate-x-1/2 flex animate-bounce"><div className="h-8 w-5 rounded-full border-2 border-white/30 flex items-start justify-center pt-1.5"><div className="h-1.5 w-1 rounded-full bg-white/60" /></div></div>}
               </div>
             );
@@ -527,16 +554,18 @@ export function CreatorWatchPage() {
         )}
       </div>
 
-      {/* Scroll progress dots */}
+      {/* ─── z-30: Scroll progress dots ───*/}
       <div className="pointer-events-none absolute right-2 top-1/2 z-30 -translate-y-1/2 flex flex-col items-center gap-1.5">
         {displayVideos.map((_, idx) => (
           <div key={idx} className={`rounded-full transition-all duration-300 ${activeIndex === idx ? 'h-3 w-1.5 bg-white' : 'h-1.5 w-1.5 bg-white/30'}`} />
         ))}
       </div>
 
-      {/* ─── Phone Input Modal ─── */}
+      {/* ═══════ z-50: MODALS (nothing below this blocks the screen) ═══════ */}
+
+      {/* ─── z-50: Phone Input Modal ───*/}
       {unlockModalVideoId && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center" onClick={() => !isProcessing && setUnlockModalVideoId(null)}>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center" onClick={() => setUnlockModalVideoId(null)}>
           <div className="w-full max-w-md rounded-t-2xl bg-gray-900 p-6 sm:rounded-2xl" onClick={e => e.stopPropagation()}>
             <h3 className="text-lg font-bold text-white">Unlock with M-Pesa</h3>
             <p className="mt-1 text-sm text-white/60">Enter your M-Pesa phone number to pay KES {videos.find(v => v.id === unlockModalVideoId)?.ticketPriceKes ?? 0}</p>
@@ -551,7 +580,7 @@ export function CreatorWatchPage() {
         </div>
       )}
 
-      {/* ─── Share Sheet ─── */}
+      {/* ─── z-50: Share Sheet ───*/}
       {shareSheetVideoId && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center" onClick={() => setShareSheetVideoId(null)}>
           <div className="w-full max-w-md rounded-t-2xl bg-gray-900 p-6 sm:rounded-2xl" onClick={e => e.stopPropagation()}>
@@ -591,7 +620,7 @@ export function CreatorWatchPage() {
         </div>
       )}
 
-      {/* ─── Comments Drawer ─── */}
+      {/* ─── z-50: Comments Drawer ───*/}
       {commentsVideoId && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center" onClick={() => setCommentsVideoId(null)}>
           <div className="w-full max-w-md max-h-[70vh] rounded-t-2xl bg-gray-900 flex flex-col sm:rounded-2xl" onClick={e => e.stopPropagation()}>

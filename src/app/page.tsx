@@ -327,6 +327,14 @@ export default function Home() {
 
   useEffect(() => {
     const sync = () => {
+      // Handle ?v=videoId deep links from /w/:videoId OG pages
+      const urlParams = new URLSearchParams(window.location.search);
+      const videoId = urlParams.get('v');
+      if (videoId) {
+        navigate('watch', { videoId });
+        window.history.replaceState({}, '', '#watch');
+        return;
+      }
       const hashPath = window.location.hash.replace(/^#/, '');
       const path = hashPath || window.location.pathname;
       const v = URL_VIEW_MAP[path];
