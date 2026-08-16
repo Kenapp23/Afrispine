@@ -1,17 +1,21 @@
 /**
- * Content For You — Weighted scoring recommendation feed
+ * Content For You — V3: Five-dimension weighted scoring
  *
- * V2: Composite scoring algorithm with four dimensions:
- *   - Recency score  (0-30 pts): decays linearly over 7 days
- *   - Engagement score (0-45 pts): normalized likes + engagement ratio
- *   - Social proof    (0-20 pts): creator followers + video shares
- *   - Follow affinity (0-30 pts): follow status + watch history
+ * Dimensions:
+ *   1. Recency score    (0-25 pts): decays linearly over 7 days
+ *   2. Engagement score  (0-35 pts): normalized likes + engagement ratio
+ *   3. Social proof     (0-15 pts): creator followers + video shares
+ *   4. Follow affinity   (0-15 pts): follow status + watch history
+ *   5. Semantic match    (0-10 pts): cosine similarity to user's taste profile
  *
- * Accepts optional ?userId= for personalization and ?category= for filtering.
+ * Accepts optional ?userId= for personalization, ?category= for filtering.
+ * When userId is provided and they have watch/like history, their aggregate
+ * topic fingerprint is compared against each video's embedding.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db, dbReady } from '@/lib/db';
+import { parseEmbedding, cosineSimilarity } from '@/lib/embedding';
 
 const SEVEN_DAYS_HOURS = 168;
 
@@ -24,7 +28,10 @@ interface VideoRow {
   thumbnailUrl: string | null;
   durationSeconds: number | null;
   demoVideoUrl: string | null;
+  cfPreviewStreamId: string | null;
+  cfPremiumStreamId: string | null;
   isHouseContent: boolean;
+  embeddingVector: string | null;
   viewCount: number;
   likeCount: number;
   shareCount: number;
@@ -39,6 +46,67 @@ interface VideoRow {
     followerCount: number;
   };
   _compositeScore: number;
+}
+
+/**
+ * Build a user's taste fingerprint by averaging embeddings of their
+ * recently-liked and recently-watched videos. Returns a number[]
+ * in the canonical topic-dimension order, or null if insufficient data.
+ */
+async function buildUserTasteProfile(userId: string): Promise<number[] | null> {
+  try {
+    // Get videos the user has liked
+    const likedVideos = await db.like.findMany({
+      where: { userId },
+      select: {
+        video: { select: { embeddingVector: true } },
+      },
+      take: 20,
+    });
+
+    // Get videos the user has watched
+    const watchedVideos = await db.watchEvent.findMany({
+      where: { userId },
+      select: {
+        video: { select: { embeddingVector: true } },
+      },
+      distinct: ['videoId'],
+      take: 20,
+    });
+
+    // Collect all non-null embeddings
+    const allEmbeddings: number[][] = [];
+    for (const lv of likedVideos) {
+      if (lv.video?.embeddingVector) {
+        const vec = parseEmbedding(lv.video.embeddingVector);
+        if (vec.length > 0) allEmbeddings.push(vec);
+      }
+    }
+    for (const wv of watchedVideos) {
+      if (wv.video?.embeddingVector) {
+        const vec = parseEmbedding(wv.video.embeddingVector);
+        if (vec.length > 0 && !allEmbeddings.some(e => e === vec)) {
+          allEmbeddings.push(vec);
+        }
+      }
+    }
+
+    if (allEmbeddings.length === 0) return null;
+
+    // Average all embeddings to create taste profile
+    const dim = allEmbeddings[0].length;
+    const avg = new Array(dim).fill(0);
+    for (const vec of allEmbeddings) {
+      for (let i = 0; i < dim && i < vec.length; i++) {
+        avg[i] += vec[i];
+      }
+    }
+    for (let i = 0; i < dim; i++) avg[i] /= allEmbeddings.length;
+
+    return avg;
+  } catch {
+    return null;
+  }
 }
 
 export async function GET(req: NextRequest) {
@@ -68,7 +136,10 @@ export async function GET(req: NextRequest) {
         thumbnailUrl: true,
         durationSeconds: true,
         demoVideoUrl: true,
+        cfPreviewStreamId: true,
+        cfPremiumStreamId: true,
         isHouseContent: true,
+        embeddingVector: true,
         viewCount: true,
         likeCount: true,
         shareCount: true,
@@ -99,6 +170,7 @@ export async function GET(req: NextRequest) {
     // --- Step 3: Fetch user affinity data if userId is provided ---
     let followedCreatorIds = new Set<string>();
     let watchedCreatorIds = new Set<string>();
+    let userTaste: number[] | null = null;
 
     if (userId) {
       // Check which creators this user follows
@@ -131,6 +203,9 @@ export async function GET(req: NextRequest) {
       } catch {
         // Silently ignore
       }
+
+      // Build semantic taste profile from user's watch/like history
+      userTaste = await buildUserTasteProfile(userId);
     }
 
     // --- Step 4: Score each video ---
@@ -139,39 +214,43 @@ export async function GET(req: NextRequest) {
     const scored: VideoRow[] = videos.map((video) => {
       let score = 0;
 
-      // ── Recency score (0-30 pts) ──
-      // Linear decay: newer videos score higher
+      // ── 1. Recency score (0-25 pts) ──
       const ageInHours = (now - video.createdAt.getTime()) / (1000 * 60 * 60);
-      const recencyScore = Math.max(0, 30 * (1 - ageInHours / SEVEN_DAYS_HOURS));
+      const recencyScore = Math.max(0, 25 * (1 - ageInHours / SEVEN_DAYS_HOURS));
       score += recencyScore;
 
-      // ── Engagement score (0-45 pts) ──
-      // Part A (0-30 pts): normalized like count
+      // ── 2. Engagement score (0-35 pts) ──
+      // Part A (0-25 pts): normalized like count
       const normalizedLikes = video.likeCount / maxLikes;
-      score += 30 * normalizedLikes;
+      score += 25 * normalizedLikes;
 
-      // Part B (0-15 pts): engagement ratio (likes / views)
+      // Part B (0-10 pts): engagement ratio (likes / views)
       if (video.viewCount > 0) {
         const engagementRatio = video.likeCount / video.viewCount;
-        score += 15 * Math.min(engagementRatio, 1);
+        score += 10 * Math.min(engagementRatio, 1);
       }
 
-      // ── Social proof score (0-20 pts) ──
-      // Part A (0-10 pts): creator follower count (caps at 100K)
-      const followerPortion = 10 * Math.min(video.creator.followerCount / 100_000, 1);
-      // Part B (0-10 pts): video share count (caps at 100)
-      const sharePortion = 10 * Math.min(video.shareCount / 100, 1);
+      // ── 3. Social proof score (0-15 pts) ──
+      const followerPortion = 8 * Math.min(video.creator.followerCount / 100_000, 1);
+      const sharePortion = 7 * Math.min(video.shareCount / 100, 1);
       score += followerPortion + sharePortion;
 
-      // ── Follow affinity (0-30 pts) — only if userId provided ──
+      // ── 4. Follow affinity (0-15 pts) — only if userId provided ──
       if (userId) {
-        // Direct follow: +20 pts
         if (followedCreatorIds.has(video.creatorId)) {
-          score += 20;
-        }
-        // Watch history affinity: +10 pts (independent of follow)
-        if (watchedCreatorIds.has(video.creatorId)) {
           score += 10;
+        }
+        if (watchedCreatorIds.has(video.creatorId)) {
+          score += 5;
+        }
+      }
+
+      // ── 5. Semantic match (0-10 pts) — only if user has taste profile ──
+      if (userTaste && video.embeddingVector) {
+        const videoVec = parseEmbedding(video.embeddingVector);
+        if (videoVec.length > 0) {
+          const sim = cosineSimilarity(userTaste, videoVec);
+          score += 10 * sim;
         }
       }
 

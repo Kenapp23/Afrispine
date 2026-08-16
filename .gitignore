@@ -51,6 +51,17 @@ test
 prompt
 .zscripts/
 
+# Internal agent context (not for public repo)
+agent-ctx/
+
+# Cached API docs (not credentials, but not customer-facing either)
+eversend-auth.json
+eversend-intro.json
+
+# Dev convenience scripts
+keep-alive.sh
+DATABASE-SETUP-GUIDE.md
+
 # Database (use prisma migrate for schema)
 db/*.db
 db/*.db-journal

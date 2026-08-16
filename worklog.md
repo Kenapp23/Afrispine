@@ -912,3 +912,79 @@ Stage Summary:
 - Sponsor overlay demo infrastructure complete (4 slot types, brand kit, auto-cycling)
 - isHouseContent flag ready for filtering in production
 - seed-house API ready for production DB deployment
+
+---
+Task ID: 2-a/2-b
+Agent: AI Search Libraries Agent
+Task: Create two server-side library files for AI-powered search (embedding.ts + search-intent.ts)
+
+Work Log:
+- Created src/lib/embedding.ts with LLM-based topic fingerprint generator
+  - Defines 25 fixed topic dimensions (african_culture through entertainment)
+  - generateVideoEmbedding() calls ZAI chat completions to produce a JSON weight map
+  - In-memory cache with 1-hour TTL keyed on title+description+category
+  - parseEmbedding() converts stored JSON back to ordered number[] matching TOPIC_DIMENSIONS
+  - cosineSimilarity() computes dot-product / magnitude for two equal-length vectors
+  - topicWeightsToVector() convenience to convert a Record into an ordered vector
+  - Graceful error handling: returns zero-vector JSON on failure
+  - Strips markdown code fences from LLM output
+- Created src/lib/search-intent.ts with conversational query understanding
+  - SearchIntent interface: rawQuery, category, maxDuration, mood, isFreeOnly, semanticQuery, topicWeights
+  - parseSearchIntent() makes a single ZAI chat completion call with African-content-aware system prompt
+  - System prompt includes Kenyan context clues (M-Pesa, gengetone, nyama choma, Nollywood, etc.)
+  - In-memory cache with 5-minute TTL keyed on trimmed query
+  - Strict validators for category (9 values), mood (8 values), maxDuration (capped at 2h)
+  - Falls back to { rawQuery, semanticQuery: query, topicWeights: {} } on any error
+  - intentToVector() convenience to convert intent weights to vector for cosine comparison
+  - Uses { type: 'disabled' } for thinking parameter as required
+- Both files import ZAI from z-ai-web-dev-sdk (server-side only)
+- search-intent.ts imports TOPIC_DIMENSIONS and topicWeightsToVector from embedding.ts (shared topic space)
+- ESLint passes clean with zero errors
+
+Stage Summary:
+- 2 new files: src/lib/embedding.ts (~160 lines), src/lib/search-intent.ts (~170 lines)
+- Shared 25-dimension topic space for embeddings and search queries
+- In-memory caching: 1h for embeddings, 5min for intents
+- Both modules degrade gracefully on LLM failure
+- No frontend changes — purely server-side utilities
+- No new dependencies required
+
+---
+Task ID: 2-a/2-b
+Agent: full-stack-developer (subagent)
+Task: Create LLM embedding generator + search intent parser libraries
+
+Work Log:
+- Created `/src/lib/embedding.ts` with 25-dimension topic fingerprint system
+- Created `/src/lib/search-intent.ts` with conversational query understanding
+- Both use z-ai-web-dev-sdk LLM chat completions (server-side only)
+- Shared TOPIC_DIMENSIONS vector space between both modules
+- In-memory caching with TTL (1hr for embeddings, 5min for intents)
+- Graceful degradation on LLM failure
+
+Stage Summary:
+- 2 new files: embedding.ts, search-intent.ts
+- Clean lint pass
+
+---
+Task ID: 1
+Agent: Main Agent
+Task: Technology audit remediation — §1 video pipeline, §2 AI search, §3 repo hygiene
+
+Work Log:
+- Fixed seed-house route: replaced broken Google 403 URLs with local /demo-video-*.mp4 paths
+- Added LLM embedding auto-generation to seed-house (generates topic fingerprints for each video)
+- Added FTS5 virtual table support via new `/src/lib/fts-setup.ts`
+- Rewrote search route (V3): 3-layer AI search — LLM intent parsing → semantic similarity → FTS5 keyword fallback
+- Updated foryou route (V3): 5-dimension scoring with semantic similarity as 5th dimension
+- Added taste-profile building from user watch/like history for personalized recommendations
+- Updated watch page VideoItem type to include cfPreviewStreamId/cfPremiumStreamId from API
+- Watch page already correctly falls back to PREVIEW_CARDS when API returns empty (correct for sandbox)
+- Repo hygiene: gitignored agent-ctx/, eversend-*.json, keep-alive.sh, DATABASE-SETUP-GUIDE.md
+- Removed tracked internal files from git index (git rm --cached)
+
+Stage Summary:
+- Modified: seed-house/route.ts, search/route.ts, foryou/route.ts, .gitignore
+- New: src/lib/embedding.ts, src/lib/search-intent.ts, src/lib/fts-setup.ts
+- Clean lint pass
+- PREVIEW_CARDS retained as legitimate fallback for sandbox (production uses real DB)

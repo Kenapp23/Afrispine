@@ -1,47 +1,26 @@
 /**
- * Content Search — Hybrid video search with relevance ranking
+ * Content Search V3 — AI-powered hybrid search
  *
- * POST handler that searches videos by title, description, and category.
- * V2: Hybrid search with keyword + fuzzy matching and relevance scoring.
+ * Three-layer search:
+ *   Layer 1: LLM intent parsing → structured filters (category, mood, maxDuration, freeOnly)
+ *   Layer 2: Semantic similarity via LLM topic fingerprints + cosine similarity
+ *   Layer 3: FTS5 full-text search as keyword fallback (replaces hand-rolled trigram)
  *
- * Scoring weights:
- *   - Title exact match:    3x
- *   - Category exact match: 2x
- *   - Description match:    1x
- *   - Engagement bonus:     viewCount*0.01 + likeCount*0.05 + shareCount*0.1
+ * Results are merged and ranked by blended score:
+ *   - Semantic similarity: 0-40 pts
+ *   - Text relevance (FTS rank): 0-30 pts
+ *   - Engagement bonus: 0-30 pts
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db, dbReady } from '@/lib/db';
+import { parseSearchIntent, type SearchIntent } from '@/lib/search-intent';
+import { parseEmbedding, cosineSimilarity, topicWeightsToVector } from '@/lib/embedding';
+import { ensureFtsTable } from '@/lib/fts-setup';
 
-/**
- * Generate all substrings of length >= 3 from a query string.
- * Used for trigram-like fuzzy matching on SQLite.
- */
-function generateTrigrams(query: string): string[] {
-  const q = query.toLowerCase();
-  const ngrams: string[] = [];
-  for (let len = 3; len <= q.length; len++) {
-    for (let i = 0; i <= q.length - len; i++) {
-      ngrams.push(q.slice(i, i + len));
-    }
-  }
-  return ngrams;
-}
+const VALID_CATEGORIES = ['film', 'music', 'comedy', 'fashion', 'sports', 'education', 'spirituality', 'food', 'beauty'];
 
-/**
- * Check if ANY trigram from the query appears in the target string.
- * Returns true if there is at least one 3+ char substring match.
- */
-function hasTrigramMatch(trigrams: string[], target: string): boolean {
-  const t = target.toLowerCase();
-  for (const ngram of trigrams) {
-    if (t.includes(ngram)) return true;
-  }
-  return false;
-}
-
-interface ScoredVideo {
+interface VideoCandidate {
   id: string;
   title: string;
   description: string | null;
@@ -55,6 +34,7 @@ interface ScoredVideo {
   status: string;
   createdAt: Date;
   creatorId: string;
+  embeddingVector: string | null;
   creator: {
     stageName: string;
     handle: string;
@@ -62,7 +42,14 @@ interface ScoredVideo {
     verified: boolean;
     followerCount: number;
   };
-  _relevanceScore: number;
+  _searchScore: number;
+}
+
+// FTS5 rank is negative (higher = better match). Normalize to 0-1.
+function normalizeFtsRank(rank: number): number {
+  if (rank >= 0) return 0; // no match
+  // FTS5 bm25 is negative; map -20..0 → 1..0
+  return Math.min(1, Math.max(0, 1 + rank / 20));
 }
 
 export async function POST(req: NextRequest) {
@@ -79,21 +66,49 @@ export async function POST(req: NextRequest) {
     }
 
     const trimmed = query.trim();
-    const queryLower = trimmed.toLowerCase();
-    const trigrams = generateTrigrams(trimmed);
 
-    // --- Step 1: Keyword matching via Prisma contains (case-insensitive) ---
-    // Fetch candidates that match at least one keyword field.
-    // We use a generous take to allow for post-query fuzzy filtering and scoring.
-    const candidates = await db.video.findMany({
-      where: {
-        status: 'live',
+    // ── Step 1: LLM intent parsing ──
+    // Parse natural language into structured filters + semantic query + topic weights
+    let intent: SearchIntent;
+    try {
+      intent = await parseSearchIntent(trimmed);
+    } catch {
+      intent = {
+        rawQuery: trimmed,
+        semanticQuery: trimmed,
+        topicWeights: {},
+      };
+    }
+
+    // Build Prisma where clause from intent filters
+    const whereClause: Record<string, unknown> = { status: 'live' };
+    const andConditions: Record<string, unknown>[] = [];
+
+    if (intent.category && VALID_CATEGORIES.includes(intent.category)) {
+      andConditions.push({ category: intent.category });
+    }
+    if (intent.maxDuration !== undefined && intent.maxDuration > 0) {
+      andConditions.push({
         OR: [
-          { title: { contains: trimmed } },
-          { description: { contains: trimmed } },
-          { category: { contains: trimmed } },
+          { durationSeconds: null }, // null duration = unknown, include it
+          { durationSeconds: { lte: intent.maxDuration } },
         ],
-      },
+      });
+    }
+    if (intent.isFreeOnly) {
+      andConditions.push({ ticketPriceKes: 0 });
+    }
+    if (andConditions.length > 0) {
+      (whereClause as Record<string, unknown>).AND = andConditions;
+    }
+
+    // ── Step 2: Ensure FTS table exists (SQLite only, no-op on Postgres) ──
+    await ensureFtsTable();
+
+    // ── Step 3: Fetch candidates ──
+    // Get all live videos matching intent filters (generous take)
+    const candidates = await db.video.findMany({
+      where: whereClause,
       select: {
         id: true,
         title: true,
@@ -108,6 +123,7 @@ export async function POST(req: NextRequest) {
         status: true,
         createdAt: true,
         creatorId: true,
+        embeddingVector: true,
         creator: {
           select: {
             stageName: true,
@@ -118,124 +134,86 @@ export async function POST(req: NextRequest) {
           },
         },
       },
-      take: 200, // generous limit — we filter & score in-memory
+      take: 200,
     });
 
-    // --- Step 2: Fuzzy matching — include results via trigram substrings ---
-    // For queries with 3+ chars, also pull videos where any trigram
-    // substring appears in title, description, or category.
-    // Only fetch IDs we don't already have from keyword matching.
-    let fuzzyCandidates: typeof candidates = [];
-
-    if (trigrams.length > 0 && candidates.length < 200) {
-      const existingIds = new Set(candidates.map((v) => v.id));
-
-      // We can't do pure trigram matching in a single Prisma query,
-      // so we fetch all live videos (up to a cap) and filter in-memory.
-      // This is practical for SQLite with typical content library sizes.
-      const allLive = await db.video.findMany({
-        where: {
-          status: 'live',
-          id: { notIn: Array.from(existingIds) },
-        },
-        select: {
-          id: true,
-          title: true,
-          description: true,
-          category: true,
-          ticketPriceKes: true,
-          thumbnailUrl: true,
-          durationSeconds: true,
-          viewCount: true,
-          likeCount: true,
-          shareCount: true,
-          status: true,
-          createdAt: true,
-          creatorId: true,
-          creator: {
-            select: {
-              stageName: true,
-              handle: true,
-              avatarUrl: true,
-              verified: true,
-              followerCount: true,
-            },
-          },
-        },
-        take: 300,
-      });
-
-      fuzzyCandidates = allLive.filter((video) => {
-        const titleMatch = hasTrigramMatch(trigrams, video.title);
-        const descMatch = video.description
-          ? hasTrigramMatch(trigrams, video.description)
-          : false;
-        const catMatch = hasTrigramMatch(trigrams, video.category);
-        return titleMatch || descMatch || catMatch;
-      });
+    if (candidates.length === 0) {
+      return NextResponse.json([]);
     }
 
-    // --- Step 3: Merge candidates and score ---
-    const allCandidates = [...candidates, ...fuzzyCandidates];
+    // ── Step 3: FTS5 keyword search ──
+    // Use SQLite FTS5 for full-text search. If the fts table doesn't exist
+    // (first run before migration), fall back to Prisma contains.
+    const semanticQuery = intent.semanticQuery || trimmed;
+    let ftsScores: Map<string, number> = new Map();
 
-    // Deduplicate by ID (keyword matches take priority)
-    const seen = new Set<string>();
-    const uniqueCandidates: typeof candidates = [];
-    for (const v of allCandidates) {
-      if (!seen.has(v.id)) {
-        seen.add(v.id);
-        uniqueCandidates.push(v);
+    try {
+      const ftsResults = await db.$queryRawUnsafe<
+        Array<{ video_id: string; rank: number }>
+      >(
+        `SELECT video_id, rank FROM video_fts WHERE video_fts MATCH ? ORDER BY rank LIMIT 200`,
+        semanticQuery,
+      );
+      for (const r of ftsResults) {
+        ftsScores.set(r.video_id, r.rank);
+      }
+    } catch {
+      // FTS5 table doesn't exist yet — fallback to Prisma contains
+      // This only runs on first deploy before migration
+      const queryLower = trimmed.toLowerCase();
+      for (const v of candidates) {
+        const titleMatch = v.title.toLowerCase().includes(queryLower) ? 1 : 0;
+        const descMatch = v.description?.toLowerCase().includes(queryLower) ? 0.5 : 0;
+        const catMatch = v.category.toLowerCase().includes(queryLower) ? 0.8 : 0;
+        const score = titleMatch + descMatch + catMatch;
+        if (score > 0) ftsScores.set(v.id, -score * 5); // negative to match FTS convention
       }
     }
 
-    const scored: ScoredVideo[] = uniqueCandidates.map((video) => {
-      const titleLower = video.title.toLowerCase();
-      const descLower = (video.description ?? '').toLowerCase();
-      const catLower = video.category.toLowerCase();
+    // ── Step 4: Semantic similarity scoring ──
+    const queryVector = topicWeightsToVector(intent.topicWeights);
+    const hasQueryVector = queryVector.some((w) => w > 0);
 
-      // --- Text relevance scoring ---
-      // Exact substring match (case-insensitive) with weighted multipliers
-      const titleMatch = titleLower.includes(queryLower);
-      const descMatch = descLower.includes(queryLower);
-      const catMatch = catLower.includes(queryLower);
+    // ── Step 5: Score and rank ──
+    const scored: VideoCandidate[] = candidates.map((video) => {
+      let score = 0;
 
-      let textScore = 0;
-      if (titleMatch) textScore += 3;
-      if (catMatch) textScore += 2;
-      if (descMatch) textScore += 1;
-
-      // If no exact match, check trigram overlap count for partial credit
-      if (textScore === 0 && trigrams.length > 0) {
-        const titleNgramHits = trigrams.filter((n) => titleLower.includes(n)).length;
-        const descNgramHits = trigrams.filter((n) => descLower.includes(n)).length;
-        const catNgramHits = trigrams.filter((n) => catLower.includes(n)).length;
-
-        // Award partial score proportional to trigram hit ratio (capped at ~1.5)
-        const hitRatio = (titleNgramHits * 3 + descNgramHits * 1 + catNgramHits * 2) / trigrams.length;
-        textScore = Math.min(hitRatio, 1.5);
+      // Layer 1: Semantic similarity (0-40 pts)
+      if (hasQueryVector && video.embeddingVector) {
+        const videoVector = parseEmbedding(video.embeddingVector);
+        if (videoVector.length > 0) {
+          const sim = cosineSimilarity(queryVector, videoVector);
+          score += 40 * sim; // max 40 pts for perfect semantic match
+        }
       }
 
-      // --- Engagement bonus ---
-      // Rewards popular/quality content to surface relevant but also good videos
+      // Layer 2: FTS text relevance (0-30 pts)
+      const ftsRank = ftsScores.get(video.id);
+      if (ftsRank !== undefined) {
+        score += 30 * normalizeFtsRank(ftsRank);
+      }
+
+      // Layer 3: Engagement bonus (0-30 pts)
       const engagementBonus =
-        video.viewCount * 0.01 +
-        video.likeCount * 0.05 +
-        video.shareCount * 0.1;
-
-      const totalScore = textScore + engagementBonus;
+        Math.min(video.viewCount * 0.005, 10) +
+        Math.min(video.likeCount * 0.02, 10) +
+        Math.min(video.shareCount * 0.1, 10);
+      score += engagementBonus;
 
       return {
         ...video,
-        _relevanceScore: Math.round(totalScore * 100) / 100,
+        _searchScore: Math.round(score * 100) / 100,
       };
     });
 
-    // --- Step 4: Sort by relevance score descending, take top 30 ---
-    scored.sort((a, b) => b._relevanceScore - a._relevanceScore);
-    const topResults = scored.slice(0, 30);
+    // Sort by blended score descending
+    scored.sort((a, b) => b._searchScore - a._searchScore);
 
-    // Strip the internal scoring field before sending to client
-    const results = topResults.map(({ _relevanceScore: _, ...rest }) => rest);
+    // Filter out zero-score results (no semantic, no text, no engagement match)
+    const results = scored
+      .filter((v) => v._searchScore > 0)
+      .slice(0, 30)
+      .map(({ _searchScore: _, embeddingVector: __, ...rest }) => rest);
 
     return NextResponse.json(results);
   } catch (err) {
