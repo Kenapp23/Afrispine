@@ -68,7 +68,7 @@ export function SeoSendUkNigeria() {
     setMeta('description', desc);
     setOg('title', 'Transfer Money from UK to Nigeria | AfriSpine');
     setOg('description', desc);
-    setOg('url', 'https://afri-spine.com/send/uk-nigeria');
+    setOg('url', 'https://www.afri-spine.com/send/uk-nigeria');
     setOg('type', 'website');
   }, []);
 
@@ -85,7 +85,7 @@ export function SeoSendUkNigeria() {
             provider: {
               '@type': 'Organization',
               name: 'AfriSpine',
-              url: 'https://afri-spine.com',
+              url: 'https://www.afri-spine.com',
             },
             areaServed: [
               { '@type': 'Country', name: 'United Kingdom' },

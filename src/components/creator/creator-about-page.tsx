@@ -438,7 +438,7 @@ export function CreatorAboutPage() {
               </div>
               <div>
                 <p className="text-sm text-gray-500">Website</p>
-                <p className="mt-1 text-lg font-semibold text-gray-900">afrispine.com</p>
+                <p className="mt-1 text-lg font-semibold text-gray-900">www.afri-spine.com</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Payment Rails</p>

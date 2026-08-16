@@ -424,7 +424,7 @@ export default function AdminSettingsPage() {
                   type="email"
                   value={settings.supportEmail}
                   onChange={(e) => setSettings({ ...settings, supportEmail: e.target.value })}
-                  placeholder="support@afrispine.com"
+                  placeholder="support@afri-spine.com"
                 />
               </div>
             </div>

@@ -26,7 +26,7 @@ export function LoginPage() {
       return;
     }
     // Auto-detect admin login attempt
-    if (form.email.trim().toLowerCase() === 'admin@afrispine.com') {
+    if (form.email.trim().toLowerCase() === 'admin@afri-spine.com') {
       navigate('admin-login');
       return;
     }

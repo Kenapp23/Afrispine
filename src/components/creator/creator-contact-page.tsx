@@ -24,14 +24,14 @@ export function CreatorContactPage() {
     {
       icon: Mail,
       label: 'Email',
-      value: 'info@afrispine.com',
-      href: 'mailto:info@afrispine.com',
+      value: 'info@afri-spine.com',
+      href: 'mailto:info@afri-spine.com',
     },
     {
       icon: Phone,
       label: 'Phone',
-      value: '+254 700 000 000',
-      href: 'tel:+254700000000',
+      value: '+254 713 014 190',
+      href: 'tel:+254713014190',
     },
     {
       icon: MapPin,

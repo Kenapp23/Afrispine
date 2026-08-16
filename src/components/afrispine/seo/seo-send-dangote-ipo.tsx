@@ -69,7 +69,7 @@ export function SeoSendDangoteIpo() {
     setMeta('description', desc);
     setOg('title', 'Dangote IPO Registration | AfriSpine');
     setOg('description', desc);
-    setOg('url', 'https://afri-spine.com/dangote-ipo');
+    setOg('url', 'https://www.afri-spine.com/dangote-ipo');
     setOg('type', 'website');
   }, []);
 

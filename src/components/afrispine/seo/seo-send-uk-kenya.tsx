@@ -140,7 +140,7 @@ export function SeoSendUkKenya() {
     setMeta('description', desc);
     setOg('title', 'Transfer Money from UK to Kenya | AfriSpine');
     setOg('description', desc);
-    setOg('url', 'https://afri-spine.com/send/uk-kenya');
+    setOg('url', 'https://www.afri-spine.com/send/uk-kenya');
     setOg('type', 'website');
   }, []);
 
@@ -157,7 +157,7 @@ export function SeoSendUkKenya() {
             provider: {
               '@type': 'Organization',
               name: 'AfriSpine',
-              url: 'https://afri-spine.com',
+              url: 'https://www.afri-spine.com',
             },
             areaServed: [
               { '@type': 'Country', name: 'United Kingdom' },

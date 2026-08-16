@@ -5,7 +5,7 @@ import { db } from '@/lib/db';
 
 export async function seed() {
   // 1. Create admin user
-  const adminEmail = process.env.ADMIN_EMAIL || 'admin@afrispine.com';
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@afri-spine.com';
   const adminPassword = process.env.ADMIN_PASSWORD || 'Admin@2024';
   const bcryptRounds = parseInt(process.env.BCRYPT_ROUNDS || '12', 10);
   const adminPasswordHash = await bcrypt.hash(adminPassword, bcryptRounds);
@@ -118,7 +118,7 @@ export async function seed() {
         sweepAccountId: 'acc_default_usd',
         sweepSchedule: 'daily',
         sweepMinimum: 50,
-        sweepNotifyEmail: 'finance@afrispine.com',
+        sweepNotifyEmail: 'finance@afri-spine.com',
         flwAccountId: 'flw_merchant_001',
       },
     });

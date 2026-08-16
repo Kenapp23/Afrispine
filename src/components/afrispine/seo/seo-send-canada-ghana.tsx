@@ -68,7 +68,7 @@ export function SeoSendCanadaGhana() {
     setMeta('description', desc);
     setOg('title', 'Transfer Money from Canada to Ghana | AfriSpine');
     setOg('description', desc);
-    setOg('url', 'https://afri-spine.com/send/canada-ghana');
+    setOg('url', 'https://www.afri-spine.com/send/canada-ghana');
     setOg('type', 'website');
   }, []);
 
@@ -85,7 +85,7 @@ export function SeoSendCanadaGhana() {
             provider: {
               '@type': 'Organization',
               name: 'AfriSpine',
-              url: 'https://afri-spine.com',
+              url: 'https://www.afri-spine.com',
             },
             areaServed: [
               { '@type': 'Country', name: 'Canada' },

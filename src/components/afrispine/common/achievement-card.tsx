@@ -104,7 +104,7 @@ export function AchievementCard({
     [resolvedType, resolvedData],
   );
 
-  const shareUrl = 'https://afri-spine.com';
+  const shareUrl = 'https://www.afri-spine.com';
 
   // ─── Handlers ──────────────────────────────────────────────
 

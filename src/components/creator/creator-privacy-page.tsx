@@ -32,7 +32,7 @@ const sections = [
   },
   {
     title: '7. Contact',
-    body: 'For any privacy-related inquiries or to exercise your data rights, please contact our Data Protection Officer at privacy@afrispine.com or write to us at AfriSpine, Nairobi, Kenya. We aim to respond to all requests within 5 business days. If you are unsatisfied with our response, you may lodge a complaint with the Office of the Data Protection Commissioner in Kenya.',
+    body: 'For any privacy-related inquiries or to exercise your data rights, please contact our Data Protection Officer at privacy@afri-spine.com or write to us at AfriSpine, Nairobi, Kenya. We aim to respond to all requests within 5 business days. If you are unsatisfied with our response, you may lodge a complaint with the Office of the Data Protection Commissioner in Kenya.',
   },
 ];
 

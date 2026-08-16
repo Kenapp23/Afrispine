@@ -48,7 +48,7 @@ export async function ensureAdminSeeded(): Promise<void> {
       const hash = await bcrypt.hash('Admin@2024', 12)
       await db.adminUser.create({
         data: {
-          email: 'admin@afrispine.com',
+          email: 'admin@afri-spine.com',
           passwordHash: hash,
           fullName: 'AfriSpine Admin',
           role: 'superadmin',

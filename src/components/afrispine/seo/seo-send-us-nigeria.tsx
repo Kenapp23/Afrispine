@@ -68,7 +68,7 @@ export function SeoSendUsNigeria() {
     setMeta('description', desc);
     setOg('title', 'Transfer Money from USA to Nigeria | AfriSpine');
     setOg('description', desc);
-    setOg('url', 'https://afri-spine.com/send/us-nigeria');
+    setOg('url', 'https://www.afri-spine.com/send/us-nigeria');
     setOg('type', 'website');
   }, []);
 
@@ -85,7 +85,7 @@ export function SeoSendUsNigeria() {
             provider: {
               '@type': 'Organization',
               name: 'AfriSpine',
-              url: 'https://afri-spine.com',
+              url: 'https://www.afri-spine.com',
             },
             areaServed: [
               { '@type': 'Country', name: 'United States' },
