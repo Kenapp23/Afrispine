@@ -70,8 +70,8 @@ const PREVIEW_CARDS: VideoItem[] = [
     id: 'preview-1', title: 'Nairobi Nights — A Short Film', description: 'A cinematic journey through the vibrant streets of Nairobi after dark.',
     category: 'film', ticketPriceKes: 150, viewCount: 4200, likeCount: 1800, shareCount: 240,
     thumbnailUrl: '/demo-poster-nairobi.png',
-    demoVideoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-    durationSeconds: 15,
+    demoVideoUrl: '/demo-video-nairobi.mp4',
+    durationSeconds: 10,
     status: 'live', createdAt: new Date().toISOString(), isPreview: true, isHouseContent: true,
     creator: { stageName: 'AfriSpine Studios', handle: '@afrispine_studios', verified: true, followerCount: 120000, id: 'as-studios' },
   },
@@ -79,8 +79,8 @@ const PREVIEW_CARDS: VideoItem[] = [
     id: 'preview-2', title: 'Sounds of the Savanna', description: 'An immersive audio-visual experience blending traditional Kenyan music with modern beats.',
     category: 'music', ticketPriceKes: 100, viewCount: 8900, likeCount: 4300, shareCount: 670,
     thumbnailUrl: '/demo-poster-savanna.png',
-    demoVideoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
-    durationSeconds: 15,
+    demoVideoUrl: '/demo-video-savanna.mp4',
+    durationSeconds: 52,
     status: 'live', createdAt: new Date().toISOString(), isPreview: true, isHouseContent: true,
     creator: { stageName: 'AfriSpine Studios', handle: '@afrispine_studios', verified: true, followerCount: 120000, id: 'as-studios' },
   },
@@ -88,8 +88,8 @@ const PREVIEW_CARDS: VideoItem[] = [
     id: 'preview-3', title: 'Ankara Dreams — Fashion Forward', description: 'A celebration of Kenyan fashion design and the artisans behind it.',
     category: 'fashion', ticketPriceKes: 0, viewCount: 15000, likeCount: 7200, shareCount: 1200,
     thumbnailUrl: '/demo-poster-fashion.png',
-    demoVideoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
-    durationSeconds: 60,
+    demoVideoUrl: '/demo-video-fashion.mp4',
+    durationSeconds: 10,
     status: 'live', createdAt: new Date().toISOString(), isPreview: true, isHouseContent: true,
     creator: { stageName: 'AfriSpine Studios', handle: '@afrispine_studios', verified: true, followerCount: 120000, id: 'as-studios' },
   },
@@ -441,7 +441,7 @@ export function CreatorWatchPage() {
 
   // ─── §2: Premiere reveal tracking ───
   const [revealedMap, setRevealedMap] = useState<Record<string, boolean>>({});
-  const prevActiveIndexRef = useRef(0);
+  const prevActiveIndexRef = useRef(-1);
 
   // ─── §5: Ticket tear animation ───
   const [tearingMap, setTearingMap] = useState<Record<string, boolean>>({});
@@ -895,8 +895,10 @@ export function CreatorWatchPage() {
                           const onReady = () => {
                             setVideoReadyMap(p => ({ ...p, [video.id]: true }));
                             el.removeEventListener('canplay', onReady);
+                            el.removeEventListener('loadeddata', onReady);
                           };
                           el.addEventListener('canplay', onReady);
+                          el.addEventListener('loadeddata', onReady);
                           const onError = () => {
                             handleVideoError(video.id);
                             el.removeEventListener('error', onError);
@@ -905,7 +907,7 @@ export function CreatorWatchPage() {
                         }
                       } else { videoRefs.current.delete(video.id); }
                     }}
-                    muted={isMuted} playsInline loop
+                    autoPlay muted={isMuted} playsInline loop preload="auto"
                     className={`absolute inset-0 z-0 h-full w-full object-cover transition-opacity duration-700 ${videoReady ? 'opacity-100' : 'opacity-0'}`}
                     src={`https://customer-c4f5c4f4.cloudflarestream.com/${streamId}/manifest/video.m3u8`} />
                 )}
@@ -920,13 +922,14 @@ export function CreatorWatchPage() {
                           const onReady = () => {
                             setVideoReadyMap(p => ({ ...p, [video.id]: true }));
                             el.removeEventListener('canplay', onReady);
+                            el.removeEventListener('loadeddata', onReady);
                           };
                           el.addEventListener('canplay', onReady);
-                          // Don't set streamError for demo videos — let them retry silently
+                          el.addEventListener('loadeddata', onReady);
                         }
                       } else { videoRefs.current.delete(video.id); }
                     }}
-                    muted={isMuted} playsInline loop
+                    autoPlay muted={isMuted} playsInline loop preload="auto"
                     className={`absolute inset-0 z-0 h-full w-full object-cover transition-opacity duration-700 ${videoReady ? 'opacity-100' : 'opacity-0'}`}
                     src={video.demoVideoUrl} />
                 )}
