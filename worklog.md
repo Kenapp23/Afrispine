@@ -856,3 +856,34 @@ Stage Summary:
 - §5 TICKET STUB: torn-edge clip-path polygon, dark theater background, emerald left border, tear-away exit animation via AnimatePresence, dark theater modal (bg-gray-950) with zigzag perforation header
 - §4 SOCIAL PRESENCE: "X watching now" chip (viewCount/500 heuristic, hidden for previews), "🔥 Trending" emerald chip (likeCount > 100), pulsing flame emoji on hot trending cards (likeCount > 5000)
 - All existing functionality preserved: API calls, STK push, comments, share, double-tap like, category filters, search
+
+---
+Task ID: Watch Demo Video + Sponsor Overlay
+Agent: Main Agent
+Task: Add demoVideoUrl playback support, sponsor preview overlay mode, and auto-seed house content
+
+Work Log:
+- Added `demoVideoUrl?: string` and `isHouseContent?: boolean` to VideoItem interface in creator-watch-page.tsx
+- Added demo video rendering: when `streamId` is falsy but `video.demoVideoUrl` exists, renders a `<video>` element with direct `src` attribute (bypasses Cloudflare Stream HLS)
+- Updated `needsPosterCard` logic to account for demo video availability
+- Updated mute toggle to show when either streamId or demoVideo is active
+- Updated curtain-open reveal overlay to trigger for both streamId and demo video
+- Built inline `SponsorOverlayDemo` component with 4 cycling slot types:
+  1. `backdrop_banner` (5s): Semi-transparent pill at bottom-48 with AfriCorp logo + text, slide-up entrance
+  2. `smart_chyron` (5s): News-style lower-third at bottom-72, emerald accent bar, slide-in/out from left
+  3. `intro_splash` (3s): Full-card branded overlay with centered logo + tagline, fade in/out
+  4. `feed_native_card` (5s): Full-width emerald strip at card top with Sponsored badge + Ad label
+- All sponsor overlays use framer-motion AnimatePresence for polished transitions
+- Added `?sponsorPreview=1` query param detection on mount, with floating emerald badge and X toggle
+- Sponsor overlay only renders on the ACTIVE card when sponsorPreview mode is on (z-35, above info, below modals)
+- Updated foryou API route to include `demoVideoUrl` and `isHouseContent` in select clause and VideoRow interface
+- Created new `/api/content/seed-house` POST route that seeds 3 house videos (Nairobi Nights, Sounds of the Savanna, Ankara Dreams) with Google sample video URLs
+- Added auto-seed logic in watch page: when foryou API returns empty, tries POST /api/content/seed-house once (via ref guard), then refetches; falls back to PREVIEW_CARDS only if seed also fails
+- Lint passes clean with zero errors
+
+Stage Summary:
+- 3 files modified: creator-watch-page.tsx, foryou/route.ts, worklog.md
+- 1 file created: seed-house/route.ts
+- Demo videos use Google's publicly available sample MP4s (rights-cleared for testing)
+- Sponsor preview is OFF by default — only activates with `?sponsorPreview=1`
+- All existing functionality preserved (like, follow, share, comments, STK push, premiere reveal, spine rail, etc.)

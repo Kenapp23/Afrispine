@@ -23,6 +23,8 @@ interface VideoRow {
   ticketPriceKes: number;
   thumbnailUrl: string | null;
   durationSeconds: number | null;
+  demoVideoUrl: string | null;
+  isHouseContent: boolean;
   viewCount: number;
   likeCount: number;
   shareCount: number;
@@ -65,6 +67,8 @@ export async function GET(req: NextRequest) {
         ticketPriceKes: true,
         thumbnailUrl: true,
         durationSeconds: true,
+        demoVideoUrl: true,
+        isHouseContent: true,
         viewCount: true,
         likeCount: true,
         shareCount: true,

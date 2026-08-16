@@ -858,10 +858,12 @@ model Video {
   ticketPriceKes      Float
   cfPreviewStreamId   String?
   cfPremiumStreamId   String?
+  demoVideoUrl        String?                            // Direct MP4/HLS URL for house/demo content (bypasses CF Stream)
   trailerSource       String   @default("ai")           // 'ai' | 'creator'
   durationSeconds     Int?
   thumbnailUrl        String?
   status              String   @default("draft")   // draft | processing | live | takedown
+  isHouseContent      Boolean  @default(false)         // Platform-owned demo content, filterable in production
   viewCount           Int      @default(0)
   likeCount           Int      @default(0)
   shareCount          Int      @default(0)
@@ -878,6 +880,7 @@ model Video {
 
   @@index([category])
   @@index([status])
+  @@index([isHouseContent])
 }
 
 model ContentTicket {

@@ -54,6 +54,8 @@ interface VideoItem {
   id: string; title: string; description?: string; category: string;
   ticketPriceKes: number; thumbnailUrl?: string; durationSeconds?: number;
   cfPreviewStreamId?: string; cfPremiumStreamId?: string;
+  demoVideoUrl?: string;
+  isHouseContent?: boolean;
   viewCount: number; likeCount: number; shareCount: number;
   status: string; createdAt: string; creatorId?: string;
   creator: VideoCreator;
@@ -67,22 +69,41 @@ const PREVIEW_CARDS: VideoItem[] = [
   {
     id: 'preview-1', title: 'Nairobi Nights — A Short Film', description: 'A cinematic journey through the vibrant streets of Nairobi after dark.',
     category: 'film', ticketPriceKes: 150, viewCount: 4200, likeCount: 1800, shareCount: 240,
-    status: 'live', createdAt: new Date().toISOString(), isPreview: true,
+    thumbnailUrl: '/demo-poster-nairobi.png',
+    demoVideoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+    durationSeconds: 15,
+    status: 'live', createdAt: new Date().toISOString(), isPreview: true, isHouseContent: true,
     creator: { stageName: 'AfriSpine Studios', handle: '@afrispine_studios', verified: true, followerCount: 120000, id: 'as-studios' },
   },
   {
     id: 'preview-2', title: 'Sounds of the Savanna', description: 'An immersive audio-visual experience blending traditional Kenyan music with modern beats.',
     category: 'music', ticketPriceKes: 100, viewCount: 8900, likeCount: 4300, shareCount: 670,
-    status: 'live', createdAt: new Date().toISOString(), isPreview: true,
+    thumbnailUrl: '/demo-poster-savanna.png',
+    demoVideoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+    durationSeconds: 15,
+    status: 'live', createdAt: new Date().toISOString(), isPreview: true, isHouseContent: true,
     creator: { stageName: 'AfriSpine Studios', handle: '@afrispine_studios', verified: true, followerCount: 120000, id: 'as-studios' },
   },
   {
-    id: 'preview-3', title: 'The Art of Kenyan Cuisine', description: 'From farm to table — exploring the rich culinary heritage of Kenya.',
-    category: 'food', ticketPriceKes: 0, viewCount: 15600, likeCount: 7800, shareCount: 1200,
-    status: 'live', createdAt: new Date().toISOString(), isPreview: true,
+    id: 'preview-3', title: 'Ankara Dreams — Fashion Forward', description: 'A celebration of Kenyan fashion design and the artisans behind it.',
+    category: 'fashion', ticketPriceKes: 0, viewCount: 15000, likeCount: 7200, shareCount: 1200,
+    thumbnailUrl: '/demo-poster-fashion.png',
+    demoVideoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+    durationSeconds: 60,
+    status: 'live', createdAt: new Date().toISOString(), isPreview: true, isHouseContent: true,
     creator: { stageName: 'AfriSpine Studios', handle: '@afrispine_studios', verified: true, followerCount: 120000, id: 'as-studios' },
   },
 ];
+
+// ─── Sponsor overlay slot types ─────────────────────────────────
+type SponsorSlotType = 'backdrop_banner' | 'smart_chyron' | 'intro_splash' | 'feed_native_card';
+const SPONSOR_SLOT_SEQUENCE: SponsorSlotType[] = ['backdrop_banner', 'smart_chyron', 'intro_splash', 'feed_native_card'];
+const SPONSOR_SLOT_DURATION: Record<SponsorSlotType, number> = {
+  backdrop_banner: 5000,
+  smart_chyron: 5000,
+  intro_splash: 3000,
+  feed_native_card: 5000,
+};
 
 // ─── Helpers ─────────────────────────────────────────────────────
 function getInitials(name: string) {
@@ -267,6 +288,132 @@ function TicketStubUnlock({ price, onClick, isProcessing }: { price: number; onC
   );
 }
 
+// ─── Inline: SponsorOverlayDemo ─────────────────────────────────
+function SponsorOverlayDemo() {
+  const [slotIndex, setSlotIndex] = useState(0);
+
+  useEffect(() => {
+    const currentSlot = SPONSOR_SLOT_SEQUENCE[slotIndex];
+    const duration = SPONSOR_SLOT_DURATION[currentSlot];
+    const timer = setInterval(() => {
+      setSlotIndex(prev => (prev + 1) % SPONSOR_SLOT_SEQUENCE.length);
+    }, duration);
+    return () => clearInterval(timer);
+  }, [slotIndex]);
+
+  const currentSlot = SPONSOR_SLOT_SEQUENCE[slotIndex];
+
+  const slotVariants = {
+    initial: (slot: SponsorSlotType) => {
+      if (slot === 'smart_chyron') return { x: '-100%', opacity: 0 };
+      return { opacity: 0 };
+    },
+    animate: (slot: SponsorSlotType) => {
+      if (slot === 'smart_chyron') return { x: 0, opacity: 1 };
+      return { opacity: 1 };
+    },
+    exit: (slot: SponsorSlotType) => {
+      if (slot === 'smart_chyron') return { x: '-100%', opacity: 0 };
+      return { opacity: 0 };
+    },
+  };
+
+  const slotTransition: Record<SponsorSlotType, object> = {
+    backdrop_banner: { duration: 0.5, ease: 'easeOut' },
+    smart_chyron: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] },
+    intro_splash: { duration: 0.4 },
+    feed_native_card: { duration: 0.3 },
+  };
+
+  return (
+    <AnimatePresence mode="wait" custom={currentSlot}>
+      <motion.div
+        key={currentSlot}
+        custom={currentSlot}
+        variants={slotVariants}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        transition={slotTransition[currentSlot]}
+      >
+        {currentSlot === 'backdrop_banner' && (
+          <div className="absolute bottom-48 left-1/2 -translate-x-1/2 z-35">
+            <motion.div
+              className="flex items-center gap-2 rounded-full bg-black/30 backdrop-blur-sm px-4 py-2"
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.4, ease: 'easeOut' }}
+            >
+              <Image
+                src="/demo-brand-afircorp.png"
+                alt="AfriCorp"
+                width={24}
+                height={24}
+                className="h-6 w-6 rounded-full object-cover"
+              />
+              <span className="text-xs font-medium text-white">Powered by AfriCorp</span>
+            </motion.div>
+          </div>
+        )}
+
+        {currentSlot === 'smart_chyron' && (
+          <div className="absolute bottom-72 left-0 inset-x-0 z-35 pointer-events-none">
+            <div className="relative h-10 w-full bg-black/50 backdrop-blur-sm overflow-hidden">
+              <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-emerald-400" />
+              <div className="flex items-center h-full px-4 pl-5">
+                <span className="text-sm font-semibold text-white tracking-wide">
+                  AfriCorp <span className="text-white/40 mx-2">—</span> Built for Africa&rsquo;s Future
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {currentSlot === 'intro_splash' && (
+          <div className="absolute inset-0 z-35 flex items-center justify-center">
+            <motion.div
+              className="absolute inset-0 bg-black/80 backdrop-blur-md"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            />
+            <div className="relative z-10 flex flex-col items-center gap-3">
+              <Image
+                src="/demo-brand-afircorp.png"
+                alt="AfriCorp"
+                width={80}
+                height={80}
+                className="h-20 w-20 rounded-2xl object-cover"
+              />
+              <span className="text-2xl font-black text-white tracking-tight">AfriCorp</span>
+              <span className="text-sm font-medium text-white/60">Premium Partner</span>
+            </div>
+          </div>
+        )}
+
+        {currentSlot === 'feed_native_card' && (
+          <div className="absolute top-0 left-0 inset-x-0 z-35">
+            <div className="flex items-center justify-between h-9 bg-emerald-600/90 backdrop-blur-sm px-4">
+              <span className="text-[11px] font-bold text-white uppercase tracking-wider">Sponsored</span>
+              <div className="flex items-center gap-2">
+                <Image
+                  src="/demo-brand-afircorp.png"
+                  alt="AfriCorp"
+                  width={20}
+                  height={20}
+                  className="h-5 w-5 rounded-full object-cover"
+                />
+                <span className="text-[11px] font-semibold text-white/80">Ad</span>
+              </div>
+            </div>
+          </div>
+        )}
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
 // ─── Main Component ──────────────────────────────────────────────
 export function CreatorWatchPage() {
   const navigate = useAppStore((s) => s.navigate);
@@ -321,6 +468,12 @@ export function CreatorWatchPage() {
   const lastTapRef = useRef<Record<string, number>>({});
   const [heartBurst, setHeartBurst] = useState<{ videoId: string; x: number; y: number } | null>(null);
 
+  // ─── Sponsor preview mode ───
+  const [sponsorPreview, setSponsorPreview] = useState(false);
+
+  // ─── Auto-seed house content ref ───
+  const houseSeededRef = useRef(false);
+
   // ─── Refs ───
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -332,6 +485,19 @@ export function CreatorWatchPage() {
     activeCategory === 'All' ? videos : videos.filter(v => v.category.toLowerCase().replace(' ', '_') === activeCategory.toLowerCase() || v.category.toLowerCase() === activeCategory.toLowerCase())
   );
 
+  // ─── Read sponsorPreview from URL on mount ───
+  useEffect(() => {
+    try {
+      const hash = window.location.hash;
+      const qMark = hash.indexOf('?');
+      const search = qMark >= 0 ? hash.substring(qMark + 1) : '';
+      const params = new URLSearchParams(search);
+      if (params.get('sponsorPreview') === '1') {
+        setSponsorPreview(true);
+      }
+    } catch {}
+  }, []);
+
   // ─── Fetch feed on mount ───
   useEffect(() => {
     try {
@@ -340,7 +506,7 @@ export function CreatorWatchPage() {
       if (refMatch?.[1]) setActiveReferralCode(refMatch[1]);
     } catch {}
 
-    (async () => {
+    const initFeed = async () => {
       try {
         const res = await fetch('/api/content/foryou');
         if (res.ok) {
@@ -355,23 +521,51 @@ export function CreatorWatchPage() {
             }
             setLikeCountMap(lm);
             setUnlockMap(um);
+            setLoading(false);
+            return;
           }
         }
       } catch { /* fallback to preview */ }
-      // Fallback to preview cards
-      if (videos.length === 0) {
-        setVideos(PREVIEW_CARDS);
-        const lm: Record<string, number> = {};
-        const um: Record<string, UnlockStatus> = {};
-        for (const v of PREVIEW_CARDS) {
-          lm[v.id] = v.likeCount;
-          um[v.id] = v.ticketPriceKes === 0 ? 'unlocked' : 'locked';
-        }
-        setLikeCountMap(lm);
-        setUnlockMap(um);
+
+      // Feed empty — try seeding house content once
+      if (!houseSeededRef.current) {
+        houseSeededRef.current = true;
+        try {
+          await fetch('/api/content/seed-house', { method: 'POST' });
+          const refetch = await fetch('/api/content/foryou');
+          if (refetch.ok) {
+            const seededData = await refetch.json();
+            if (Array.isArray(seededData) && seededData.length > 0) {
+              setVideos(seededData);
+              const lm: Record<string, number> = {};
+              const um: Record<string, UnlockStatus> = {};
+              for (const v of seededData) {
+                lm[v.id] = v.likeCount;
+                um[v.id] = v.ticketPriceKes === 0 ? 'unlocked' : 'locked';
+              }
+              setLikeCountMap(lm);
+              setUnlockMap(um);
+              setLoading(false);
+              return;
+            }
+          }
+        } catch { /* seed failed, fall through to preview */ }
       }
+
+      // Fallback to preview cards
+      setVideos(PREVIEW_CARDS);
+      const lm: Record<string, number> = {};
+      const um: Record<string, UnlockStatus> = {};
+      for (const v of PREVIEW_CARDS) {
+        lm[v.id] = v.likeCount;
+        um[v.id] = v.ticketPriceKes === 0 ? 'unlocked' : 'locked';
+      }
+      setLikeCountMap(lm);
+      setUnlockMap(um);
       setLoading(false);
-    })();
+    };
+
+    initFeed();
   }, []);
 
   // ─── Track active index changes for spring animation and reveal ───
@@ -584,6 +778,25 @@ export function CreatorWatchPage() {
         </Button>
       </header>
 
+      {/* ─── Sponsor Preview Mode Badge ─── */}
+      {sponsorPreview && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="absolute left-4 z-30 flex items-center gap-2 rounded-full bg-emerald-500/90 backdrop-blur-sm px-3 py-1.5"
+          style={{ top: 64 }}
+        >
+          <span className="text-[11px] font-bold text-white uppercase tracking-wider">Sponsor Preview Mode</span>
+          <button
+            onClick={() => setSponsorPreview(false)}
+            className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+            aria-label="Disable sponsor preview"
+          >
+            <X className="h-3 w-3 text-white" />
+          </button>
+        </motion.div>
+      )}
+
       {/* ─── z-20: Category chips ─── */}
       {!searchOpen && (
         <div className="absolute inset-x-0 top-16 z-20 flex items-center gap-2 px-4 pt-2 pb-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
@@ -622,7 +835,9 @@ export function CreatorWatchPage() {
             const hasStreamError = !!streamErrorMap[video.id];
             // Use preview stream always; swap to premium when unlocked
             const streamId = isUnlocked && video.cfPremiumStreamId ? video.cfPremiumStreamId : video.cfPreviewStreamId;
-            const needsPosterCard = (!video.thumbnailUrl && !streamId) || hasStreamError;
+            // Use demoVideoUrl when no Cloudflare stream is available
+            const hasDemoVideo = !streamId && !!video.demoVideoUrl;
+            const needsPosterCard = (!video.thumbnailUrl && !streamId && !hasDemoVideo) || hasStreamError;
             const isRevealed = !!revealedMap[video.id];
             // §4: Social presence
             const watchingNow = Math.max(1, Math.floor(video.viewCount / 500));
@@ -634,7 +849,7 @@ export function CreatorWatchPage() {
                 className="relative h-dvh w-full snap-start snap-always flex-shrink-0 select-none"
                 onClick={e => handleCardTap(video.id, e)}>
 
-                {/* ─── z-0: PosterCard (no thumbnail, no stream, or stream error) ─── */}
+                {/* ─── z-0: PosterCard (no thumbnail, no stream, no demo, or stream error) ─── */}
                 {needsPosterCard && (
                   <div className={`absolute inset-0 z-0 transition-opacity duration-700 ${videoReady && !hasStreamError ? 'opacity-0' : 'opacity-100'}`}>
                     <PosterCard
@@ -670,7 +885,7 @@ export function CreatorWatchPage() {
                   />
                 )}
 
-                {/* ─── z-0: Video element (trailer or premium) ─── */}
+                {/* ─── z-0: Cloudflare Stream video element (trailer or premium) ─── */}
                 {streamId && !hasStreamError && (
                   <video
                     ref={el => {
@@ -695,8 +910,29 @@ export function CreatorWatchPage() {
                     src={`https://customer-c4f5c4f4.cloudflarestream.com/${streamId}/manifest/video.m3u8`} />
                 )}
 
+                {/* ─── z-0: Demo video element (direct URL, no Cloudflare Stream) ─── */}
+                {hasDemoVideo && !hasStreamError && (
+                  <video
+                    ref={el => {
+                      if (el) {
+                        videoRefs.current.set(video.id, el);
+                        if (!videoReadyMap[video.id]) {
+                          const onReady = () => {
+                            setVideoReadyMap(p => ({ ...p, [video.id]: true }));
+                            el.removeEventListener('canplay', onReady);
+                          };
+                          el.addEventListener('canplay', onReady);
+                          // Don't set streamError for demo videos — let them retry silently
+                        }
+                      } else { videoRefs.current.delete(video.id); }
+                    }}
+                    muted={isMuted} playsInline loop
+                    className={`absolute inset-0 z-0 h-full w-full object-cover transition-opacity duration-700 ${videoReady ? 'opacity-100' : 'opacity-0'}`}
+                    src={video.demoVideoUrl} />
+                )}
+
                 {/* ─── §2: Curtain-open reveal overlay (400-800ms, z-10) ─── */}
-                {isActive && !isRevealed && streamId && !hasStreamError && (
+                {isActive && !isRevealed && (streamId || hasDemoVideo) && !hasStreamError && (
                   <motion.div
                     className="absolute inset-0 z-[8] pointer-events-none"
                     initial={{ clipPath: 'inset(0 50% 0 50%)' }}
@@ -713,6 +949,11 @@ export function CreatorWatchPage() {
                   <div className={`absolute inset-0 transition-opacity duration-700 ${isActive ? 'opacity-100' : 'opacity-40'}`}
                     style={{ backgroundImage: 'radial-gradient(ellipse at 30% 50%, rgba(255,255,255,0.04) 0%, transparent 70%)' }} />
                 </div>
+
+                {/* ─── z-35: Sponsor Overlay Demo (only on active card when sponsor preview is on) ─── */}
+                {isActive && sponsorPreview && (
+                  <SponsorOverlayDemo />
+                )}
 
                 {/* ─── z-20: Bottom info bar + action rail ─── */}
                 <motion.div
@@ -844,7 +1085,7 @@ export function CreatorWatchPage() {
                 </AnimatePresence>
 
                 {/* ─── z-30: Mute toggle ───*/}
-                {streamId && !hasStreamError && (
+                {(streamId || hasDemoVideo) && !hasStreamError && (
                   <button onClick={e => { e.stopPropagation(); setMutedMap(p => ({ ...p, [video.id]: !isMuted })); }}
                     className="absolute right-4 bottom-48 z-30 flex h-9 w-9 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm">
                     {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
