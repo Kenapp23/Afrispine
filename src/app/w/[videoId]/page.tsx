@@ -22,11 +22,16 @@ export async function generateMetadata({
           description: true,
           ticketPriceKes: true,
           thumbnailUrl: true,
-          creator: { select: { stageName: true } },
+          releaseMode: true,
+          premiereAt: true,
+          premiereWindowEnds: true,
+          creator: { select: { stageName: true, handle: true } },
         },
       });
       if (video) {
-        title = `${video.title} — ${video.creator.stageName} | AfriSpine`;
+        const isPremiere = video.releaseMode === 'premiere' && video.premiereWindowEnds && new Date(video.premiereWindowEnds) > new Date();
+        const modeLabel = isPremiere ? ' · Premiere' : '';
+        title = `${video.title}${modeLabel} — ${video.creator.stageName} | AfriSpine`;
         description = video.description || `${video.creator.stageName} on AfriSpine${video.ticketPriceKes > 0 ? ` · KES ${video.ticketPriceKes}` : ' · Free'}`;
         if (video.thumbnailUrl) imageUrl = video.thumbnailUrl;
       }

@@ -616,7 +616,7 @@ export function SponsorDashboardPage() {
                         {SLOT_TYPES.map((slot) => {
                           const price = getSlotPrice(slot.key);
                           const displayPrice = hasPricing
-                            ? (price !== null ? `KES ${price.toLocaleString()}` : `KES ${DEFAULT_SLOT_PRICE_KES.toLocaleString()}`)
+                            ? (price !== null ? `From KES ${price.toLocaleString()}` : `From KES ${DEFAULT_SLOT_PRICE_KES.toLocaleString()}`)
                             : null;
                           return (
                             <label

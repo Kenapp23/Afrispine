@@ -10,8 +10,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Unlock, Heart, ArrowLeft, Loader2, MessageCircle,
   Share2, Search, BadgeCheck, X, Send, Copy, Check, VolumeX, Volume2,
-  Users, Eye, Film, Ticket,
+  Users, Eye, Film, Ticket, Clock, Calendar,
 } from 'lucide-react';
+import { YoureInScreen } from './youre-in-screen';
 
 // ─── Category system (§5.3 seed taxonomy) ───────────────────────
 const CATEGORIES = ['All', 'Music', 'Comedy', 'Film', 'Fashion', 'Sports', 'Education', 'Spirituality', 'Food', 'Beauty'] as const;
@@ -60,6 +61,12 @@ interface VideoItem {
   status: string; createdAt: string; creatorId?: string;
   creator: VideoCreator;
   isPreview?: boolean;
+  // §1 Premiere → VOD fields
+  releaseMode?: string;
+  premiereAt?: string;
+  premiereWindowEnds?: string;
+  vodRevSharePct?: number;
+  backstageVideoId?: string;
 }
 
 type UnlockStatus = 'locked' | 'processing' | 'unlocked';
@@ -268,6 +275,48 @@ function FilmSpineRail({ count, activeIndex }: { count: number; activeIndex: num
   );
 }
 
+// ─── Inline: Premiere Countdown Badge (§1) ───
+function PremiereCountdownBadge({ premiereAt, premiereWindowEnds }: { premiereAt: string; premiereWindowEnds: string }) {
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const isUpcoming = new Date(premiereAt) > new Date();
+  const target = isUpcoming ? premiereAt : premiereWindowEnds;
+  const label = isUpcoming ? 'Premiere in' : 'Window closes in';
+
+  useEffect(() => {
+    const targetMs = new Date(target).getTime();
+    const tick = () => {
+      const diff = Math.max(0, targetMs - Date.now());
+      setTimeLeft({
+        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+        minutes: Math.floor((diff / (1000 * 60)) % 60),
+        seconds: Math.floor((diff / 1000) % 60),
+      });
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [target]);
+
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const isExpired = timeLeft.days === 0 && timeLeft.hours === 0 && timeLeft.minutes === 0 && timeLeft.seconds === 0;
+
+  if (isExpired) return null;
+
+  return (
+    <div className="mt-2.5 flex items-center justify-between rounded-xl bg-amber-500/10 border border-amber-500/30 px-4 py-2.5">
+      <div className="flex items-center gap-2">
+        <Calendar className="h-3.5 w-3.5 text-amber-400" />
+        <span className="text-[11px] font-semibold text-amber-300 uppercase tracking-wider">{label}</span>
+      </div>
+      <span className="text-sm font-mono font-bold text-amber-200 tabular-nums">
+        {timeLeft.days > 0 && <>{pad(timeLeft.days)}d </>}
+        {pad(timeLeft.hours)}:{pad(timeLeft.minutes)}:{pad(timeLeft.seconds)}
+      </span>
+    </div>
+  );
+}
+
 // ─── Inline: TicketStubUnlock (replaces shimmer unlock bar) ───
 function TicketStubUnlock({ price, onClick, isProcessing }: { price: number; onClick: () => void; isProcessing: boolean }) {
   return (
@@ -435,6 +484,8 @@ export function CreatorWatchPage() {
   const [mutedMap, setMutedMap] = useState<Record<string, boolean>>(() => ({}));
   const [flashMap, setFlashMap] = useState<Record<string, boolean>>({});
   const [videoReadyMap, setVideoReadyMap] = useState<Record<string, boolean>>({});
+  // §3: "You're In" post-purchase screen
+  const [youreInVideoId, setYoureInVideoId] = useState<string | null>(null);
 
   // ─── §6: Stream error tracking ───
   const [streamErrorMap, setStreamErrorMap] = useState<Record<string, boolean>>({});
@@ -650,9 +701,13 @@ export function CreatorWatchPage() {
             setTimeout(() => {
               setUnlockMap(p => ({ ...p, [videoId]: 'unlocked' }));
               setFlashMap(p => ({ ...p, [videoId]: true }));
-              setTimeout(() => setFlashMap(p => ({ ...p, [videoId]: false })), 1500);
               setTearingMap(p => ({ ...p, [videoId]: false }));
               setUnlockModalVideoId(null);
+              // §3: Show "You're In" screen after flash
+              setTimeout(() => {
+                setFlashMap(p => ({ ...p, [videoId]: false }));
+                setYoureInVideoId(videoId);
+              }, 1500);
             }, 500);
           } else if (d.status === 'expired') {
             setUnlockMap(p => ({ ...p, [videoId]: 'locked' }));
@@ -1016,6 +1071,11 @@ export function CreatorWatchPage() {
                       {/* Description (only when unlocked) */}
                       <p className={`mt-0.5 text-xs leading-relaxed text-white/70 transition-all duration-500 ${isUnlocked ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>{video.description}</p>
 
+                      {/* ─── §1: Premiere Countdown ───*/}
+                      {video.releaseMode === 'premiere' && video.premiereAt && video.premiereWindowEnds && new Date(video.premiereWindowEnds) > new Date() && (
+                        <PremiereCountdownBadge premiereAt={video.premiereAt} premiereWindowEnds={video.premiereWindowEnds} />
+                      )}
+
                       {/* ─── §5: Ticket Stub Unlock bar ───*/}
                       <AnimatePresence>
                         {isLocked && !tearingMap[video.id] && (
@@ -1220,6 +1280,16 @@ export function CreatorWatchPage() {
           </div>
         </div>
       )}
+
+      {/* ═══════ z-60: "You're In" Post-Purchase Screen (§3) ═══════ */}
+      <AnimatePresence>
+        {youreInVideoId && (
+          <YoureInScreen
+            video={(videos.find(v => v.id === youreInVideoId) ?? displayVideos.find(v => v.id === youreInVideoId))!}
+            onClose={() => setYoureInVideoId(null)}
+          />
+        )}
+      </AnimatePresence>
 
     </div>
   );

@@ -25,28 +25,28 @@ import {
 const RATE_CARDS = [
   {
     title: 'Backdrop Banner',
-    price: 'KES 15,000/week',
+    price: 'From KES 12,000/week',
     description: 'Full-screen branded backdrop displayed behind video content for maximum visual impact.',
     icon: '🖼️',
     accent: 'from-emerald-50 to-white',
   },
   {
     title: 'Smart Chyron',
-    price: 'KES 10,000/week',
+    price: 'From KES 8,000/week',
     description: 'Subtle text overlay at the bottom of videos — non-intrusive yet highly visible.',
     icon: '📝',
     accent: 'from-amber-50 to-white',
   },
   {
     title: 'Intro Splash',
-    price: 'KES 25,000/week',
+    price: 'From KES 20,000/week',
     description: '3-second pre-roll ad that plays before the video starts — premium attention capture.',
     icon: '🎬',
     accent: 'from-emerald-50 to-white',
   },
   {
     title: 'Feed Native Card',
-    price: 'KES 8,000/week',
+    price: 'From KES 6,400/week',
     description: 'Appears natively in the content feed between videos — blends in, converts well.',
     icon: '📱',
     accent: 'from-amber-50 to-white',

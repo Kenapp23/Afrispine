@@ -17,8 +17,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, dbReady } from '@/lib/db';
 
-const CREATOR_SHARE_PCT = 0.6;   // 60% to creator
-const PLATFORM_SHARE_PCT = 0.4;  // 40% to platform
+const DEFAULT_CREATOR_SHARE_PCT = 0.6;   // 60% to creator (premiere window)
+const DEFAULT_PLATFORM_SHARE_PCT = 0.4;  // 40% to platform
 const REFERRAL_COMMISSION_PCT = 0.05; // 5% referral commission (deducted from platform share)
 const PAYOUT_THRESHOLD_KES = 1000;
 
@@ -104,9 +104,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ResultCode: 0, ResultDesc: 'Accepted' });
     }
 
-    // Calculate shares
-    const creatorShare = Math.round(amountPaid * CREATOR_SHARE_PCT * 100) / 100;
-    const platformShare = Math.round(amountPaid * PLATFORM_SHARE_PCT * 100) / 100;
+    // Fetch video to determine rev-share rate
+    // For standard (VOD) content, use video.vodRevSharePct if set;
+    // otherwise fall back to the default 60/40.
+    const video = await db.video.findUnique({
+      where: { id: pending.videoId },
+      select: { vodRevSharePct: true },
+    });
+
+    const creatorSharePct =
+      (video?.vodRevSharePct != null)
+        ? video.vodRevSharePct
+        : DEFAULT_CREATOR_SHARE_PCT;
+    const platformSharePct = 1 - creatorSharePct;
+
+    // Calculate shares using the video's rate
+    const creatorShare = Math.round(amountPaid * creatorSharePct * 100) / 100;
+    const platformShare = Math.round(amountPaid * platformSharePct * 100) / 100;
     const referralCommission = pending.referralCode
       ? Math.round(amountPaid * REFERRAL_COMMISSION_PCT * 100) / 100
       : 0;

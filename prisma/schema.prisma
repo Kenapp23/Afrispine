@@ -864,6 +864,11 @@ model Video {
   thumbnailUrl        String?
   status              String   @default("draft")   // draft | processing | live | takedown
   isHouseContent      Boolean  @default(false)         // Platform-owned demo content, filterable in production
+  releaseMode         String   @default("standard")  // 'standard' | 'premiere'
+  premiereAt          DateTime?                        // scheduled first-screening time
+  premiereWindowEnds  DateTime?                        // when premiere ticket window closes, VOD pricing kicks in
+  vodRevSharePct      Float?                            // creator's VOD share (e.g. 0.60). null = use platform default (0.60)
+  backstageVideoId    String?                            // self-referencing: points to a separate Video for backstage/afterparty content
   viewCount           Int      @default(0)
   likeCount           Int      @default(0)
   shareCount          Int      @default(0)
@@ -871,16 +876,20 @@ model Video {
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
+  backstage           Video?    @relation("BackstageContent", fields: [backstageVideoId], references: [id])
   creator             CreatorProfile @relation(fields: [creatorId], references: [id])
   tickets             ContentTicket[]
   sponsorSlots        SponsorSlot[]
   likes               Like[]
   comments            Comment[]
   watchEvents         WatchEvent[]
+  backstagedBy        Video[]    @relation("BackstageContent")
 
   @@index([category])
   @@index([status])
   @@index([isHouseContent])
+  @@index([releaseMode])
+  @@index([premiereWindowEnds])
 }
 
 model ContentTicket {
