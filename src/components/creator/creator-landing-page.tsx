@@ -424,13 +424,6 @@ export function CreatorLandingPage() {
               <p className="text-xs text-gray-400">
                 AfriSpine is fully owned by Rech Fish Market, a company registered in Kenya.
               </p>
-              <a
-                href="/afri-spine-source.zip"
-                download="afri-spine-source.zip"
-                className="inline-flex items-center gap-1.5 mt-2 text-xs text-emerald-500 hover:text-emerald-700 transition-colors underline underline-offset-2"
-              >
-                Download Source Code (11 MB)
-              </a>
             </div>
           </div>
         </div>
