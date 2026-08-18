@@ -421,7 +421,7 @@ export function ProfilePage() {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="text-base">Saved recipients</CardTitle>
-            <CardDescription>People you transfer money to frequently</CardDescription>
+            <CardDescription>Your frequent contacts</CardDescription>
           </div>
         </CardHeader>
         <CardContent>

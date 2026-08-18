@@ -53,8 +53,8 @@ const resources = {
       'landing.featureSecureDesc': 'Licensed and regulated. Your payments are protected with enterprise-grade encryption.',
 
       // ── Product Pillars ──
-      'pillar.sendTitle': 'Transfer Money',
-      'pillar.sendDesc': 'Transfer funds to mobile money, bank accounts, and cash pickup locations across Africa. Fast, affordable, and reliable.',
+      'pillar.sendTitle': 'Creator Marketplace',
+      'pillar.sendDesc': 'Discover premium content from Africa’s top creators. Pay with M-Pesa and support African talent directly.',
       'pillar.wealthTitle': 'Explore Africa',
       'pillar.wealthDesc': 'Access African stock exchanges, government bonds, and IPOs. Build wealth from wherever you are.',
       'pillar.billsTitle': 'Pay Bills',

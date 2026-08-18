@@ -35,6 +35,20 @@ export const metadata: Metadata = {
   keywords: ["AfriSpine", "African creators", "content marketplace", "M-Pesa", "African content", "premium content", "creator economy", "Kenya", "Nigeria", "Ghana"],
 };
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "AfriSpine",
+  alternateName: "AfriSpine — African Creator Content Marketplace",
+  url: process.env.NEXT_PUBLIC_BASE_URL || "https://www.afri-spine.com",
+  description: "Discover and unlock premium content from Africa's top creators. Pay with M-Pesa. Support African talent directly.",
+  potentialAction: {
+    "@type": "SearchAction",
+    target: `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.afri-spine.com"}/#?q={search_term_string}`,
+    "query-input": "required name=search_term_string",
+  },
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -42,6 +56,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >

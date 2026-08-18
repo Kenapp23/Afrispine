@@ -56,7 +56,7 @@ export default function IntraAfricaBlock() {
       <div className="max-w-3xl mx-auto text-center">
         {/* Heading */}
         <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-amber-300 mb-4">
-          Transfer Money Within Africa
+          Cross-Border Payments Within Africa
         </h2>
         <p className="text-lg sm:text-xl text-amber-200/80 font-medium mb-2">
           Intra-Africa Payments — Coming Soon via PAPSS

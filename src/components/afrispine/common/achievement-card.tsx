@@ -66,7 +66,7 @@ function getShareText(type: string, data: Record<string, string>): string {
       return `${company} just paid me a dividend of ${data.amount}! African stocks pay real returns via @AfriSpine.`;
     }
     default:
-      return 'Check out AfriSpine — the smartest way to transfer money and explore African markets!';
+      return 'Check out AfriSpine — Africa\u2019s creator content marketplace. Discover, support, and enjoy premium content!';
   }
 }
 

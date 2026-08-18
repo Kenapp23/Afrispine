@@ -102,7 +102,7 @@ export function IntraAfricaPage() {
           </h2>
           <p className="mt-4 text-lg text-muted-foreground leading-relaxed">
             We&apos;ll notify you as soon as Intra-Africa corridors go live via PAPSS.
-            You&apos;ll be among the first to transfer money across African currencies
+            You&apos;ll be among the first to make seamless cross-border payments across African currencies
             without USD conversion — local currency in, local currency out.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
@@ -142,7 +142,7 @@ export function IntraAfricaPage() {
               Coming Soon — Pan-African Payment Infrastructure
             </Badge>
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl leading-tight">
-              Transfer Money Within Africa
+              Cross-Border Payments Within Africa
               <span className="block text-amber-300 mt-2">No USD conversion needed</span>
             </h1>
             <p className="mt-6 text-lg text-amber-100 leading-relaxed max-w-2xl mx-auto">
@@ -454,7 +454,7 @@ export function IntraAfricaPage() {
               </button>
               <p className="text-xs text-center text-muted-foreground">
                 No spam. We&apos;ll only email you when Intra-Africa corridors launch.
-                You can also create a full AfriSpine account to transfer money internationally today.
+                You can also create a full AfriSpine account to explore the content marketplace today.
               </p>
             </form>
           </div>
@@ -505,7 +505,7 @@ export function IntraAfricaPage() {
             Africa&apos;s payment infrastructure is changing.
           </h2>
           <p className="mt-4 text-lg text-amber-200">
-            Be among the first to transfer money within Africa without USD conversion.
+            Be among the first to make payments within Africa without USD conversion.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
             <Button

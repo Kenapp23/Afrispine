@@ -276,7 +276,7 @@ export function LandingPage() {
               How it works
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
-              Five simple steps to transfer money across borders
+              Five simple steps to start creating and earning
             </p>
           </div>
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-5">
@@ -512,7 +512,7 @@ export function LandingPage() {
             </h2>
           </div>
           <div className="space-y-3">
-            <FaqItem q="Is AfriSpine available in the US?" a="Yes. Any US cardholder can transfer money to Africa using AfriSpine. Cards are charged in USD." />
+            <FaqItem q="Is AfriSpine available in the US?" a="Yes. AfriSpine is accessible globally. Anyone can discover and support African creators from anywhere in the world." />
             <FaqItem q="How does AfriSpine compare to Western Union?" a="AfriSpine charges 1.5% with no hidden fees. Traditional providers often charge 3–8% plus FX spread." />
             <FaqItem q="Can I pay bills for family?" a="Yes! KPLC electricity, Nairobi Water, DStv/GOtv subscriptions, and airtime top-ups." />
             <FaqItem q="Does AfriSpine offer corporate FX?" a="Yes. AfriSpine Business offers FX from $5,000 at 0.5–1% margin. Visit our Business page for details." />
@@ -602,10 +602,10 @@ export function LandingPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight text-white">
-              Ready to transfer money home?
+              Ready to discover African content?
             </h2>
             <p className="mt-4 text-lg text-emerald-100">
-              Join thousands of people who trust AfriSpine for fast, fair transfers.
+              Join thousands who use AfriSpine to discover, support, and enjoy premium African content.
             </p>
             <Button
               size="lg"
