@@ -29,15 +29,17 @@ model Sender {
 }
 
 model AdminUser {
-  id              String   @id @default(cuid())
-  email           String   @unique
-  fullName        String?
-  passwordHash    String
-  role            String   @default("admin")
-  isActive        Boolean  @default(true)
-  lastLoginAt     DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                String   @id @default(cuid())
+  email             String   @unique
+  fullName          String?
+  passwordHash      String
+  role              String   @default("admin")
+  isActive          Boolean  @default(true)
+  lastLoginAt       DateTime?
+  twoFactorEnabled  Boolean  @default(false)
+  twoFactorSecret   String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
 // ─── Core Business Models ─────────────────────────────────────
@@ -830,23 +832,36 @@ model Post {
 //   KYC-heavy remittance onboarding just to buy a KES 50 ticket.
 
 model CreatorProfile {
-  id                String   @id @default(cuid())
-  userId            String   @unique
-  stageName         String
-  handle            String   @unique
-  bio               String?
-  avatarUrl         String?
-  mpesaPayoutNumber String
-  verified          Boolean  @default(false)
-  followerCount     Int      @default(0)
-  balanceKes        Float    @default(0)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  stageName           String
+  handle              String   @unique
+  bio                 String?
+  avatarUrl           String?
+  mpesaPayoutNumber   String
+  verified            Boolean  @default(false)
+  followerCount       Int      @default(0)
+  balanceKes          Float    @default(0)
+  category            String?
+  location            String?
+  languages           String?
+  coverImageUrl       String?
+  availabilityStatus  String   @default("not_listed")
+  whatsappNumber      String?
+  socialLinks         String?
+  brandPricingVisible Boolean  @default(false)
+  bookingInquiryEmail String?
+  profilePublished    Boolean  @default(false)
+  onboardingStep      Int      @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
-  videos            Video[]
-  follows           Follow[]        @relation("CreatorFollows")
+  videos              Video[]
+  follows             Follow[]        @relation("CreatorFollows")
 
   @@index([handle])
+  @@index([category])
+  @@index([profilePublished])
 }
 
 model Video {
@@ -1103,4 +1118,98 @@ model SponsorSlot {
 
   campaign           SponsorCampaign @relation(fields: [campaignId], references: [id])
   video              Video? @relation(fields: [videoId], references: [id])
+}
+
+// ─── Ledger (append-only money trail) ──────────────────────────
+
+model LedgerEntry {
+  id            String   @id @default(cuid())
+  entryType     String                                // 'ticket_sale' | 'creator_payout' | 'platform_fee' | 'refund' | 'sponsor_payment' | 'referral_commission'
+  amountKes     Float
+  direction     String                                // 'credit' | 'debit'
+  creatorId     String?
+  brandId       String?
+  referenceType String                                // 'ContentTicket' | 'OutboundCreatorPayout' | 'SponsorCampaign' | 'ReferralReward'
+  referenceId   String
+  meta          String?
+  createdAt     DateTime @default(now())
+
+  @@index([creatorId])
+  @@index([referenceType, referenceId])
+  @@index([entryType])
+  @@index([createdAt])
+}
+
+model Refund {
+  id              String   @id @default(cuid())
+  ticketId        String   @unique
+  amountKes       Float
+  reason          String
+  status          String   @default("pending")  // pending | approved | processed | rejected
+  requestedAt     DateTime @default(now())
+  processedAt     DateTime?
+}
+
+// ─── Lightweight Inquiry Models (informational, not transactional) ─
+
+model BrandInquiry {
+  id            String   @id @default(cuid())
+  creatorId     String
+  brandName     String
+  contactEmail  String
+  message       String
+  status        String   @default("new")  // 'new' | 'responded' | 'closed'
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([creatorId])
+  @@index([status])
+}
+
+model BookingInquiry {
+  id            String   @id @default(cuid())
+  creatorId     String
+  eventType     String?
+  roughDate     String?
+  contactEmail  String
+  contactName   String?
+  message       String
+  status        String   @default("new")  // 'new' | 'responded' | 'closed'
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([creatorId])
+  @@index([status])
+}
+
+// ─── Light Moderation ──────────────────────────────────────────
+
+model ContentReport {
+  id            String   @id @default(cuid())
+  videoId       String
+  reporterPhone String?
+  reason        String
+  status        String   @default("pending")  // pending | reviewed | dismissed
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([videoId])
+  @@index([status])
+}
+
+// ─── Analytics Events ──────────────────────────────────────────
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  eventName String
+  actorType String?                             // 'viewer' | 'creator' | 'brand' | 'admin'
+  actorId   String?
+  targetType String?                             // 'video' | 'creator' | 'ticket' | 'campaign'
+  targetId   String?
+  meta      String?                             // JSON
+  createdAt  DateTime @default(now())
+
+  @@index([eventName])
+  @@index([actorId])
+  @@index([createdAt])
 }

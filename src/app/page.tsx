@@ -33,6 +33,11 @@ const SponsorDashboardPage = d(() => import('@/components/creator/sponsor-dashbo
 const SponsorCampaignDetailPage = d(() => import('@/components/creator/sponsor-campaign-detail-page').then(m => ({ default: m.SponsorCampaignDetailPage })));
 const CreatorDashboardPage = d(() => import('@/components/creator/creator-dashboard-page').then(m => ({ default: m.CreatorDashboardPage })));
 const AdminSponsorBrandsPage = d(() => import('@/components/afrispine/admin/admin-sponsor-brands-page').then(m => ({ default: m.AdminSponsorBrandsPage })));
+const CreatorProfileCardPage = d(() => import('@/components/creator/creator-profile-card-page').then(m => ({ default: m.CreatorProfileCardPage })));
+const CreatorOnboardPage = d(() => import('@/components/creator/creator-onboarding-wizard').then(m => ({ default: m.CreatorOnboardingWizard })));
+const Admin2FAPage = d(() => import('@/components/afrispine/admin/admin-2fa-page').then(m => ({ default: m.Admin2FAPage })));
+const AdminReconciliationPage = d(() => import('@/components/afrispine/admin/admin-reconciliation-page').then(m => ({ default: m.AdminReconciliationPage })));
+const AdminModerationPage = d(() => import('@/components/afrispine/admin/admin-moderation-page').then(m => ({ default: m.AdminModerationPage })));
 
 // Auth Pages
 const LoginPage = d(() => import('@/components/afrispine/auth/login-page').then(m => ({ default: m.LoginPage })));
@@ -172,6 +177,8 @@ const URL_VIEW_MAP: Record<string, ViewName> = {
   '/sponsor/campaign': 'sponsor-campaign-detail',
   '/creator/dashboard': 'creator-dashboard',
   '/admin/sponsor-brands': 'admin-sponsor-brands',
+  '/admin/2fa': 'admin-2fa', '/admin/reconciliation': 'admin-reconciliation', '/admin/moderation': 'admin-moderation',
+  '/c/profile': 'creator-profile', '/c/onboard': 'creator-onboard',
 };
 
 const ADMIN_VIEWS: ViewName[] = [
@@ -179,7 +186,7 @@ const ADMIN_VIEWS: ViewName[] = [
   'admin-revenue', 'admin-billing', 'admin-settlement', 'admin-compliance',
   'admin-settings', 'admin-business', 'admin-wealth', 'admin-digest',
   'admin-gift-providers', 'admin-gift-cards', 'admin-testing', 'admin-partners',
-  'admin-sponsor-brands',
+  'admin-sponsor-brands', 'admin-2fa', 'admin-reconciliation', 'admin-moderation',
 ];
 
 const SENDER_VIEWS: ViewName[] = [
@@ -192,7 +199,7 @@ const SENDER_VIEWS: ViewName[] = [
 ];
 
 const AUTH_VIEWS: ViewName[] = ['login', 'signup', 'forgot-password', 'onboarding', 'verify'];
-const CREATOR_VIEWS: ViewName[] = ['landing', 'about', 'contact', 'terms', 'privacy', 'watch', 'creator-apply', 'sponsor-landing', 'sponsor-dashboard', 'sponsor-campaign-detail', 'creator-dashboard'];
+const CREATOR_VIEWS: ViewName[] = ['landing', 'about', 'contact', 'terms', 'privacy', 'watch', 'creator-apply', 'sponsor-landing', 'sponsor-dashboard', 'sponsor-campaign-detail', 'creator-dashboard', 'creator-profile', 'creator-onboard'];
 
 function renderCreatorPage(view: ViewName): React.ReactNode {
   switch (view) {
@@ -207,6 +214,8 @@ function renderCreatorPage(view: ViewName): React.ReactNode {
     case 'sponsor-dashboard': return <SponsorDashboardPage />;
     case 'sponsor-campaign-detail': return <SponsorCampaignDetailPage />;
     case 'creator-dashboard': return <CreatorDashboardPage />;
+    case 'creator-profile': return <CreatorProfileCardPage />;
+    case 'creator-onboard': return <CreatorOnboardPage />;
     default: return null;
   }
 }
@@ -294,6 +303,9 @@ function renderAdminPage(view: ViewName): React.ReactNode {
     case 'admin-testing': return <AdminTestingDashboard />;
     case 'admin-partners': return <AdminPartnersPage />;
     case 'admin-sponsor-brands': return <AdminSponsorBrandsPage />;
+    case 'admin-2fa': return <Admin2FAPage />;
+    case 'admin-reconciliation': return <AdminReconciliationPage />;
+    case 'admin-moderation': return <AdminModerationPage />;
     default: return null;
   }
 }
@@ -336,13 +348,21 @@ export default function Home() {
         return;
       }
       const hashPath = window.location.hash.replace(/^#/, '');
-      const path = hashPath || window.location.pathname;
+      // Parse query params from hash (e.g., #c/profile?handle=xxx&mode=brand)
+      let path = hashPath || window.location.pathname;
+      let params: Record<string, string> = {};
+      const qIdx = path.indexOf('?');
+      if (qIdx !== -1) {
+        const queryStr = path.slice(qIdx + 1);
+        path = path.slice(0, qIdx);
+        new URLSearchParams(queryStr).forEach((val, key) => { params[key] = val; });
+      }
       const v = URL_VIEW_MAP[path];
       if (v) {
         if (!hashPath && window.location.pathname !== '/') {
           window.history.replaceState({}, '', '#' + window.location.pathname);
         }
-        navigate(v);
+        navigate(v, params);
       }
     };
     sync();
@@ -358,7 +378,11 @@ export default function Home() {
   useEffect(() => {
     const entry = Object.entries(URL_VIEW_MAP).find(([, v]) => v === currentView);
     const target = entry?.[0] || '/';
-    const hash = '#' + target;
+    let hash = '#' + target;
+    // Append viewParams as query string in the hash
+    const vp = useAppStore.getState().viewParams;
+    const qs = Object.entries(vp).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+    if (qs) hash += '?' + qs;
     if (window.location.hash !== hash) {
       window.history.pushState({}, '', hash);
     }

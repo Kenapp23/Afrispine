@@ -65,10 +65,10 @@ export default async function CreatorSharePage({
   return (
     <html lang="en">
       <head>
-        <meta httpEquiv="refresh" content={`0;url=/#watch?creator=${handle}`} />
+        <meta httpEquiv="refresh" content={`0;url=/#c/profile?handle=${handle}`} />
         <script
           dangerouslySetInnerHTML={{
-            __html: `window.location.replace('/#watch?creator=${handle}');`,
+            __html: `window.location.replace('/#c/profile?handle=${handle}');`,
           }}
         />
       </head>
@@ -76,7 +76,7 @@ export default async function CreatorSharePage({
         <div className="text-center text-white/60">
           <div className="animate-spin h-8 w-8 border-2 border-emerald-500 border-t-transparent rounded-full mx-auto mb-4" />
           <p className="text-sm">Opening creator profile...</p>
-          <a href={`/#watch?creator=${handle}`} className="mt-2 inline-block text-emerald-500 text-xs underline">
+          <a href={`/#c/profile?handle=${handle}`} className="mt-2 inline-block text-emerald-500 text-xs underline">
             Click here if not redirected
           </a>
         </div>

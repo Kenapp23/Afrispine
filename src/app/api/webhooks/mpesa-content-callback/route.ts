@@ -10,6 +10,7 @@
  *   - Auto-queue payout if balance >= KES 1000
  *   - Handle referral tracking (5% commission from platform share)
  *   - Upsert ContentViewer for buyer & referrer
+ *   - Write LedgerEntry records (ticket_sale, platform_fee, referral_commission, creator_payout)
  *
  * Daraja ALWAYS expects a 200 response.
  */
@@ -183,6 +184,18 @@ export async function POST(req: NextRequest) {
               console.log(
                 `[mpesa-content-callback] Referral commission: KES ${referralCommission} (${REFERRAL_COMMISSION_PCT * 100}%) credited to ${referrerPhone}`,
               );
+
+              // Ledger: referral commission
+              await tx.ledgerEntry.create({
+                data: {
+                  entryType: 'referral_commission',
+                  amountKes: referralCommission,
+                  direction: 'credit',
+                  referenceType: 'ReferralReward',
+                  referenceId: ticket.id,
+                  meta: JSON.stringify({ referrerPhone }),
+                },
+              });
             } else {
               console.warn(
                 `[mpesa-content-callback] ShareEvent found for code=${pending.referralCode} but no viewer phone linked`,
@@ -205,6 +218,29 @@ export async function POST(req: NextRequest) {
         const updatedCreator = await tx.creatorProfile.update({
           where: { id: pending.creatorId },
           data: { balanceKes: { increment: creatorShare } },
+        });
+
+        // e2) Ledger: ticket sale credit to creator
+        await tx.ledgerEntry.create({
+          data: {
+            entryType: 'ticket_sale',
+            amountKes: creatorShare,
+            direction: 'credit',
+            creatorId: pending.creatorId,
+            referenceType: 'ContentTicket',
+            referenceId: ticket.id,
+          },
+        });
+
+        // e3) Ledger: platform fee
+        await tx.ledgerEntry.create({
+          data: {
+            entryType: 'platform_fee',
+            amountKes: platformShare,
+            direction: 'credit',
+            referenceType: 'ContentTicket',
+            referenceId: ticket.id,
+          },
         });
 
         // f) Auto-queue payout if balance >= threshold
@@ -233,6 +269,19 @@ export async function POST(req: NextRequest) {
             await tx.creatorProfile.update({
               where: { id: pending.creatorId },
               data: { balanceKes: 0 },
+            });
+
+            // Ledger: creator payout debit
+            await tx.ledgerEntry.create({
+              data: {
+                entryType: 'creator_payout',
+                amountKes: updatedCreator.balanceKes,
+                direction: 'debit',
+                creatorId: pending.creatorId,
+                referenceType: 'OutboundCreatorPayout',
+                referenceId: MerchantRequestID,
+                meta: JSON.stringify({ phoneTarget: creator.mpesaPayoutNumber }),
+              },
             });
           }
         }

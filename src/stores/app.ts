@@ -18,10 +18,10 @@ export type ViewName =
   | 'digest-current' | 'digest-archive' | 'digest-issue' | 'digest-story'
   | 'digest-advertise' | 'digest-subscribe'
   | 'admin-digest'
-  | 'watch' | 'creator-apply'
+  | 'watch' | 'creator-apply' | 'creator-profile' | 'creator-onboard'
   | 'sponsor-landing' | 'sponsor-dashboard' | 'sponsor-campaign-detail'
   | 'creator-dashboard'
-  | 'admin-sponsor-brands';
+  | 'admin-sponsor-brands' | 'admin-2fa' | 'admin-reconciliation' | 'admin-moderation';
 
 interface AppState {
   currentView: ViewName;
