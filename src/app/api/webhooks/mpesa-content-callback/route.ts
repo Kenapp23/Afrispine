@@ -299,6 +299,18 @@ export async function POST(req: NextRequest) {
       console.log(
         `[mpesa-content-callback] SUCCESS: ticket created for ${pending.videoId}, KES ${amountPaid} (${creatorShare}/${platformShare} split)${commissionNote}`,
       );
+
+      // Fire analytics (fire-and-forget, outside transaction)
+      db.analyticsEvent.create({
+        data: {
+          eventName: 'payment_confirmed',
+          actorType: 'viewer',
+          actorId: pending.viewerPhone,
+          targetType: 'ticket',
+          targetId: pending.videoId,
+          meta: JSON.stringify({ amountKes: amountPaid, merchantRequestId: MerchantRequestID }),
+        },
+      }).catch(() => {});
     } catch (txErr) {
       console.error('[mpesa-content-callback] Transaction error:', txErr);
       // Don't retry — Daraja doesn't retry on 200

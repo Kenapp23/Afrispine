@@ -476,6 +476,9 @@ export function CreatorWatchPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<VideoItem[] | null>(null);
 
+  // ─── §3: Signed Stream URL tracking ───
+  const [signedUrlMap, setSignedUrlMap] = useState<Record<string, string>>({});
+
   // ─── Per-video state ───
   const [unlockMap, setUnlockMap] = useState<Record<string, UnlockStatus>>({});
   const [likedMap, setLikedMap] = useState<Record<string, boolean>>({});
@@ -661,6 +664,25 @@ export function CreatorWatchPage() {
     cardRefs.current.forEach(el => observerRef.current?.observe(el));
     return () => observerRef.current?.disconnect();
   }, [displayVideos, handleIntersect]);
+
+  // ─── Fetch signed stream URLs for unlocked premium content ───
+  useEffect(() => {
+    const active = displayVideos[activeIndex];
+    if (!active) return;
+    const isUnlocked = unlockMap[active.id] === 'unlocked' || active.ticketPriceKes === 0;
+    const needsSigned = isUnlocked && active.cfPremiumStreamId && !signedUrlMap[active.id];
+    if (!needsSigned) return;
+
+    const params = new URLSearchParams({ videoId: active.id });
+    if (phoneInput.length >= 12) params.set('phone', phoneInput.replace(/\D/g, ''));
+
+    fetch(`/api/content/signed-stream?${params}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.url) setSignedUrlMap(p => ({ ...p, [active.id]: data.url }));
+      })
+      .catch(() => {});
+  }, [activeIndex, displayVideos, unlockMap, phoneInput, signedUrlMap]);
 
   // ─── Actions ───
   const toggleLike = useCallback(async (id: string) => {
@@ -964,7 +986,7 @@ export function CreatorWatchPage() {
                     }}
                     autoPlay muted={isMuted} playsInline loop preload="auto"
                     className={`absolute inset-0 z-0 h-full w-full object-cover transition-opacity duration-700 ${videoReady ? 'opacity-100' : 'opacity-0'}`}
-                    src={`https://customer-c4f5c4f4.cloudflarestream.com/${streamId}/manifest/video.m3u8`} />
+                    src={signedUrlMap[video.id] || `https://customer-c4f5c4f4.cloudflarestream.com/${streamId}/manifest/video.m3u8`} />
                 )}
 
                 {/* ─── z-0: Demo video element (direct URL, no Cloudflare Stream) ─── */}

@@ -71,9 +71,23 @@ export function AdminModerationPage() {
     fetchReports();
   }, [fetchReports]);
 
-  const handleDismiss = (reportId: string) => {
-    setReports((prev) => prev.filter((r) => r.id !== reportId));
-    toast.success('Report dismissed');
+  const handleDismiss = async (reportId: string) => {
+    try {
+      const res = await fetch('/api/admin/content-takedown', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reportId, action: 'dismiss' }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || 'Failed to dismiss report');
+        return;
+      }
+      setReports((prev) => prev.filter((r) => r.id !== reportId));
+      toast.success('Report dismissed');
+    } catch {
+      toast.error('Network error');
+    }
   };
 
   const handleTakedown = async () => {
@@ -83,7 +97,7 @@ export function AdminModerationPage() {
       const res = await fetch('/api/admin/content-takedown', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ videoId: takedownTarget.videoId }),
+        body: JSON.stringify({ videoId: takedownTarget.videoId, reportId: takedownTarget.id }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));

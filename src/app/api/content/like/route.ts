@@ -35,6 +35,17 @@ export async function POST(req: NextRequest) {
         data: { likeCount: { increment: 1 } },
       }).catch(() => { /* ignore */ });
 
+      // Fire analytics (fire-and-forget)
+      db.analyticsEvent.create({
+        data: {
+          eventName: 'video_liked',
+          actorType: 'viewer',
+          actorId: user,
+          targetType: 'video',
+          targetId: videoId,
+        },
+      }).catch(() => {});
+
       return NextResponse.json({ success: true });
     } catch (err: unknown) {
       const prismaErr = err as { code?: string };

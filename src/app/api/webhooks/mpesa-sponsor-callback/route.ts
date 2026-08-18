@@ -123,6 +123,19 @@ export async function POST(req: NextRequest) {
           },
           data: { status: 'active' },
         });
+
+        // Ledger: sponsor payment credit
+        await tx.ledgerEntry.create({
+          data: {
+            entryType: 'sponsor_payment',
+            amountKes: amountPaid,
+            direction: 'credit',
+            brandId: campaign.brandId,
+            referenceType: 'SponsorCampaign',
+            referenceId: campaign.id,
+            meta: JSON.stringify({ mpesaReceiptNumber, campaignName: campaign.name }),
+          },
+        });
       });
 
       console.log(

@@ -115,3 +115,32 @@ Work Log:
 Stage Summary:
 - All new routes are accessible via hash navigation
 - Query params in hashes work for profile card handle/mode
+
+---
+Task ID: 7
+Agent: Main (orchestrator)
+Task: Profile Card & Platform Hardening — Gap analysis and hardening
+
+Work Log:
+- Comprehensive audit of all 6 sections of the scoped prompt against existing codebase
+- Discovered that ALL major features were already implemented in prior session:
+  - §1.1-1.2: Profile Card with Fan/Brand/Booking faces (creator-profile-card.tsx)
+  - §1.3-1.4: Brand Inquiry + Booking Inquiry (APIs + UI forms)
+  - §1.5: 10-step Creator Onboarding Wizard
+  - §2: Ledger (LedgerEntry writes in mpesa-content-callback + Admin Reconciliation page/API)
+  - §3: TOTP 2FA for admin (setup/verify/disable APIs + admin login 2-step + management page)
+  - §4: Analytics Event API + client-side firing (profile_viewed, creator_followed, profile_shared)
+  - §5: ContentReport + Admin Takedown API + Moderation page
+- Identified and fixed 4 specific gaps:
+  - Gap 1: Sponsor callback was missing LedgerEntry write for sponsor_payment
+  - Gap 2: Admin moderation page dismiss was UI-only (no API call); added PATCH endpoint for persisting dismissals
+  - Gap 3: Premium Cloudflare Stream content used unsigned URLs; created cf-stream-sign.ts utility + /api/content/signed-stream endpoint + watch page integration
+  - Gap 4: Analytics events only fired client-side; added server-side firing in follow, like, and payment_confirmed handlers
+
+Stage Summary:
+- All 6 sections of the scoped build prompt are now complete
+- ESLint passes clean
+- Prisma schema in sync
+- 4 hardening gaps closed
+- New files: src/lib/cf-stream-sign.ts, src/app/api/content/signed-stream/route.ts
+- Modified files: mpesa-sponsor-callback, content-takedown, admin-moderation-page, content/follow, content/like, mpesa-content-callback, creator-watch-page
