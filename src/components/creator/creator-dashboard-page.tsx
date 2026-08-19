@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { CreatorInvitePack } from '@/components/creator/creator-invite-pack';
+import { TopSupportersStrip, ReferralBadge } from '@/components/afrispine/sender/top-supporters-strip';
 
 /* -- Demo Data ----------------------------------------------- */
 
@@ -135,16 +136,18 @@ function InquiriesSection({ creatorId }: { creatorId: string }) {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'new' | 'responded' | 'closed'>('all');
 
-  const fetchInquiries = useCallback(async () => {
-    if (!creatorId) { setLoading(false); return; }
-    try {
-      const res = await fetch(`/api/creator/inquiries?creatorId=${encodeURIComponent(creatorId)}`);
-      if (res.ok) setInquiries(await res.json());
-    } catch {}
-    setLoading(false);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!creatorId) { if (!cancelled) setLoading(false); return; }
+      try {
+        const res = await fetch(`/api/creator/inquiries?creatorId=${encodeURIComponent(creatorId)}`);
+        if (res.ok && !cancelled) setInquiries(await res.json());
+      } catch {}
+      if (!cancelled) setLoading(false);
+    })();
+    return () => { cancelled = true; };
   }, [creatorId]);
-
-  useEffect(() => { fetchInquiries(); }, [fetchInquiries]);
 
   const filtered = filter === 'all' ? inquiries : inquiries.filter(i => i.status === filter);
   const newCount = inquiries.filter(i => i.status === 'new').length;
@@ -303,6 +306,8 @@ export function CreatorDashboardPage() {
               <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 flex items-center gap-2">
                 <BarChart3 className="h-7 w-7 text-emerald-600" />
                 Creator Dashboard
+                {/* ReferralBadge: shows when referralCount >= 5 — placeholder for real data */}
+                <ReferralBadge referralCount={0} />
               </h1>
               <p className="mt-1 text-sm text-gray-500">
                 Track your content performance and earnings
@@ -359,6 +364,11 @@ export function CreatorDashboardPage() {
               iconBg="bg-emerald-100"
               iconColor="text-emerald-600"
             />
+          </div>
+
+          {/* Top Supporters Strip */}
+          <div className="mb-8">
+            <TopSupportersStrip />
           </div>
 
           {/* My Videos Table */}
