@@ -1,16 +1,26 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { io, Socket } from 'socket.io-client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users, Copy, Check, X, Play, Pause, MonitorPlay,
-  Share2, Wifi, WifiOff, Loader2, MessageCircle,
+  Wifi, WifiOff, Loader2, MessageCircle,
 } from 'lucide-react';
 import { useAppStore } from '@/stores/app';
+import {
+  joinRealtimeRoom,
+  realtimeReady,
+  makePlayEvent,
+  makePauseEvent,
+  makeSeekEvent,
+  makeHeartbeatEvent,
+  makeSyncRequestEvent,
+  makeSyncResponseEvent,
+  type PartyEvent,
+} from '@/lib/supabase-realtime';
 
 interface WatchPartyOverlayProps {
   roomCode: string;
@@ -22,102 +32,166 @@ interface WatchPartyOverlayProps {
 
 export function WatchPartyOverlay({ roomCode, videoId, isHost, userId, onClose }: WatchPartyOverlayProps) {
   const navigate = useAppStore((s) => s.navigate);
-  const socketRef = useRef<Socket | null>(null);
+  const channelRef = useRef<ReturnType<typeof joinRealtimeRoom> | null>(null);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const memberCountRef = useRef(1);
+  // Refs for playback state used inside intervals (avoids re-subscribing)
+  const isPlayingRef = useRef(false);
+  const playbackSecondsRef = useRef(0);
 
   const [memberCount, setMemberCount] = useState(1);
-  const [connected, setConnected] = useState(false);
+  const [connected, setConnected] = useState(realtimeReady);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSeconds, setPlaybackSeconds] = useState(0);
   const [copiedCode, setCopiedCode] = useState(false);
 
-  // ─── Socket connection ───────────────────────────────────
+  // Keep refs in sync with state
+  useEffect(() => { isPlayingRef.current = isPlaying; }, [isPlaying]);
+  useEffect(() => { playbackSecondsRef.current = playbackSeconds; }, [playbackSeconds]);
+
+  // ─── Supabase Realtime connection ─────────────────────────
   useEffect(() => {
-    const socket = io('/?XTransformPort=3005', {
-      transports: ['websocket', 'polling'],
-      reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1000,
-    });
-    socketRef.current = socket;
+    const { channel, send, connected: rtConnected } = joinRealtimeRoom(roomCode, {
+      onEvent: (event: PartyEvent) => {
+        switch (event.type) {
+          case 'play':
+            setIsPlaying(true);
+            setPlaybackSeconds(event.payload.playbackSeconds ?? 0);
+            window.dispatchEvent(new CustomEvent('watch-party-sync', {
+              detail: { isPlaying: true, playbackSeconds: event.payload.playbackSeconds ?? 0 },
+            }));
+            break;
 
-    socket.on('connect', () => {
-      setConnected(true);
-      socket.emit('join-room', { roomCode, userId });
-      socket.emit('sync-request', { roomCode });
+          case 'pause':
+            setIsPlaying(false);
+            setPlaybackSeconds(event.payload.playbackSeconds ?? 0);
+            window.dispatchEvent(new CustomEvent('watch-party-sync', {
+              detail: { isPlaying: false, playbackSeconds: event.payload.playbackSeconds ?? 0 },
+            }));
+            break;
+
+          case 'seek':
+            setPlaybackSeconds(event.payload.playbackSeconds ?? 0);
+            window.dispatchEvent(new CustomEvent('watch-party-seek', {
+              detail: { playbackSeconds: event.payload.playbackSeconds ?? 0 },
+            }));
+            break;
+
+          case 'heartbeat':
+            if (event.payload.count !== undefined) {
+              memberCountRef.current = event.payload.count;
+              setMemberCount(event.payload.count);
+            }
+            break;
+
+          case 'sync-request': {
+            if (isHost) {
+              send(makeSyncResponseEvent(roomCode, userId, isPlayingRef.current, playbackSecondsRef.current, memberCountRef.current));
+            }
+            break;
+          }
+
+          case 'sync-response': {
+            if (!isHost && event.userId !== userId) {
+              setIsPlaying(event.payload.isPlaying ?? false);
+              setPlaybackSeconds(event.payload.playbackSeconds ?? 0);
+              if (event.payload.count !== undefined) {
+                memberCountRef.current = event.payload.count;
+                setMemberCount(event.payload.count);
+              }
+              window.dispatchEvent(new CustomEvent('watch-party-sync', {
+                detail: { isPlaying: event.payload.isPlaying ?? false, playbackSeconds: event.payload.playbackSeconds ?? 0 },
+              }));
+            }
+            break;
+          }
+
+          case 'member-join':
+            if (event.payload.count !== undefined) {
+              memberCountRef.current = event.payload.count;
+              setMemberCount(event.payload.count);
+            }
+            break;
+        }
+      },
+      onStatusChange: (status) => {
+        setConnected(status === 'SUBSCRIBED');
+      },
     });
 
-    socket.on('disconnect', () => {
-      setConnected(false);
-    });
+    channelRef.current = { channel, send, connected: rtConnected };
 
-    socket.on('connect_error', () => {
-      setConnected(false);
-    });
+    // Non-host requests sync from host
+    if (rtConnected && !isHost) {
+      setTimeout(() => {
+        send(makeSyncRequestEvent(roomCode, userId));
+      }, 500);
+    }
 
-    socket.on('member-count', (data: { count: number }) => {
-      setMemberCount(data.count);
-    });
-
-    socket.on('play-state', (data: { isPlaying: boolean; playbackSeconds: number }) => {
-      setIsPlaying(data.isPlaying);
-      setPlaybackSeconds(data.playbackSeconds);
-      // Dispatch a custom event so the watch page can sync video playback
-      window.dispatchEvent(new CustomEvent('watch-party-sync', {
-        detail: { isPlaying: data.isPlaying, playbackSeconds: data.playbackSeconds },
-      }));
-    });
-
-    socket.on('seek', (data: { playbackSeconds: number }) => {
-      setPlaybackSeconds(data.playbackSeconds);
-      window.dispatchEvent(new CustomEvent('watch-party-seek', {
-        detail: { playbackSeconds: data.playbackSeconds },
-      }));
-    });
-
-    socket.on('error', (data: { message: string }) => {
-      toast.error(data.message);
-    });
-
-    // Heartbeat every 15s
-    heartbeatRef.current = setInterval(() => {
-      if (socket.connected) {
-        socket.emit('heartbeat', { roomCode, userId });
-      }
+    // Heartbeat every 15s — poll member count from REST API and broadcast
+    heartbeatRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/watch-party/room?roomCode=${roomCode}`);
+        if (res.ok) {
+          const data = await res.json();
+          const count = data.memberCount || 1;
+          memberCountRef.current = count;
+          setMemberCount(count);
+          if (rtConnected) {
+            send(makeHeartbeatEvent(roomCode, userId, count));
+          }
+        }
+      } catch { /* non-critical */ }
     }, 15000);
+
+    // Persist playback state to DB periodically (host only)
+    let syncInterval: ReturnType<typeof setInterval> | null = null;
+    if (isHost) {
+      syncInterval = setInterval(async () => {
+        try {
+          await fetch('/api/watch-party/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ roomCode, isPlaying: isPlayingRef.current, playbackSeconds: playbackSecondsRef.current }),
+          });
+        } catch { /* non-critical */ }
+      }, 5000);
+    }
 
     return () => {
       if (heartbeatRef.current) clearInterval(heartbeatRef.current);
-      socket.emit('leave-room', { roomCode, userId });
-      socket.disconnect();
-      socketRef.current = null;
+      if (syncInterval) clearInterval(syncInterval);
+      if (channel) {
+        channel.unsubscribe();
+      }
+      channelRef.current = null;
     };
-  }, [roomCode, userId]);
+  }, [roomCode, userId, isHost]);
 
   // ─── Host controls ──────────────────────────────────────
   const handlePlay = useCallback(() => {
-    socketRef.current?.emit('play', { roomCode, seconds: playbackSeconds });
     setIsPlaying(true);
     window.dispatchEvent(new CustomEvent('watch-party-sync', {
       detail: { isPlaying: true, playbackSeconds },
     }));
-  }, [roomCode, playbackSeconds]);
+    channelRef.current?.send(makePlayEvent(roomCode, userId, playbackSeconds));
+  }, [roomCode, userId, playbackSeconds]);
 
   const handlePause = useCallback(() => {
-    socketRef.current?.emit('pause', { roomCode, seconds: playbackSeconds });
     setIsPlaying(false);
     window.dispatchEvent(new CustomEvent('watch-party-sync', {
       detail: { isPlaying: false, playbackSeconds },
     }));
-  }, [roomCode, playbackSeconds]);
+    channelRef.current?.send(makePauseEvent(roomCode, userId, playbackSeconds));
+  }, [roomCode, userId, playbackSeconds]);
 
   const handleSeek = useCallback((seconds: number) => {
-    socketRef.current?.emit('seek', { roomCode, seconds });
     setPlaybackSeconds(seconds);
     window.dispatchEvent(new CustomEvent('watch-party-seek', {
       detail: { playbackSeconds: seconds },
     }));
-  }, [roomCode]);
+    channelRef.current?.send(makeSeekEvent(roomCode, userId, seconds));
+  }, [roomCode, userId]);
 
   // ─── Copy room code ─────────────────────────────────────
   const copyCode = async () => {
@@ -134,7 +208,7 @@ export function WatchPartyOverlay({ roomCode, videoId, isHost, userId, onClose }
   // ─── WhatsApp share ─────────────────────────────────────
   const shareWhatsApp = () => {
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-    const url = `${baseUrl}/party/${roomCode}`;
+    const url = `${baseUrl}/#watch-party?roomCode=${roomCode}`;
     const text = `Join my watch party on AfriSpine! ${url}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
@@ -162,7 +236,6 @@ export function WatchPartyOverlay({ roomCode, videoId, isHost, userId, onClose }
       >
         {/* Header */}
         <div className="relative px-4 pt-4 pb-3">
-          {/* Emerald accent line */}
           <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-emerald-500 via-emerald-400 to-emerald-600" />
 
           <div className="flex items-center justify-between">
@@ -173,7 +246,7 @@ export function WatchPartyOverlay({ roomCode, videoId, isHost, userId, onClose }
             <div className="flex items-center gap-2">
               <div className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${connected ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
                 {connected ? <Wifi className="h-2.5 w-2.5" /> : <WifiOff className="h-2.5 w-2.5" />}
-                {connected ? 'Live' : 'Reconnecting'}
+                {connected ? 'Live' : (realtimeReady ? 'Reconnecting' : 'Offline')}
               </div>
               {onClose && (
                 <button onClick={onClose} className="h-6 w-6 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors">
@@ -220,7 +293,6 @@ export function WatchPartyOverlay({ roomCode, videoId, isHost, userId, onClose }
                 {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 ml-0.5" />}
               </Button>
               <span className="text-xs font-mono text-white/60">{formatTime(playbackSeconds)}</span>
-              {/* Quick seek buttons */}
               <button
                 onClick={() => handleSeek(Math.max(0, playbackSeconds - 10))}
                 className="ml-auto h-7 px-2 rounded-lg bg-white/5 text-white/50 text-[10px] font-medium hover:bg-white/10 transition-colors"

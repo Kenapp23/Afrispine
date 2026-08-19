@@ -434,3 +434,46 @@ Stage Summary:
 - Fan Zone shows unlocked shows, watch parties, ambassador status, premieres
 - My Tickets API queries ContentTicket + Video + CreatorProfile
 - Toggle between profile and My Zone views via state
+---
+Task ID: 0.1
+Agent: main
+Task: §0.1 — Revert prisma/schema.prisma provider to postgresql, add directUrl, restore DATABASE-SETUP-GUIDE.md
+
+Work Log:
+- Changed `provider = "sqlite"` to `provider = "postgresql"` in prisma/schema.prisma
+- Added `directUrl = env("DIRECT_URL")` to the datasource block
+- Ran `prisma generate` — succeeded (352ms)
+- Created DATABASE-SETUP-GUIDE.md with full documentation for Supabase PostgreSQL setup
+
+Stage Summary:
+- Schema now targets PostgreSQL (not SQLite)
+- DIRECT_URL added for Prisma migrations
+- DATABASE-SETUP-GUIDE.md restored with connection string docs, troubleshooting, and Watch Party Realtime config
+- **Kennedy action required**: Set DATABASE_URL (pooled, port 6543, ?pgbouncer=true) and DIRECT_URL (direct, port 5432) in Vercel env vars, then run `bun run db:push` against real Postgres
+
+---
+Task ID: 0.2
+Agent: main
+Task: §0.2 — Replace phantom Socket.io Watch Party with Supabase Realtime
+
+Work Log:
+- Installed @supabase/supabase-js (v2.112.3)
+- Created src/lib/supabase-server.ts (server-side Supabase client with graceful degradation)
+- Created src/lib/supabase-realtime.ts (client-side Supabase Realtime broadcast channel helper)
+- Completely rewrote src/components/creator/watch-party-overlay.tsx (removed socket.io-client import, replaced with Supabase Realtime)
+- Completely rewrote src/components/creator/watch-party-lobby.tsx (removed socket.io-client import, replaced with Supabase Realtime)
+- Fixed src/app/api/watch-party/create/route.ts (removed phantom `fetch('/bootstrap?XTransformPort=3005')` call)
+- Created src/app/api/watch-party/sync/route.ts (new — persists host playback state to DB)
+- Fixed TS errors: typo in supabase-realtime.ts, variable declaration order in lobby
+- ESLint: 0 errors, 0 warnings
+- TypeScript: 0 errors in watch-party files
+- Dev server compiles and serves / route (200)
+
+Stage Summary:
+- **socket.io-client is completely removed from all Watch Party code**
+- Watch Party now uses Supabase Realtime broadcast channels (ephemeral, no DB triggers, no RLS needed)
+- Channel name pattern: `room:{roomCode}`
+- Member count comes from REST API polling (every 15s) + broadcast
+- Host playback state persisted to DB every 5s via /api/watch-party/sync
+- Graceful degradation: when NEXT_PUBLIC_SUPABASE_URL/ANON_KEY not set, UI shows 'Offline' state
+- **Kennedy action required**: Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in Vercel env vars

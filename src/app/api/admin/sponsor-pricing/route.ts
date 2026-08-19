@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, dbReady } from '@/lib/db';
-import { adminAuth } from '@/lib/admin-auth';
+import { requireAdminWith2FA } from '@/lib/admin-auth';
 
 // GET /api/admin/sponsor-pricing — return all SponsorPricing records ordered by slotType
 export async function GET(req: NextRequest) {
@@ -23,10 +23,8 @@ export async function GET(req: NextRequest) {
 // POST /api/admin/sponsor-pricing — upsert SponsorPricing records (admin only)
 export async function POST(req: NextRequest) {
   try {
-    const admin = await adminAuth(req);
-    if (!admin) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const auth = await requireAdminWith2FA(req);
+    if (auth.error) return auth.res!;
 
     if (!dbReady) {
       return NextResponse.json({ error: 'Database is not available' }, { status: 503 });

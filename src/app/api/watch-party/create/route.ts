@@ -2,6 +2,9 @@
  * Watch Party — Create Room
  *
  * POST: { videoId, userId } → { roomCode, joinUrl }
+ *
+ * The room is persisted in the DB. Real-time sync is handled by
+ * Supabase Realtime broadcast channels (client-side), NOT socket.io.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -61,13 +64,6 @@ export async function POST(req: NextRequest) {
         },
       },
     });
-
-    // Bootstrap the socket.io mini-service room (fire-and-forget)
-    fetch(`/bootstrap?XTransformPort=3005`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ roomCode, videoId, hostUserId: userId }),
-    }).catch(() => { /* non-critical: room will be lazily created on first socket join */ });
 
     return NextResponse.json({
       roomCode: room.roomCode,

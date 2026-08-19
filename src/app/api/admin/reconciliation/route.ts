@@ -9,14 +9,14 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db, dbReady } from '@/lib/db';
-import { requireAdmin } from '@/lib/admin-auth';
+import { requireAdminWith2FA } from '@/lib/admin-auth';
 
 export async function GET(req: NextRequest) {
   if (!dbReady) {
     return NextResponse.json({ error: 'Database not available' }, { status: 503 });
   }
 
-  const auth = await requireAdmin(req);
+  const auth = await requireAdminWith2FA(req);
   if (auth.error) return auth.res!;
 
   try {

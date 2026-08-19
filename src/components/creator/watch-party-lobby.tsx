@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { io, Socket } from 'socket.io-client';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -11,8 +10,15 @@ import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, MonitorPlay, Users, Loader2, Wifi, WifiOff,
-  Copy, Check, Search, Play, MessageCircle,
+  Copy, Play, MessageCircle,
 } from 'lucide-react';
+import {
+  joinRealtimeRoom,
+  realtimeReady,
+  makeHeartbeatEvent,
+  makeSyncRequestEvent,
+  type PartyEvent,
+} from '@/lib/supabase-realtime';
 
 export function WatchPartyLobby() {
   const navigate = useAppStore((s) => s.navigate);
@@ -30,65 +36,65 @@ export function WatchPartyLobby() {
     hostUserId?: string;
   } | null>(null);
   const [memberCount, setMemberCount] = useState(1);
-  const [connected, setConnected] = useState(false);
-  const socketRef = useRef<Socket | null>(null);
+  const [connected, setConnected] = useState(realtimeReady);
+  const channelRef = useRef<ReturnType<typeof joinRealtimeRoom> | null>(null);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const memberCountRef = useRef(1);
 
   const userId = sender?.id || `anon-${Date.now()}`;
 
-  // ─── If prefillCode, auto-join on mount ─────────────────
-  useEffect(() => {
-    if (prefillCode) {
-      handleJoin();
-    }
-  }, [prefillCode]);
-
-  // ─── Cleanup on unmount ──────────────────────────────────
-  useEffect(() => {
-    return () => {
-      if (heartbeatRef.current) clearInterval(heartbeatRef.current);
-      if (socketRef.current) {
-        if (joined && inputCode) {
-          socketRef.current.emit('leave-room', { roomCode: inputCode, userId });
+  // ─── Connect to Realtime after joining ──────────────────
+  const connectRealtime = useCallback((roomCode: string) => {
+    const { channel, send, connected: rtConnected } = joinRealtimeRoom(roomCode, {
+      onEvent: (event: PartyEvent) => {
+        switch (event.type) {
+          case 'heartbeat':
+          case 'member-join':
+            if (event.payload.count !== undefined) {
+              memberCountRef.current = event.payload.count;
+              setMemberCount(event.payload.count);
+            }
+            break;
+          case 'sync-response':
+            if (event.userId !== userId) {
+              if (event.payload.count !== undefined) {
+                memberCountRef.current = event.payload.count;
+                setMemberCount(event.payload.count);
+              }
+            }
+            break;
         }
-        socketRef.current.disconnect();
-      }
-    };
-  }, []);
-
-  const connectSocket = (roomCode: string) => {
-    const socket = io('/?XTransformPort=3005', {
-      transports: ['websocket', 'polling'],
-      reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1000,
-    });
-    socketRef.current = socket;
-
-    socket.on('connect', () => {
-      setConnected(true);
-      socket.emit('join-room', { roomCode, userId });
+      },
+      onStatusChange: (status) => {
+        setConnected(status === 'SUBSCRIBED');
+      },
     });
 
-    socket.on('disconnect', () => setConnected(false));
-    socket.on('connect_error', () => setConnected(false));
+    channelRef.current = { channel, send, connected: rtConnected };
 
-    socket.on('member-count', (data: { count: number }) => {
-      setMemberCount(data.count);
-    });
+    if (rtConnected) {
+      setTimeout(() => {
+        send(makeSyncRequestEvent(roomCode, userId));
+      }, 500);
+    }
 
-    socket.on('error', (data: { message: string }) => {
-      toast.error(data.message);
-    });
-
-    heartbeatRef.current = setInterval(() => {
-      if (socket.connected) {
-        socket.emit('heartbeat', { roomCode, userId });
-      }
+    heartbeatRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/watch-party/room?roomCode=${roomCode}`);
+        if (res.ok) {
+          const data = await res.json();
+          const count = data.memberCount || 1;
+          memberCountRef.current = count;
+          setMemberCount(count);
+          if (rtConnected) {
+            send(makeHeartbeatEvent(roomCode, userId, count));
+          }
+        }
+      } catch { /* non-critical */ }
     }, 15000);
-  };
+  }, [userId]);
 
-  const handleJoin = async () => {
+  const handleJoin = useCallback(async () => {
     const code = inputCode.trim().toUpperCase();
     if (code.length !== 6) {
       toast.error('Enter a 6-character room code');
@@ -110,14 +116,32 @@ export function WatchPartyLobby() {
       }
       setRoomInfo(data);
       setJoined(true);
-      connectSocket(code);
+      connectRealtime(code);
       toast.success('Joined watch party!');
     } catch {
       toast.error('Network error');
     } finally {
       setJoining(false);
     }
-  };
+  }, [inputCode, userId, connectRealtime]);
+
+  // ─── If prefillCode, auto-join on mount ─────────────────
+  useEffect(() => {
+    if (prefillCode) {
+      handleJoin();
+    }
+  }, [prefillCode]);
+
+  // ─── Cleanup on unmount ──────────────────────────────────
+  useEffect(() => {
+    return () => {
+      if (heartbeatRef.current) clearInterval(heartbeatRef.current);
+      if (channelRef.current?.channel) {
+        channelRef.current.channel.unsubscribe();
+      }
+      channelRef.current = null;
+    };
+  }, []);
 
   const goToWatch = () => {
     if (!roomInfo) return;
@@ -135,9 +159,7 @@ export function WatchPartyLobby() {
 
   const shareWhatsApp = () => {
     const code = roomInfo?.roomCode || inputCode;
-    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-    const url = `${baseUrl}/party/${code}`;
-    const text = `Join my watch party on AfriSpine! ${url}`;
+    const text = `Join my watch party on AfriSpine! Room code: ${code}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
@@ -204,13 +226,12 @@ export function WatchPartyLobby() {
               exit={{ opacity: 0, scale: 0.95 }}
               className="w-full max-w-sm space-y-4"
             >
-              {/* Room card */}
               <Card className="bg-gray-900 border-emerald-500/30">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <Badge className="bg-emerald-500/15 text-emerald-400 border-emerald-500/30 gap-1">
                       <Wifi className={`h-3 w-3 ${connected ? '' : 'animate-pulse'}`} />
-                      {connected ? 'Connected' : 'Connecting...'}
+                      {connected ? 'Connected' : (realtimeReady ? 'Connecting...' : 'Offline')}
                     </Badge>
                     <div className="flex items-center gap-1.5 text-white/50">
                       <Users className="h-4 w-4" />
@@ -218,7 +239,6 @@ export function WatchPartyLobby() {
                     </div>
                   </div>
 
-                  {/* Room code */}
                   <div className="flex items-center justify-center gap-3 rounded-xl bg-white/5 border border-white/10 p-4 mb-4">
                     <span className="text-3xl font-mono font-bold tracking-[0.2em] text-emerald-400">
                       {roomInfo?.roomCode}
@@ -228,7 +248,6 @@ export function WatchPartyLobby() {
                     </button>
                   </div>
 
-                  {/* Video info */}
                   {roomInfo?.videoTitle && (
                     <div className="rounded-xl bg-white/5 border border-white/10 p-4 mb-4">
                       <p className="text-[11px] text-white/40 uppercase tracking-wider font-medium mb-1">Now Watching</p>
@@ -236,7 +255,6 @@ export function WatchPartyLobby() {
                     </div>
                   )}
 
-                  {/* Actions */}
                   <Button
                     onClick={goToWatch}
                     className="w-full h-12 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-base rounded-xl gap-2"
@@ -260,7 +278,6 @@ export function WatchPartyLobby() {
         </AnimatePresence>
       </main>
 
-      {/* Footer */}
       <footer className="border-t border-white/5 mt-auto">
         <p className="text-center text-xs text-white/30 py-4">AfriSpine Watch Party</p>
       </footer>

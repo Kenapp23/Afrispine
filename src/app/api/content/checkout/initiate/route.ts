@@ -9,9 +9,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, dbReady } from '@/lib/db';
 import { initiateStkPush } from '@/lib/daraja';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
   try {
+    // Rate limit: 5 checkout initiations per IP per minute
+    const ip = getClientIp(req);
+    const phoneLimiter = checkRateLimit(`ip:${ip}:checkout`, 5);
+    if (!phoneLimiter.allowed) {
+      return NextResponse.json(
+        { error: 'Too many checkout attempts. Please wait a moment.' },
+        { status: 429, headers: { 'Retry-After': String(Math.ceil((phoneLimiter.resetAt - Date.now()) / 1000)) } },
+      );
+    }
+
     if (!dbReady) {
       return NextResponse.json({ error: 'Database not available' }, { status: 503 });
     }

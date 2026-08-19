@@ -10,12 +10,23 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db, dbReady } from '@/lib/db';
 import { requireAdmin } from '@/lib/admin-auth';
 import { sendWhatsAppAsync } from '@/lib/whatsapp';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 const VALID_STATUSES = ['new', 'responded', 'closed'] as const;
 
 type InquiryStatus = (typeof VALID_STATUSES)[number];
 
 export async function POST(req: NextRequest) {
+  // Rate limit: 10 inquiries per IP per minute
+  const ip = getClientIp(req);
+  const rl = checkRateLimit(`ip:${ip}:booking-inquiry`, 10);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Too many inquiries. Please wait a moment.' },
+      { status: 429, headers: { 'Retry-After': String(Math.ceil((rl.resetAt - Date.now()) / 1000)) } },
+    );
+  }
+
   if (!dbReady) {
     return NextResponse.json({ error: 'Database not available' }, { status: 503 });
   }
