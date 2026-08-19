@@ -52,6 +52,34 @@ export const WHATSAPP_TEMPLATES = {
     recipientName: string;
   }) =>
     'Hello ' + params.name + '! Your ' + params.brand + ' gift card worth ' + params.amount + ' ' + params.currency + ' for ' + params.recipientName + ' has been purchased successfully on AfriSpine.\n\nhttps://www.afri-spine.com',
+
+  purchase_confirmation: (params: {
+    video_title: string;
+    creator_name: string;
+    amount: string;
+  }) =>
+    '\u{1F389} You\'re in! You\'ve unlocked ' + params.video_title + ' by ' + params.creator_name + ' on AfriSpine. KES ' + params.amount + ' paid. Enjoy the show!',
+
+  watch_party_invite: (params: {
+    host_name: string;
+    room_code: string;
+    party_url: string;
+  }) =>
+    '\u{1F3AC} ' + params.host_name + ' invited you to a Watch Party on AfriSpine!\n\nJoin room: ' + params.room_code + '\n' + params.party_url + '\n\nDon\'t miss it!',
+
+  publication_share: (params: {
+    creator_name: string;
+    asset_type: string;
+    show_title: string;
+    share_url: string;
+  }) =>
+    '\u2728 New from ' + params.creator_name + ' on AfriSpine!\n\n' + params.asset_type + ': ' + params.show_title + '\n' + params.share_url,
+
+  creator_earnings: (params: {
+    amount: string;
+    source: string;
+  }) =>
+    '\u{1F4B0} KES ' + params.amount + ' just landed in your AfriSpine wallet from ' + params.source + '. Keep creating!',
 } as const;
 
 export type WhatsAppTemplateKey = keyof typeof WHATSAPP_TEMPLATES;

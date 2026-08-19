@@ -32,6 +32,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { CreatorInvitePack } from '@/components/creator/creator-invite-pack';
+import { CreativeAssetsSection } from '@/components/creator/creative-assets-section';
+import { CreatorSuccessCard } from '@/components/creator/creator-success-card';
 import { TopSupportersStrip, ReferralBadge } from '@/components/afrispine/sender/top-supporters-strip';
 
 /* -- Demo Data ----------------------------------------------- */
@@ -366,6 +368,11 @@ export function CreatorDashboardPage() {
             />
           </div>
 
+          {/* Creator Success — Completeness + Actions */}
+          <div className="mb-8">
+            <CreatorSuccessCard creatorId={viewParams.creatorId || ''} />
+          </div>
+
           {/* Top Supporters Strip */}
           <div className="mb-8">
             <TopSupportersStrip />
@@ -463,6 +470,11 @@ export function CreatorDashboardPage() {
               creatorName={viewParams.creatorName || 'AfriSpine Creator'}
               referralCode={viewParams.referralCode}
             />
+          </div>
+
+          {/* Creative Assets — Digital Publication Engine */}
+          <div className="mt-8">
+            <CreativeAssetsSection creatorId={viewParams.creatorId || ''} />
           </div>
 
           {/* Inquiries Section */}

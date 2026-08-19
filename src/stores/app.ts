@@ -22,7 +22,8 @@ export type ViewName =
   | 'sponsor-landing' | 'sponsor-dashboard' | 'sponsor-campaign-detail'
   | 'creator-dashboard'
   | 'admin-sponsor-brands' | 'admin-2fa' | 'admin-reconciliation' | 'admin-moderation'
-  | 'admin-inquiries';
+  | 'admin-inquiries'
+  | 'watch-party' | 'party';
 
 interface AppState {
   currentView: ViewName;

@@ -10,9 +10,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Unlock, Heart, ArrowLeft, Loader2, MessageCircle,
   Share2, Search, BadgeCheck, X, Send, Copy, Check, VolumeX, Volume2,
-  Users, Eye, Film, Ticket, Clock, Calendar,
+  Users, Eye, Film, Ticket, Clock, Calendar, MonitorPlay,
 } from 'lucide-react';
 import { YoureInScreen } from './youre-in-screen';
+import { WatchPartyOverlay } from './watch-party-overlay';
 
 // ─── Category system (§5.3 seed taxonomy) ───────────────────────
 const CATEGORIES = ['All', 'Music', 'Comedy', 'Film', 'Fashion', 'Sports', 'Education', 'Spirituality', 'Food', 'Beauty'] as const;
@@ -525,6 +526,13 @@ export function CreatorWatchPage() {
   // ─── Sponsor preview mode ───
   const [sponsorPreview, setSponsorPreview] = useState(false);
 
+  // ─── Watch Party ───
+  const viewParams = useAppStore((s) => s.viewParams);
+  const sender = useAppStore((s) => s.sender);
+  const [partyRoomCode, setPartyRoomCode] = useState<string | null>(viewParams.roomCode || null);
+  const [partyVideoId, setPartyVideoId] = useState<string | null>(viewParams.roomCode ? (viewParams.videoId || null) : null);
+  const [creatingParty, setCreatingParty] = useState(false);
+
   // ─── Auto-seed house content ref ───
   const houseSeededRef = useRef(false);
 
@@ -771,6 +779,30 @@ export function CreatorWatchPage() {
   const copyShareLink = useCallback(() => {
     navigator.clipboard.writeText(shareUrl); setCopied(true); setTimeout(() => setCopied(false), 2000);
   }, [shareUrl]);
+
+  // ─── Watch Party: create ───
+  const handleStartParty = useCallback(async (videoId: string) => {
+    setCreatingParty(true);
+    try {
+      const userId = sender?.id || `anon-${Date.now()}`;
+      const res = await fetch('/api/watch-party/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ videoId, userId }),
+      });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error || 'Failed to create party'); return; }
+      setPartyRoomCode(data.roomCode);
+      setPartyVideoId(videoId);
+      toast.success(`Party created! Code: ${data.roomCode}`);
+    } catch { toast.error('Network error'); }
+    finally { setCreatingParty(false); }
+  }, [sender]);
+
+  const handleCloseParty = useCallback(() => {
+    setPartyRoomCode(null);
+    setPartyVideoId(null);
+  }, []);
 
   // ─── Comments ───
   const openComments = useCallback(async (videoId: string) => {
@@ -1149,6 +1181,18 @@ export function CreatorWatchPage() {
                         <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm text-white"><Share2 className="h-6 w-6" /></div>
                         <span className="text-xs font-semibold text-white/80">Share</span>
                       </button>
+
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleStartParty(video.id); }}
+                        disabled={creatingParty}
+                        className="flex flex-col items-center gap-1 transition-transform duration-200 active:scale-90"
+                        aria-label="Watch Party"
+                      >
+                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-500/20 backdrop-blur-sm text-emerald-400">
+                          {creatingParty ? <Loader2 className="h-6 w-6 animate-spin" /> : <MonitorPlay className="h-6 w-6" />}
+                        </div>
+                        <span className="text-xs font-semibold text-emerald-400">Party</span>
+                      </button>
                     </div>
                   </div>
                 </motion.div>
@@ -1312,6 +1356,17 @@ export function CreatorWatchPage() {
           />
         )}
       </AnimatePresence>
+
+      {/* ═══════ z-40: Watch Party Overlay ═══════ */}
+      {partyRoomCode && partyVideoId && (
+        <WatchPartyOverlay
+          roomCode={partyRoomCode}
+          videoId={partyVideoId}
+          isHost={true}
+          userId={sender?.id || 'anon'}
+          onClose={handleCloseParty}
+        />
+      )}
 
     </div>
   );

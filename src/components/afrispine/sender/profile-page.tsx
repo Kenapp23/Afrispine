@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ReferralShareButtons } from '@/components/afrispine/common/referral-share';
 import { TopSupportersStrip, ReferralBadge } from '@/components/afrispine/sender/top-supporters-strip';
+import { MyZoneTab } from '@/components/afrispine/sender/my-zone-tab';
 
 import { toast } from 'sonner';
 import {
@@ -48,6 +49,7 @@ import {
   TrendingUp,
   Banknote,
   HeartHandshake,
+  Sparkles,
 } from 'lucide-react';
 
 // ─── Types ───────────────────────────────────────────────────────
@@ -195,6 +197,7 @@ export function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [whatsappOptedIn, setWhatsappOptedIn] = useState(true);
   const [whatsappLoading, setWhatsappLoading] = useState(false);
+  const [myZoneActive, setMyZoneActive] = useState(false);
 
   // ── Derived values ──
   const name = profileData
@@ -488,30 +491,50 @@ export function ProfilePage() {
                 </div>
               </div>
 
-              {/* Edit button */}
-              <Button
-                variant="outline"
-                size="sm"
-                className="shrink-0 border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
-                onClick={() => {
-                  setEditForm({
-                    firstName: profileData?.firstName || '',
-                    lastName: profileData?.lastName || '',
-                    phone: profileData?.phone || '',
-                    dob: profileData?.dob || '',
-                    countryOfResidence: profileData?.countryOfResidence || '',
-                  });
-                  setEditOpen(true);
-                }}
-              >
-                <Pencil className="mr-1.5 h-3.5 w-3.5" />
-                Edit Profile
-              </Button>
+              {/* Edit + My Zone buttons */}
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                <Button
+                  size="sm"
+                  className={
+                    myZoneActive
+                      ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                      : 'border border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800'
+                  }
+                  variant={myZoneActive ? 'default' : 'outline'}
+                  onClick={() => setMyZoneActive(!myZoneActive)}
+                >
+                  <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                  My Zone
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
+                  onClick={() => {
+                    setEditForm({
+                      firstName: profileData?.firstName || '',
+                      lastName: profileData?.lastName || '',
+                      phone: profileData?.phone || '',
+                      dob: profileData?.dob || '',
+                      countryOfResidence: profileData?.countryOfResidence || '',
+                    });
+                    setEditOpen(true);
+                  }}
+                >
+                  <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                  Edit Profile
+                </Button>
+              </div>
             </div>
           </div>
         </div>
       </motion.div>
 
+      {/* ── My Zone Tab (alternate view) ─────────────────── */}
+      {myZoneActive ? (
+        <MyZoneTab />
+      ) : (
+        <>
       {/* ── 2. Stats Row ─────────────────────────────────────── */}
       <motion.div
         custom={1}
@@ -835,6 +858,9 @@ export function ProfilePage() {
           </div>
         </div>
       </motion.div>
+
+        </>
+      )}
 
       {/* ── Edit Profile Dialog ──────────────────────────────── */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>

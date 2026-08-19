@@ -858,6 +858,7 @@ model CreatorProfile {
 
   videos              Video[]
   follows             Follow[]        @relation("CreatorFollows")
+  creativeAssets      CreativeAsset[]
 
   @@index([handle])
   @@index([category])
@@ -899,6 +900,8 @@ model Video {
   comments            Comment[]
   watchEvents         WatchEvent[]
   backstagedBy        Video[]    @relation("BackstageContent")
+  creativeAssets      CreativeAsset[]
+  watchPartyRooms     WatchPartyRoom[]
 
   @@index([category])
   @@index([status])
@@ -1195,6 +1198,56 @@ model ContentReport {
 
   @@index([videoId])
   @@index([status])
+}
+
+// ─── Digital Publication Engine ────────────────────────────────
+
+model CreativeAsset {
+  id             String   @id @default(cuid())
+  creatorId      String
+  videoId        String?                          // optional — tied to a specific show, or null for general profile assets
+  presetType     String                           // 'poster' | 'digital_ticket' | 'flyer'
+  sourceAssetUrl String?                          // creator-uploaded raw image/frame used as input
+  generatedUrl   String?                          // output, null while processing
+  status         String   @default("processing")  // processing | pending_approval | approved | rejected
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  creator        CreatorProfile @relation(fields: [creatorId], references: [id])
+  video          Video? @relation(fields: [videoId], references: [id])
+
+  @@index([creatorId])
+  @@index([status])
+}
+
+// ─── Watch Party ─────────────────────────────────────────────
+
+model WatchPartyRoom {
+  id                     String   @id @default(cuid())
+  roomCode               String   @unique                // short, shareable — e.g. 6 chars
+  videoId                String
+  hostUserId             String
+  currentPlaybackSeconds Float    @default(0)
+  isPlaying              Boolean  @default(false)
+  createdAt              DateTime @default(now())
+
+  video                  Video @relation(fields: [videoId], references: [id])
+  members                WatchPartyMember[]
+
+  @@index([roomCode])
+  @@index([videoId])
+}
+
+model WatchPartyMember {
+  id         String   @id @default(cuid())
+  roomId     String
+  userId     String?                          // nullable — allow anonymous join via room code for v1
+  joinedAt   DateTime @default(now())
+  lastPingAt DateTime @default(now())
+
+  room       WatchPartyRoom @relation(fields: [roomId], references: [id])
+
+  @@unique([roomId, userId])
 }
 
 // ─── Analytics Events ──────────────────────────────────────────

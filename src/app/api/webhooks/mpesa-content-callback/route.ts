@@ -17,6 +17,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db, dbReady } from '@/lib/db';
+import { sendWhatsAppAsync } from '@/lib/whatsapp';
 
 const DEFAULT_CREATOR_SHARE_PCT = 0.6;   // 60% to creator (premiere window)
 const DEFAULT_PLATFORM_SHARE_PCT = 0.4;  // 40% to platform
@@ -105,12 +106,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ResultCode: 0, ResultDesc: 'Accepted' });
     }
 
-    // Fetch video to determine rev-share rate
+    // Fetch video to determine rev-share rate + WhatsApp notification data
     // For standard (VOD) content, use video.vodRevSharePct if set;
     // otherwise fall back to the default 60/40.
     const video = await db.video.findUnique({
       where: { id: pending.videoId },
-      select: { vodRevSharePct: true },
+      select: {
+        vodRevSharePct: true,
+        title: true,
+        creator: { select: { stageName: true, handle: true, whatsappNumber: true } },
+      },
     });
 
     const creatorSharePct =
@@ -311,6 +316,32 @@ export async function POST(req: NextRequest) {
           meta: JSON.stringify({ amountKes: amountPaid, merchantRequestId: MerchantRequestID }),
         },
       }).catch(() => {});
+
+      // WhatsApp: purchase confirmation to viewer
+      const creatorName = video?.creator?.stageName || video?.creator?.handle || 'a creator';
+      if (video?.title) {
+        sendWhatsAppAsync(
+          pending.viewerPhone,
+          'purchase_confirmation',
+          {
+            video_title: video.title,
+            creator_name: creatorName,
+            amount: String(amountPaid),
+          },
+        );
+      }
+
+      // WhatsApp: creator earnings notification
+      if (video?.creator?.whatsappNumber) {
+        sendWhatsAppAsync(
+          video.creator.whatsappNumber,
+          'creator_earnings',
+          {
+            amount: String(creatorShare),
+            source: 'content unlock',
+          },
+        );
+      }
     } catch (txErr) {
       console.error('[mpesa-content-callback] Transaction error:', txErr);
       // Don't retry — Daraja doesn't retry on 200

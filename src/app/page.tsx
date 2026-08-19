@@ -39,6 +39,8 @@ const Admin2FAPage = d(() => import('@/components/afrispine/admin/admin-2fa-page
 const AdminReconciliationPage = d(() => import('@/components/afrispine/admin/admin-reconciliation-page').then(m => ({ default: m.AdminReconciliationPage })));
 const AdminModerationPage = d(() => import('@/components/afrispine/admin/admin-moderation-page').then(m => ({ default: m.AdminModerationPage })));
 const AdminInquiriesPage = d(() => import('@/components/afrispine/admin/admin-inquiries-page').then(m => ({ default: m.AdminInquiriesPage })));
+const WatchPartyLobby = d(() => import('@/components/creator/watch-party-lobby').then(m => ({ default: m.WatchPartyLobby })));
+const WatchPartyOverlay = d(() => import('@/components/creator/watch-party-overlay').then(m => ({ default: m.WatchPartyOverlay })));
 
 // Auth Pages
 const LoginPage = d(() => import('@/components/afrispine/auth/login-page').then(m => ({ default: m.LoginPage })));
@@ -181,6 +183,7 @@ const URL_VIEW_MAP: Record<string, ViewName> = {
   '/admin/2fa': 'admin-2fa', '/admin/reconciliation': 'admin-reconciliation', '/admin/moderation': 'admin-moderation',
   '/admin/inquiries': 'admin-inquiries',
   '/c/profile': 'creator-profile', '/c/onboard': 'creator-onboard',
+  '/watch-party': 'watch-party', '/party': 'party',
 };
 
 const ADMIN_VIEWS: ViewName[] = [
@@ -202,7 +205,7 @@ const SENDER_VIEWS: ViewName[] = [
 ];
 
 const AUTH_VIEWS: ViewName[] = ['login', 'signup', 'forgot-password', 'onboarding', 'verify'];
-const CREATOR_VIEWS: ViewName[] = ['landing', 'about', 'contact', 'terms', 'privacy', 'watch', 'creator-apply', 'sponsor-landing', 'sponsor-dashboard', 'sponsor-campaign-detail', 'creator-dashboard', 'creator-profile', 'creator-onboard'];
+const CREATOR_VIEWS: ViewName[] = ['landing', 'about', 'contact', 'terms', 'privacy', 'watch', 'creator-apply', 'sponsor-landing', 'sponsor-dashboard', 'sponsor-campaign-detail', 'creator-dashboard', 'creator-profile', 'creator-onboard', 'watch-party', 'party'];
 
 function renderCreatorPage(view: ViewName): React.ReactNode {
   switch (view) {
@@ -219,6 +222,8 @@ function renderCreatorPage(view: ViewName): React.ReactNode {
     case 'creator-dashboard': return <CreatorDashboardPage />;
     case 'creator-profile': return <CreatorProfileCardPage />;
     case 'creator-onboard': return <CreatorOnboardPage />;
+    case 'watch-party': return <WatchPartyLobby />;
+    case 'party': return <WatchPartyLobby />;
     default: return null;
   }
 }

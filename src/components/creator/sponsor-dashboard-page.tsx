@@ -513,6 +513,44 @@ export function SponsorDashboardPage() {
             </Card>
           )}
 
+          {/* ── Performance Summary ── */}
+          {brandId && campaigns.length > 0 && (
+            <Card className="border-gray-100 bg-gradient-to-r from-emerald-50/50 to-white">
+              <CardContent className="p-5">
+                <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-emerald-600" />
+                  Performance Summary
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wide text-gray-400">Total Spent</p>
+                    <p className="text-lg font-extrabold text-gray-900">
+                      KES {campaigns.reduce((a, c) => a + (c.spentKes || 0), 0).toLocaleString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wide text-gray-400">Active Campaigns</p>
+                    <p className="text-lg font-extrabold text-emerald-600">
+                      {campaigns.filter((c) => c.status === 'active').length}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wide text-gray-400">Total Impressions</p>
+                    <p className="text-lg font-extrabold text-gray-900">
+                      {campaigns.reduce((a, c) => a + c.slots.reduce((b, s) => b + s.currentImpressions, 0), 0).toLocaleString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wide text-gray-400">Total Clicks</p>
+                    <p className="text-lg font-extrabold text-gray-900">
+                      {campaigns.reduce((a, c) => a + c.slots.reduce((b, s) => b + s.clickCount, 0), 0).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* ── Step 2+: Campaign Builder + Campaign List ── */}
           {brandId && (
             <div className="grid gap-8 lg:grid-cols-5">
