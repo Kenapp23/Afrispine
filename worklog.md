@@ -117,30 +117,128 @@ Stage Summary:
 - Query params in hashes work for profile card handle/mode
 
 ---
-Task ID: 7
-Agent: Main (orchestrator)
-Task: Profile Card & Platform Hardening — Gap analysis and hardening
+Task ID: 0.2-status-api
+Agent: full-stack-developer
+Task: Add PATCH endpoints to brand-inquiry and booking-inquiry API routes for admin status updates
 
 Work Log:
-- Comprehensive audit of all 6 sections of the scoped prompt against existing codebase
-- Discovered that ALL major features were already implemented in prior session:
-  - §1.1-1.2: Profile Card with Fan/Brand/Booking faces (creator-profile-card.tsx)
-  - §1.3-1.4: Brand Inquiry + Booking Inquiry (APIs + UI forms)
-  - §1.5: 10-step Creator Onboarding Wizard
-  - §2: Ledger (LedgerEntry writes in mpesa-content-callback + Admin Reconciliation page/API)
-  - §3: TOTP 2FA for admin (setup/verify/disable APIs + admin login 2-step + management page)
-  - §4: Analytics Event API + client-side firing (profile_viewed, creator_followed, profile_shared)
-  - §5: ContentReport + Admin Takedown API + Moderation page
-- Identified and fixed 4 specific gaps:
-  - Gap 1: Sponsor callback was missing LedgerEntry write for sponsor_payment
-  - Gap 2: Admin moderation page dismiss was UI-only (no API call); added PATCH endpoint for persisting dismissals
-  - Gap 3: Premium Cloudflare Stream content used unsigned URLs; created cf-stream-sign.ts utility + /api/content/signed-stream endpoint + watch page integration
-  - Gap 4: Analytics events only fired client-side; added server-side firing in follow, like, and payment_confirmed handlers
+- Added PATCH handler to /api/creator/brand-inquiry/route.ts
+- Added PATCH handler to /api/creator/booking-inquiry/route.ts
+- Both handlers: requireAdmin auth guard, validate id + status presence, validate status against ('new'|'responded'|'closed'), update record, return updated record
+- 400 for missing/invalid fields, 404 for Prisma P2025 (record not found), 500 for unexpected errors
+- Existing POST and GET handlers left unchanged
+- Updated JSDoc comments to document PATCH method
+- ESLint passes clean
 
 Stage Summary:
-- All 6 sections of the scoped build prompt are now complete
-- ESLint passes clean
-- Prisma schema in sync
-- 4 hardening gaps closed
-- New files: src/lib/cf-stream-sign.ts, src/app/api/content/signed-stream/route.ts
-- Modified files: mpesa-sponsor-callback, content-takedown, admin-moderation-page, content/follow, content/like, mpesa-content-callback, creator-watch-page
+- Two PATCH endpoints added for admin inquiry status management
+- Modified files:  
+  - src/app/api/creator/brand-inquiry/route.ts
+  - src/app/api/creator/booking-inquiry/route.ts
+
+---
+Task ID: 0.2-admin
+Agent: full-stack-developer
+Task: Create admin inquiries page component
+
+Work Log:
+- Read worklog.md and admin-moderation-page.tsx for visual pattern reference
+- Created src/components/afrispine/admin/admin-inquiries-page.tsx
+- Features implemented:
+  - Tab/filter bar: All, New, Responded, Closed — fetches both brand and booking inquiry endpoints with ?status= query param
+  - Unified merged list sorted by createdAt descending, each item tagged with type badge (Brand=emerald, Booking=violet)
+  - Card layout: type icon, type badge, status badge (new=amber, responded=sky, closed=gray), name/brand, creator ID, contact email, event info for bookings, truncated message (180 chars), relative time
+  - Mark Responded (ghost button, sky color) shown for new inquiries, with inline loading spinner
+  - Mark Closed (outline button) opens confirmation dialog with inquiry details
+  - Dialog: dark theme bg-gray-900, cancel + confirm buttons, loading state
+  - Empty state with Inbox icon and contextual message per filter
+  - Loading state centered with emerald spinner
+  - 401/403 handling via logoutAdmin()
+- max-h-96 overflow-y-auto with pr-1 for list scrolling
+- Fixed duplicate `responded` key in STATUS_BADGE_MAP
+- ESLint passes clean, dev server compiles successfully
+
+Stage Summary:
+- Created: src/components/afrispine/admin/admin-inquiries-page.tsx
+- Reuses exact same dark theme visual language as admin-moderation-page (bg-gray-900, gray-800 cards, gray-700 borders, same formatTime, same badge/button patterns)
+- Exports AdminInquiriesPage component ready for SPA router wiring
+
+---
+Task ID: 2.1
+Agent: full-stack-developer
+Task: Build ambassador/recognition features for the growth toolkit
+
+Work Log:
+- Audited actual Prisma schema: Referral (referrerId, referredId, isClaimed), ReferralReward (referrerPhone, amountKes → ContentViewer), Sender (referralCode, firstName, lastName, email, phone)
+- Created src/app/api/growth/leaderboard/route.ts: GET endpoint, no auth, ?window=week|month|all
+  - Groups Referral by referrerId where isClaimed=true, top 20 by count desc
+  - Joins Sender for name/email/referralCode (truncated to 24 chars)
+  - Cross-references ReferralReward by sender phone for totalEarningsKes sum
+  - Time-window filtering via createdAt gte
+  - dbReady guard returns empty array gracefully
+- Created src/components/afrispine/sender/top-supporters-strip.tsx with two exports:
+  - TopSupportersStrip: horizontal scrollable strip, fetches ?window=week, shows top 5 with avatar initials circles, name, referral count Badge
+  - Loading skeleton (5 placeholders), empty state with Trophy icon + CTA
+  - ReferralBadge: props { referralCount }, shows "Ambassador" (emerald) at >=5, "Top Ambassador" (amber + star) at >=10, null otherwise
+- Wired TopSupportersStrip into notifications-page.tsx at top of content, before header
+- ESLint clean on all 3 new/modified files
+
+Stage Summary:
+- Created: src/app/api/growth/leaderboard/route.ts, src/components/afrispine/sender/top-supporters-strip.tsx
+- Modified: src/components/afrispine/sender/notifications-page.tsx (added TopSupportersStrip at top)
+
+---
+Task ID: 3
+Agent: full-stack-developer
+Task: Transform signup page into role-aware flow with 3 paths (Fan/Creator/Brand)
+
+Work Log:
+- Read existing signup-page.tsx, app.ts store (ViewName types), and worklog.md
+- Rewrote src/components/afrispine/auth/signup-page.tsx with 3-stage flow:
+  - Stage 0 (Role Selection): 3 cards — Fan (Eye icon, highlighted/recommended with emerald border), Creator (Video icon), Brand (Building2 icon)
+  - Fan path → 2-step lightweight form: Step 1 (name + phone), Step 2 (interest picker with 8 toggleable chip badges, min 1)
+  - Creator path → navigate('creator-onboard') immediately
+  - Brand path → navigate('sponsor-landing') immediately
+- Preserved referral code capture from ?ref= URL parameter, shown as badge on role select and fan step 1
+- Fan signup POST to /api/auth/signup includes fullName, phone, interests array, and referralCode if present
+- After successful fan signup, loginAsSender navigates to 'watch'
+- Back button: fan step 2→1, fan step 1→role select, role select→login
+- AnimatePresence + framer-motion for transitions between stages
+- Responsive design, emerald theme, shadcn/ui Card/Button/Input/Label/Badge
+- Lucide icons: Eye, Video, Building2, ArrowLeft, Phone, Users, Check, Loader2
+- Dev server compiles successfully
+
+Stage Summary:
+- Modified: src/components/afrispine/auth/signup-page.tsx
+- Replaced monolithic 5-field signup form with role-aware 3-path flow
+- Fan is lightweight (2 steps, no password/email), Creator/Brand delegate to existing wizards
+
+---
+Task ID: 2.2
+Agent: full-stack-developer
+Task: Add "Share Your Profile" invite pack button to the creator dashboard
+
+Work Log:
+- Read worklog.md, creator-dashboard-page.tsx, app.ts store, and existing component patterns
+- Created src/components/creator/creator-invite-pack.tsx:
+  - Exported CreatorInvitePack component with props: creatorHandle, creatorName, referralCode?
+  - Card with "Share Your Profile" heading and descriptive subtext
+  - Three share buttons in a flex-wrap row:
+    a) WhatsApp (MessageCircle icon): opens wa.me/?text= with pre-filled message containing name + profile URL with referral code
+    b) Copy Link (Copy/Check icons): copies profile URL to clipboard, shows checkmark feedback for 2s, sonner toast on success/error
+    c) Download Poster (Download icon): opens profile URL in new tab (canvas approach noted for future enhancement)
+  - Profile URL format: {NEXT_PUBLIC_BASE_URL}/c/profile?handle={handle}&ref={referralCode}
+  - Base URL fallback: https://www.afri-spine.com
+  - Emerald theme styling matching existing dashboard cards (border-gray-100, emerald accents)
+  - Uses shadcn/ui Button, Card, CardContent, CardHeader, CardTitle
+  - Lucide icons: Share2, Copy, Check, Download, MessageCircle
+- Wired CreatorInvitePack into creator-dashboard-page.tsx:
+  - Added import for CreatorInvitePack
+  - Placed invite pack card ABOVE the InquiriesSection (after the videos table)
+  - Passes creatorHandle, creatorName, referralCode from viewParams with sensible defaults
+- ESLint: new component is clean; pre-existing lint error in InquiriesSection useEffect (unrelated)
+- Dev server compiles successfully
+
+Stage Summary:
+- Created: src/components/creator/creator-invite-pack.tsx
+- Modified: src/components/creator/creator-dashboard-page.tsx (import + mount above InquiriesSection)

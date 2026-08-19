@@ -44,6 +44,7 @@ import {
   Shield,
   ShieldCheck as ShieldCheckIcon,
   AlertTriangle,
+  MessageSquare,
 } from 'lucide-react';
 import {
   Sheet,
@@ -541,6 +542,7 @@ const adminLinks: NavItem[] = [
   { view: 'admin-2fa', label: '2FA Security', icon: Shield },
   { view: 'admin-reconciliation', label: 'Ledger Reconciliation', icon: ShieldCheckIcon },
   { view: 'admin-moderation', label: 'Content Moderation', icon: AlertTriangle },
+  { view: 'admin-inquiries', label: 'Inquiries', icon: MessageSquare },
   { view: 'admin-partners', label: 'admin.partners', icon: KeyRound, group: 'admin.system' },
   { view: 'admin-settings', label: 'admin.settings', icon: Settings },
 ];

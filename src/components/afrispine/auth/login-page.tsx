@@ -25,11 +25,6 @@ export function LoginPage() {
       toast.error('Please fill in all fields');
       return;
     }
-    // Auto-detect admin login attempt
-    if (form.email.trim().toLowerCase() === 'admin@afri-spine.com') {
-      navigate('admin-login');
-      return;
-    }
     setLoading(true);
     try {
       let res: Response;
@@ -137,6 +132,13 @@ export function LoginPage() {
                 Sign up
               </button>
             </p>
+            <button
+              type="button"
+              onClick={() => navigate('admin-login')}
+              className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+            >
+              Staff
+            </button>
           </CardFooter>
         </form>
       </Card>

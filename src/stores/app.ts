@@ -21,7 +21,8 @@ export type ViewName =
   | 'watch' | 'creator-apply' | 'creator-profile' | 'creator-onboard'
   | 'sponsor-landing' | 'sponsor-dashboard' | 'sponsor-campaign-detail'
   | 'creator-dashboard'
-  | 'admin-sponsor-brands' | 'admin-2fa' | 'admin-reconciliation' | 'admin-moderation';
+  | 'admin-sponsor-brands' | 'admin-2fa' | 'admin-reconciliation' | 'admin-moderation'
+  | 'admin-inquiries';
 
 interface AppState {
   currentView: ViewName;

@@ -665,13 +665,13 @@ export function CreatorWatchPage() {
     return () => observerRef.current?.disconnect();
   }, [displayVideos, handleIntersect]);
 
-  // ─── Fetch signed stream URLs for unlocked premium content ───
+  // ─── Fetch signed stream URLs for ALL content (preview + premium) ───
   useEffect(() => {
     const active = displayVideos[activeIndex];
     if (!active) return;
-    const isUnlocked = unlockMap[active.id] === 'unlocked' || active.ticketPriceKes === 0;
-    const needsSigned = isUnlocked && active.cfPremiumStreamId && !signedUrlMap[active.id];
-    if (!needsSigned) return;
+    // Only fetch if the video has a Cloudflare stream and we haven't already
+    const hasStream = !!(active.cfPreviewStreamId || active.cfPremiumStreamId);
+    if (!hasStream || signedUrlMap[active.id]) return;
 
     const params = new URLSearchParams({ videoId: active.id });
     if (phoneInput.length >= 12) params.set('phone', phoneInput.replace(/\D/g, ''));
@@ -682,7 +682,7 @@ export function CreatorWatchPage() {
         if (data?.url) setSignedUrlMap(p => ({ ...p, [active.id]: data.url }));
       })
       .catch(() => {});
-  }, [activeIndex, displayVideos, unlockMap, phoneInput, signedUrlMap]);
+  }, [activeIndex, displayVideos, phoneInput, signedUrlMap]);
 
   // ─── Actions ───
   const toggleLike = useCallback(async (id: string) => {

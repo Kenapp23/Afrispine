@@ -22,6 +22,7 @@ import {
   UserPlus,
   CreditCard,
 } from 'lucide-react';
+import { TopSupportersStrip } from '@/components/afrispine/sender/top-supporters-strip';
 
 interface Notification {
   id: string;
@@ -268,6 +269,9 @@ export function NotificationsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Top Supporters Strip */}
+      <TopSupportersStrip />
+
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">

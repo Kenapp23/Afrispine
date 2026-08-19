@@ -38,6 +38,7 @@ const CreatorOnboardPage = d(() => import('@/components/creator/creator-onboardi
 const Admin2FAPage = d(() => import('@/components/afrispine/admin/admin-2fa-page').then(m => ({ default: m.Admin2FAPage })));
 const AdminReconciliationPage = d(() => import('@/components/afrispine/admin/admin-reconciliation-page').then(m => ({ default: m.AdminReconciliationPage })));
 const AdminModerationPage = d(() => import('@/components/afrispine/admin/admin-moderation-page').then(m => ({ default: m.AdminModerationPage })));
+const AdminInquiriesPage = d(() => import('@/components/afrispine/admin/admin-inquiries-page').then(m => ({ default: m.AdminInquiriesPage })));
 
 // Auth Pages
 const LoginPage = d(() => import('@/components/afrispine/auth/login-page').then(m => ({ default: m.LoginPage })));
@@ -178,6 +179,7 @@ const URL_VIEW_MAP: Record<string, ViewName> = {
   '/creator/dashboard': 'creator-dashboard',
   '/admin/sponsor-brands': 'admin-sponsor-brands',
   '/admin/2fa': 'admin-2fa', '/admin/reconciliation': 'admin-reconciliation', '/admin/moderation': 'admin-moderation',
+  '/admin/inquiries': 'admin-inquiries',
   '/c/profile': 'creator-profile', '/c/onboard': 'creator-onboard',
 };
 
@@ -187,6 +189,7 @@ const ADMIN_VIEWS: ViewName[] = [
   'admin-settings', 'admin-business', 'admin-wealth', 'admin-digest',
   'admin-gift-providers', 'admin-gift-cards', 'admin-testing', 'admin-partners',
   'admin-sponsor-brands', 'admin-2fa', 'admin-reconciliation', 'admin-moderation',
+  'admin-inquiries',
 ];
 
 const SENDER_VIEWS: ViewName[] = [
@@ -306,6 +309,7 @@ function renderAdminPage(view: ViewName): React.ReactNode {
     case 'admin-2fa': return <Admin2FAPage />;
     case 'admin-reconciliation': return <AdminReconciliationPage />;
     case 'admin-moderation': return <AdminModerationPage />;
+    case 'admin-inquiries': return <AdminInquiriesPage />;
     default: return null;
   }
 }

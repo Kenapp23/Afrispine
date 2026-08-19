@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -22,7 +23,15 @@ import {
   ArrowLeft,
   LogOut,
   Video,
+  MessageSquare,
+  Building2,
+  Calendar,
+  Clock,
+  Loader2,
+  Inbox,
 } from 'lucide-react';
+import { toast } from 'sonner';
+import { CreatorInvitePack } from '@/components/creator/creator-invite-pack';
 
 /* -- Demo Data ----------------------------------------------- */
 
@@ -106,10 +115,142 @@ function StatCard({ label, value, icon, gradient, iconBg, iconColor }: StatCardP
   );
 }
 
+/* -- Inquiries Section --------------------------------------------- */
+
+interface InquiryItem {
+  id: string;
+  _type: 'brand' | 'booking';
+  brandName?: string;
+  contactName?: string;
+  contactEmail: string;
+  message: string;
+  eventType?: string | null;
+  roughDate?: string | null;
+  status: string;
+  createdAt: string;
+}
+
+function InquiriesSection({ creatorId }: { creatorId: string }) {
+  const [inquiries, setInquiries] = useState<InquiryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<'all' | 'new' | 'responded' | 'closed'>('all');
+
+  const fetchInquiries = useCallback(async () => {
+    if (!creatorId) { setLoading(false); return; }
+    try {
+      const res = await fetch(`/api/creator/inquiries?creatorId=${encodeURIComponent(creatorId)}`);
+      if (res.ok) setInquiries(await res.json());
+    } catch {}
+    setLoading(false);
+  }, [creatorId]);
+
+  useEffect(() => { fetchInquiries(); }, [fetchInquiries]);
+
+  const filtered = filter === 'all' ? inquiries : inquiries.filter(i => i.status === filter);
+  const newCount = inquiries.filter(i => i.status === 'new').length;
+
+  const formatTime = (iso: string) => {
+    const d = new Date(iso);
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffHr = Math.floor(diffMs / 3600000);
+    const diffDay = Math.floor(diffMs / 86400000);
+    if (diffHr < 1) return 'Just now';
+    if (diffHr < 24) return `${diffHr}h ago`;
+    if (diffDay < 7) return `${diffDay}d ago`;
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+  };
+
+  if (!creatorId) return null;
+
+  return (
+    <Card className="border-gray-100 mt-8">
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className="text-base flex items-center gap-2">
+          <MessageSquare className="h-5 w-5 text-emerald-600" />
+          Inquiries
+          {newCount > 0 && (
+            <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[10px] font-semibold">
+              {newCount} new
+            </Badge>
+          )}
+        </CardTitle>
+        <div className="flex items-center gap-1">
+          {(['all', 'new', 'responded', 'closed'] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors capitalize ${
+                filter === f ? 'bg-emerald-100 text-emerald-700' : 'text-gray-500 hover:bg-gray-100'
+              }`}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        {loading ? (
+          <div className="flex items-center justify-center py-10">
+            <Loader2 className="h-5 w-5 animate-spin text-emerald-400" />
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+            <Inbox className="h-8 w-8 mb-2" />
+            <p className="text-sm">No inquiries yet</p>
+            <p className="text-xs mt-1">Brands and fans will reach out here</p>
+          </div>
+        ) : (
+          <div className="max-h-96 overflow-y-auto divide-y divide-gray-50">
+            {filtered.map((inq) => (
+              <div key={inq.id} className="px-4 py-3 hover:bg-gray-50/50 transition-colors">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start gap-2 min-w-0">
+                    <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${
+                      inq._type === 'brand' ? 'bg-emerald-100 text-emerald-600' : 'bg-violet-100 text-violet-600'
+                    }`}>
+                      {inq._type === 'brand' ? <Building2 className="h-3.5 w-3.5" /> : <Calendar className="h-3.5 w-3.5" />}
+                    </div>
+                    <div className="min-w-0 space-y-0.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-semibold text-gray-900 truncate">
+                          {inq._type === 'brand' ? inq.brandName : inq.eventType || 'Event'}
+                        </span>
+                        <Badge variant="outline" className={`text-[10px] font-semibold shrink-0 ${
+                          inq.status === 'new' ? 'border-amber-200 bg-amber-50 text-amber-700' :
+                          inq.status === 'responded' ? 'border-sky-200 bg-sky-50 text-sky-700' :
+                          'border-gray-200 bg-gray-50 text-gray-500'
+                        }`}>
+                          {inq.status}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-gray-500 truncate">
+                        {inq._type === 'booking' && inq.contactName ? `${inq.contactName} · ` : ''}
+                        {inq.contactEmail}
+                        {inq._type === 'booking' && inq.roughDate ? ` · ${inq.roughDate}` : ''}
+                      </p>
+                      <p className="text-xs text-gray-600 line-clamp-2 mt-1">{inq.message}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 text-xs text-gray-400 shrink-0">
+                    <Clock className="h-3 w-3" />
+                    {formatTime(inq.createdAt)}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 /* -- Component --------------------------------------------- */
 
 export function CreatorDashboardPage() {
   const navigate = useAppStore((s) => s.navigate);
+  const viewParams = useAppStore((s) => s.viewParams);
   const logout = useAppStore((s) => s.logout);
 
   return (
@@ -304,6 +445,18 @@ export function CreatorDashboardPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Share Your Profile — Invite Pack */}
+          <div className="mt-8">
+            <CreatorInvitePack
+              creatorHandle={viewParams.creatorHandle || 'creator'}
+              creatorName={viewParams.creatorName || 'AfriSpine Creator'}
+              referralCode={viewParams.referralCode}
+            />
+          </div>
+
+          {/* Inquiries Section */}
+          <InquiriesSection creatorId={viewParams.creatorId || ''} />
 
           {/* Demo note */}
           <p className="mt-6 text-center text-xs text-gray-400">
